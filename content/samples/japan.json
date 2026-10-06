@@ -1,0 +1,496 @@
+{
+  "manifest": {
+    "bundleId": "bundle_jp_sample",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "0.1.0",
+    "tripId": "trip_jp_sample",
+    "classification": "sample",
+    "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
+  },
+  "trip": {
+    "tripId": "trip_jp_sample",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "0.1.0",
+    "title": "Japan · Tokyo + Osaka",
+    "editionType": "full",
+    "primaryCountryCode": "JP",
+    "locale": "en-US",
+    "primaryAudienceCountry": "US",
+    "internationalBuyerNotice": "Travel information is framed for U.S. travelers. International buyers must check requirements for their own nationality.",
+    "durationDays": 2,
+    "regionIds": [
+      "region_tokyo",
+      "region_osaka"
+    ],
+    "defaultTimezone": "Asia/Tokyo",
+    "overview": "Your trip is already planned. Make it yours.",
+    "dayIds": [
+      "day_jp_01",
+      "day_jp_02"
+    ],
+    "travelInfoArticleIds": [
+      "info_jp_sample"
+    ],
+    "emergencyResourceIds": [
+      "help_jp_placeholder"
+    ],
+    "defaultThemeId": "japan",
+    "status": "draft"
+  },
+  "regions": [
+    {
+      "regionId": "region_tokyo",
+      "name": "Tokyo",
+      "countryCode": "JP",
+      "timezone": "Asia/Tokyo"
+    },
+    {
+      "regionId": "region_osaka",
+      "name": "Osaka",
+      "countryCode": "JP",
+      "timezone": "Asia/Tokyo"
+    }
+  ],
+  "places": [
+    {
+      "placeId": "place_nezu",
+      "name": "Nezu Shrine",
+      "category": "attraction",
+      "regionId": "region_tokyo",
+      "address": "Tokyo — exact address pending verification",
+      "status": "active"
+    },
+    {
+      "placeId": "place_shibuya",
+      "name": "Shibuya shopping cluster",
+      "category": "shopping",
+      "regionId": "region_tokyo",
+      "address": "Shibuya, Tokyo — sample location label",
+      "status": "active"
+    },
+    {
+      "placeId": "place_borderless",
+      "name": "teamLab Borderless",
+      "category": "attraction",
+      "regionId": "region_tokyo",
+      "address": "Azabudai, Tokyo — exact address pending verification",
+      "status": "active"
+    }
+  ],
+  "days": [
+    {
+      "dayId": "day_jp_01",
+      "tripId": "trip_jp_sample",
+      "dayNumber": 1,
+      "title": "Shibuya + Harajuku sample day",
+      "primaryRegionId": "region_tokyo",
+      "dayType": "city",
+      "pace": "moderate–busy",
+      "expectedWalkingLevel": "high",
+      "scheduleItems": [
+        {
+          "scheduleItemId": "day_jp_01_item_1",
+          "dayId": "day_jp_01",
+          "sequence": 1,
+          "itemType": "activity",
+          "referencedEntityId": "act_nezu",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "09:00"
+        },
+        {
+          "scheduleItemId": "day_jp_01_item_2",
+          "dayId": "day_jp_01",
+          "sequence": 2,
+          "itemType": "transport",
+          "referencedEntityId": "transport_nezu_shibuya",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "10:30"
+        },
+        {
+          "scheduleItemId": "day_jp_01_item_3",
+          "dayId": "day_jp_01",
+          "sequence": 3,
+          "itemType": "activity",
+          "referencedEntityId": "act_shibuya",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "11:30"
+        },
+        {
+          "scheduleItemId": "day_jp_01_item_4",
+          "dayId": "day_jp_01",
+          "sequence": 4,
+          "itemType": "meal",
+          "suggestedTimeMode": "flexible",
+          "displayLabelOverride": "Flexible lunch buffer"
+        },
+        {
+          "scheduleItemId": "day_jp_01_item_5",
+          "dayId": "day_jp_01",
+          "sequence": 5,
+          "itemType": "free_time",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "16:30",
+          "displayLabelOverride": "Refresh / free time"
+        },
+        {
+          "scheduleItemId": "day_jp_01_item_6",
+          "dayId": "day_jp_01",
+          "sequence": 6,
+          "itemType": "option_group",
+          "referencedEntityId": "group_tokyo_art",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "17:30"
+        }
+      ],
+      "optionGroupIds": [
+        "group_tokyo_art"
+      ]
+    },
+    {
+      "dayId": "day_jp_02",
+      "tripId": "trip_jp_sample",
+      "dayNumber": 2,
+      "title": "Osaka validation day",
+      "primaryRegionId": "region_osaka",
+      "dayType": "city",
+      "scheduleItems": [
+        {
+          "scheduleItemId": "day_jp_02_item_1",
+          "dayId": "day_jp_02",
+          "sequence": 1,
+          "itemType": "activity",
+          "referencedEntityId": "act_osaka",
+          "suggestedTimeMode": "flexible"
+        }
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "activityId": "act_nezu",
+      "name": "Nezu Shrine",
+      "category": "attraction",
+      "regionId": "region_tokyo",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_nezu"
+      ],
+      "badgeIds": [
+        "badge_free"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "placeId": "place_nezu",
+      "recommendedDurationMinutes": 75,
+      "indoorOutdoor": "outdoor"
+    },
+    {
+      "activityId": "act_shibuya",
+      "name": "Shibuya shopping cluster",
+      "category": "shopping",
+      "regionId": "region_tokyo",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_shibuya"
+      ],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "placeId": "place_shibuya",
+      "recommendedDurationMinutes": 180
+    },
+    {
+      "activityId": "act_borderless",
+      "name": "teamLab Borderless",
+      "category": "attraction",
+      "regionId": "region_tokyo",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_borderless"
+      ],
+      "badgeIds": [
+        "badge_pick",
+        "badge_book"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "placeId": "place_borderless",
+      "recommendedDurationMinutes": 150,
+      "indoorOutdoor": "indoor",
+      "reservationInfo": {
+        "reservationLevel": "recommended",
+        "bookAheadGuidance": "Sample reservation guidance; verify official booking before use."
+      },
+      "mcsNote": "A strong late-afternoon anchor. Sample guidance from the prototype."
+    },
+    {
+      "activityId": "act_planets",
+      "name": "teamLab Planets — authored alternative",
+      "category": "attraction",
+      "regionId": "region_tokyo",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_planets"
+      ],
+      "badgeIds": [
+        "badge_book"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "indoorOutdoor": "indoor"
+    },
+    {
+      "activityId": "act_osaka",
+      "name": "Osaka sample neighborhood day",
+      "category": "attraction",
+      "regionId": "region_osaka",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_osaka"
+      ],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft"
+    }
+  ],
+  "options": [
+    {
+      "optionId": "option_borderless",
+      "title": "Primary plan",
+      "activityIds": [
+        "act_borderless"
+      ],
+      "transportIds": [],
+      "costIds": []
+    },
+    {
+      "optionId": "option_planets",
+      "title": "Swap to teamLab Planets",
+      "activityIds": [
+        "act_planets"
+      ],
+      "transportIds": [],
+      "costIds": []
+    }
+  ],
+  "optionGroups": [
+    {
+      "optionGroupId": "group_tokyo_art",
+      "title": "Curated art experience",
+      "selectionMode": "single",
+      "requiredSelection": true,
+      "defaultOptionId": "option_borderless",
+      "optionIds": [
+        "option_borderless",
+        "option_planets"
+      ],
+      "budgetImpactMode": "replace",
+      "scheduleImpactMode": "replace"
+    }
+  ],
+  "transport": [
+    {
+      "transportId": "transport_nezu_shibuya",
+      "mode": "train",
+      "fromPlaceId": "place_nezu",
+      "toPlaceId": "place_shibuya",
+      "regionId": "region_tokyo",
+      "durationMinutes": 40,
+      "routeSummary": "Approximate prototype transit segment — route pending verification.",
+      "fareCostIds": [
+        "cost_train_sample"
+      ]
+    }
+  ],
+  "lodgingGuidance": [
+    {
+      "lodgingGuideId": "lodging_tokyo_sample",
+      "regionId": "region_tokyo",
+      "type": "area_recommendation",
+      "name": "Lodging guidance placeholder",
+      "whyStayHere": "Research pending; actual hotel confirmations belong in Traveler State."
+    }
+  ],
+  "costs": [
+    {
+      "costId": "cost_act_nezu",
+      "label": "Nezu Shrine",
+      "category": "activity",
+      "pricingModel": "free",
+      "currency": "JPY",
+      "fixedMinor": 0,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_shibuya",
+      "label": "Shibuya shopping cluster",
+      "category": "activity",
+      "pricingModel": "free",
+      "currency": "JPY",
+      "fixedMinor": 0,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_borderless",
+      "label": "teamLab Borderless",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "JPY",
+      "fixedMinor": 4000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_planets",
+      "label": "teamLab Planets — authored alternative",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "JPY",
+      "fixedMinor": 4500,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_osaka",
+      "label": "Osaka sample neighborhood day",
+      "category": "activity",
+      "pricingModel": "free",
+      "currency": "JPY",
+      "fixedMinor": 0,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_train_sample",
+      "label": "Sample transit",
+      "category": "transport",
+      "pricingModel": "fixed",
+      "currency": "JPY",
+      "fixedMinor": 300,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    }
+  ],
+  "travelInfo": [
+    {
+      "articleId": "info_jp_sample",
+      "tripId": "trip_jp_sample",
+      "title": "Before you travel",
+      "category": "practical",
+      "contentBlocks": [
+        {
+          "type": "warning",
+          "text": "Sample only. Production entry, transit, connectivity, and emergency guidance must be researched and verified before release."
+        }
+      ],
+      "audienceCountry": "US",
+      "riskLevel": "high",
+      "sourceIds": [],
+      "verificationRecordIds": [],
+      "status": "draft"
+    }
+  ],
+  "emergencyResources": [
+    {
+      "emergencyResourceId": "help_jp_placeholder",
+      "countryCode": "JP",
+      "resourceType": "travel_assistance",
+      "organizationName": "Emergency resources — pending verification",
+      "instructions": "No verified emergency contact is included in this engineering sample. Do not rely on this sample during travel.",
+      "sourceIds": [],
+      "verificationRecordIds": [],
+      "priority": 1
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "source_prototype",
+      "sourceType": "secondary",
+      "publisher": "Mystik Compass Solutions",
+      "title": "Step 4 Prototype v0.1 — structural reference only",
+      "url": "https://docs.google.com/presentation/d/1x4n_Iy-11WhhSRZibmr3nbAQmvDDh8ZExfkVzpJU-Mg/edit",
+      "accessedAt": "2026-10-05",
+      "active": true,
+      "notes": "Not an authoritative source for destination facts."
+    }
+  ],
+  "verification": [],
+  "badges": [
+    {
+      "badgeId": "badge_pick",
+      "label": "MCS PICK",
+      "semanticType": "brand"
+    },
+    {
+      "badgeId": "badge_book",
+      "label": "BOOK AHEAD",
+      "semanticType": "warning"
+    },
+    {
+      "badgeId": "badge_free",
+      "label": "FREE",
+      "semanticType": "info"
+    },
+    {
+      "badgeId": "badge_walking",
+      "label": "HIGH WALKING",
+      "semanticType": "warning"
+    },
+    {
+      "badgeId": "badge_rain",
+      "label": "RAIN PLAN",
+      "semanticType": "info"
+    },
+    {
+      "badgeId": "badge_low",
+      "label": "LOW-ENERGY OPTION",
+      "semanticType": "info"
+    },
+    {
+      "badgeId": "badge_upgrade",
+      "label": "OPTIONAL UPGRADE",
+      "semanticType": "info"
+    }
+  ],
+  "media": [],
+  "themes": [
+    {
+      "themeId": "japan",
+      "name": "Japan",
+      "primaryAccent": "#C54D3C"
+    }
+  ]
+}

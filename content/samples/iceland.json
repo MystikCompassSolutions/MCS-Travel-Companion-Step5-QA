@@ -1,0 +1,496 @@
+{
+  "manifest": {
+    "bundleId": "bundle_is_sample",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "0.1.0",
+    "tripId": "trip_is_sample",
+    "classification": "sample",
+    "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
+  },
+  "trip": {
+    "tripId": "trip_is_sample",
+    "schemaVersion": "1.0.0",
+    "contentVersion": "0.1.0",
+    "title": "Iceland · Reykjavík",
+    "editionType": "full",
+    "primaryCountryCode": "IS",
+    "locale": "en-US",
+    "primaryAudienceCountry": "US",
+    "internationalBuyerNotice": "Travel information is framed for U.S. travelers. International buyers must check requirements for their own nationality.",
+    "durationDays": 2,
+    "regionIds": [
+      "region_reykjavik"
+    ],
+    "defaultTimezone": "Atlantic/Reykjavik",
+    "overview": "Your trip is already planned. Make it yours.",
+    "dayIds": [
+      "day_is_01",
+      "day_is_02"
+    ],
+    "travelInfoArticleIds": [
+      "info_is_sample"
+    ],
+    "emergencyResourceIds": [
+      "help_is_placeholder"
+    ],
+    "defaultThemeId": "iceland",
+    "status": "draft"
+  },
+  "regions": [
+    {
+      "regionId": "region_reykjavik",
+      "name": "Reykjavík",
+      "countryCode": "IS",
+      "timezone": "Atlantic/Reykjavik"
+    }
+  ],
+  "places": [],
+  "days": [
+    {
+      "dayId": "day_is_01",
+      "tripId": "trip_is_sample",
+      "dayNumber": 1,
+      "title": "Choose Your Golden Circle",
+      "primaryRegionId": "region_reykjavik",
+      "dayType": "excursion",
+      "weatherNotes": "Weather-sensitive structural example; current road and tour guidance pending verification.",
+      "scheduleItems": [
+        {
+          "scheduleItemId": "day_is_01_item_1",
+          "dayId": "day_is_01",
+          "sequence": 1,
+          "itemType": "option_group",
+          "referencedEntityId": "group_golden_circle",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "08:00"
+        }
+      ],
+      "optionGroupIds": [
+        "group_golden_circle"
+      ]
+    },
+    {
+      "dayId": "day_is_02",
+      "tripId": "trip_is_sample",
+      "dayNumber": 2,
+      "title": "Flexible Reykjavík + spa day",
+      "primaryRegionId": "region_reykjavik",
+      "dayType": "mixed",
+      "scheduleItems": [
+        {
+          "scheduleItemId": "day_is_02_item_1",
+          "dayId": "day_is_02",
+          "sequence": 1,
+          "itemType": "free_time",
+          "suggestedTimeMode": "flexible",
+          "displayLabelOverride": "Flexible city time"
+        },
+        {
+          "scheduleItemId": "day_is_02_item_2",
+          "dayId": "day_is_02",
+          "sequence": 2,
+          "itemType": "activity",
+          "referencedEntityId": "act_spa",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "15:00"
+        },
+        {
+          "scheduleItemId": "day_is_02_item_3",
+          "dayId": "day_is_02",
+          "sequence": 3,
+          "itemType": "option_group",
+          "referencedEntityId": "group_city_addon",
+          "suggestedTimeMode": "exact",
+          "suggestedStartTime": "17:00"
+        }
+      ],
+      "optionGroupIds": [
+        "group_city_addon"
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "activityId": "act_adventure",
+      "name": "Snowmobile + Golden Circle",
+      "category": "attraction",
+      "regionId": "region_reykjavik",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_adventure"
+      ],
+      "badgeIds": [
+        "badge_upgrade"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "weatherSensitivity": "high",
+      "recommendedDurationMinutes": 600
+    },
+    {
+      "activityId": "act_scenic",
+      "name": "Horseback + Golden Circle",
+      "category": "attraction",
+      "regionId": "region_reykjavik",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_scenic"
+      ],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "weatherSensitivity": "high",
+      "recommendedDurationMinutes": 600
+    },
+    {
+      "activityId": "act_classic",
+      "name": "Minibus Golden Circle",
+      "category": "attraction",
+      "regionId": "region_reykjavik",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_classic"
+      ],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "weatherSensitivity": "high",
+      "recommendedDurationMinutes": 480
+    },
+    {
+      "activityId": "act_spa",
+      "name": "Geothermal spa sample",
+      "category": "attraction",
+      "regionId": "region_reykjavik",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_spa"
+      ],
+      "badgeIds": [
+        "badge_book"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "reservationInfo": {
+        "reservationLevel": "recommended",
+        "bookAheadGuidance": "Prototype reservation placeholder; no verified availability or price."
+      },
+      "optionalUpgradeIds": [
+        "cost_spa_upgrade"
+      ]
+    },
+    {
+      "activityId": "act_city_walk",
+      "name": "Flexible city walk sample",
+      "category": "attraction",
+      "regionId": "region_reykjavik",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_city_walk"
+      ],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft"
+    },
+    {
+      "activityId": "act_cafe",
+      "name": "Optional café stop sample",
+      "category": "attraction",
+      "regionId": "region_reykjavik",
+      "summary": "Representative sample from approved design materials.",
+      "costIds": [
+        "cost_act_cafe"
+      ],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "verificationRecordIds": [],
+      "status": "draft"
+    }
+  ],
+  "options": [
+    {
+      "optionId": "option_adventure",
+      "title": "Snowmobile + Golden Circle",
+      "activityIds": [
+        "act_adventure"
+      ],
+      "transportIds": [],
+      "costIds": [],
+      "estimatedDurationMinutes": 600,
+      "intensity": "high"
+    },
+    {
+      "optionId": "option_scenic",
+      "title": "Horseback + Golden Circle",
+      "activityIds": [
+        "act_scenic"
+      ],
+      "transportIds": [],
+      "costIds": [],
+      "estimatedDurationMinutes": 600,
+      "intensity": "moderate"
+    },
+    {
+      "optionId": "option_classic",
+      "title": "Minibus Golden Circle",
+      "activityIds": [
+        "act_classic"
+      ],
+      "transportIds": [],
+      "costIds": [],
+      "estimatedDurationMinutes": 480,
+      "intensity": "easier"
+    },
+    {
+      "optionId": "option_city_walk",
+      "title": "Base city walk",
+      "activityIds": [
+        "act_city_walk"
+      ],
+      "transportIds": [],
+      "costIds": []
+    },
+    {
+      "optionId": "option_cafe",
+      "title": "Add a café stop",
+      "activityIds": [
+        "act_cafe"
+      ],
+      "transportIds": [],
+      "costIds": []
+    }
+  ],
+  "optionGroups": [
+    {
+      "optionGroupId": "group_golden_circle",
+      "title": "Choose Your Golden Circle Day",
+      "selectionMode": "single",
+      "requiredSelection": true,
+      "defaultOptionId": "option_classic",
+      "optionIds": [
+        "option_adventure",
+        "option_scenic",
+        "option_classic"
+      ],
+      "travelerPrompt": "Choose the day that fits your energy.",
+      "budgetImpactMode": "replace",
+      "scheduleImpactMode": "replace"
+    },
+    {
+      "optionGroupId": "group_city_addon",
+      "title": "Optional city stop",
+      "selectionMode": "multiple",
+      "requiredSelection": false,
+      "baseOptionId": "option_city_walk",
+      "optionIds": [
+        "option_city_walk",
+        "option_cafe"
+      ],
+      "travelerPrompt": "The base walk stays on your day; add a fictional café stop if you wish.",
+      "budgetImpactMode": "add",
+      "scheduleImpactMode": "insert"
+    }
+  ],
+  "transport": [],
+  "lodgingGuidance": [],
+  "costs": [
+    {
+      "costId": "cost_act_adventure",
+      "label": "Snowmobile + Golden Circle",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "ISK",
+      "fixedMinor": 4500000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_scenic",
+      "label": "Horseback + Golden Circle",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "ISK",
+      "fixedMinor": 3000000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_classic",
+      "label": "Minibus Golden Circle",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "ISK",
+      "fixedMinor": 1500000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_spa",
+      "label": "Geothermal spa sample",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "ISK",
+      "fixedMinor": 1200000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_spa_upgrade",
+      "label": "Optional spa add-on sample",
+      "category": "upgrade",
+      "pricingModel": "fixed",
+      "currency": "ISK",
+      "fixedMinor": 500000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_city_walk",
+      "label": "Flexible city walk sample",
+      "category": "activity",
+      "pricingModel": "free",
+      "currency": "ISK",
+      "fixedMinor": 0,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    },
+    {
+      "costId": "cost_act_cafe",
+      "label": "Optional café stop sample",
+      "category": "activity",
+      "pricingModel": "fixed",
+      "currency": "ISK",
+      "fixedMinor": 200000,
+      "basis": "per_person",
+      "estimateNotes": "Invented sample fixture; not a current price.",
+      "sourceIds": [],
+      "verificationRecordIds": []
+    }
+  ],
+  "travelInfo": [
+    {
+      "articleId": "info_is_sample",
+      "tripId": "trip_is_sample",
+      "title": "Before you travel",
+      "category": "practical",
+      "contentBlocks": [
+        {
+          "type": "warning",
+          "text": "Sample only. Production entry, transit, connectivity, and emergency guidance must be researched and verified before release."
+        }
+      ],
+      "audienceCountry": "US",
+      "riskLevel": "high",
+      "sourceIds": [],
+      "verificationRecordIds": [],
+      "status": "draft"
+    }
+  ],
+  "emergencyResources": [
+    {
+      "emergencyResourceId": "help_is_placeholder",
+      "countryCode": "IS",
+      "resourceType": "travel_assistance",
+      "organizationName": "Emergency resources — pending verification",
+      "instructions": "No verified emergency contact is included in this engineering sample. Do not rely on this sample during travel.",
+      "sourceIds": [],
+      "verificationRecordIds": [],
+      "priority": 1
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "source_prototype",
+      "sourceType": "secondary",
+      "publisher": "Mystik Compass Solutions",
+      "title": "Step 4 Prototype v0.1 — structural reference only",
+      "url": "https://docs.google.com/presentation/d/1x4n_Iy-11WhhSRZibmr3nbAQmvDDh8ZExfkVzpJU-Mg/edit",
+      "accessedAt": "2026-10-05",
+      "active": true,
+      "notes": "Not an authoritative source for destination facts."
+    }
+  ],
+  "verification": [],
+  "badges": [
+    {
+      "badgeId": "badge_pick",
+      "label": "MCS PICK",
+      "semanticType": "brand"
+    },
+    {
+      "badgeId": "badge_book",
+      "label": "BOOK AHEAD",
+      "semanticType": "warning"
+    },
+    {
+      "badgeId": "badge_free",
+      "label": "FREE",
+      "semanticType": "info"
+    },
+    {
+      "badgeId": "badge_walking",
+      "label": "HIGH WALKING",
+      "semanticType": "warning"
+    },
+    {
+      "badgeId": "badge_rain",
+      "label": "RAIN PLAN",
+      "semanticType": "info"
+    },
+    {
+      "badgeId": "badge_low",
+      "label": "LOW-ENERGY OPTION",
+      "semanticType": "info"
+    },
+    {
+      "badgeId": "badge_upgrade",
+      "label": "OPTIONAL UPGRADE",
+      "semanticType": "info"
+    }
+  ],
+  "media": [],
+  "themes": [
+    {
+      "themeId": "iceland",
+      "name": "Iceland",
+      "primaryAccent": "#6EAFA9"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "MCS Travel Companion",
+  "short_name": "MCS Companion",
+  "description": "Your trip is already planned. Make it yours.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "lang": "en-US",
+  "background_color": "#F7F1E6",
+  "theme_color": "#211E43",
+  "icons": [
+    {"src":"./assets/compass.svg","sizes":"any","type":"image/svg+xml","purpose":"any"},
+    {"src":"./assets/compass-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"./assets/compass-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"./assets/compass-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}

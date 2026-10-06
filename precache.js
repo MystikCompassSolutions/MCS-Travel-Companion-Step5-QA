@@ -1,0 +1,25 @@
+self.MCS_PRECACHE_VERSION="bd73ca942c0d4109";
+self.MCS_PRECACHE=[
+  "./assets/app/app/dom.js",
+  "./assets/app/app/main.js",
+  "./assets/app/app/runtime-contracts.js",
+  "./assets/app/domain/budget.js",
+  "./assets/app/domain/content.js",
+  "./assets/app/domain/itinerary.js",
+  "./assets/app/domain/schema.js",
+  "./assets/app/offline/register.js",
+  "./assets/app/storage/tab-coordination.js",
+  "./assets/app/storage/traveler-state.js",
+  "./assets/app/styles/app.css",
+  "./assets/app/styles/tokens.css",
+  "./assets/compass-180.png",
+  "./assets/compass-192.png",
+  "./assets/compass-512.png",
+  "./assets/compass-maskable-512.png",
+  "./assets/compass-maskable.svg",
+  "./assets/compass.svg",
+  "./content/samples/iceland.json",
+  "./content/samples/japan.json",
+  "./index.html",
+  "./manifest.webmanifest"
+];

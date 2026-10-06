@@ -1,0 +1,11 @@
+:root {
+  --indigo-900: #211E43; --indigo-700: #393064; --gold: #C5A256;
+  --cream: #F7F1E6; --paper: #FCFAF6; --success: #466D5C;
+  --warning: #A76F24; --danger: #A4493F; --info: #4A678A;
+  --accent: var(--gold); --body-font: Inter, system-ui, sans-serif;
+  --display-font: 'Cormorant Garamond', Georgia, serif;
+  --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px;
+  --space-6: 48px; --space-8: 64px;
+}
+[data-theme="japan"] { --accent: #C54D3C; --destination-ink: #17161B; --destination-surface: #F4ECDD; --secondary-accent: #5A5ECF; }
+[data-theme="iceland"] { --accent: #6EAFA9; --destination-ink: #272C31; --destination-surface: #A8C9D3; --secondary-accent: #7D8D70; }
