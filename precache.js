@@ -1,4 +1,4 @@
-self.MCS_PRECACHE_VERSION="bd73ca942c0d4109";
+self.MCS_PRECACHE_VERSION="0d18d27dc1781568";
 self.MCS_PRECACHE=[
   "./assets/app/app/dom.js",
   "./assets/app/app/main.js",
