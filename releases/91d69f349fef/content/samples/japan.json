@@ -185,7 +185,8 @@
       "status": "draft",
       "placeId": "place_nezu",
       "recommendedDurationMinutes": 75,
-      "indoorOutdoor": "outdoor"
+      "indoorOutdoor": "outdoor",
+      "heroMediaId": "media_nezu"
     },
     {
       "activityId": "act_shibuya",
@@ -205,7 +206,8 @@
       "verificationRecordIds": [],
       "status": "draft",
       "placeId": "place_shibuya",
-      "recommendedDurationMinutes": 180
+      "recommendedDurationMinutes": 180,
+      "heroMediaId": "media_shibuya"
     },
     {
       "activityId": "act_borderless",
@@ -232,7 +234,8 @@
         "reservationLevel": "recommended",
         "bookAheadGuidance": "Sample reservation guidance; verify official booking before use."
       },
-      "mcsNote": "A strong late-afternoon anchor. Sample guidance from the prototype."
+      "mcsNote": "A strong late-afternoon anchor. Sample guidance from the prototype.",
+      "heroMediaId": "media_immersive"
     },
     {
       "activityId": "act_planets",
@@ -251,7 +254,8 @@
       ],
       "verificationRecordIds": [],
       "status": "draft",
-      "indoorOutdoor": "indoor"
+      "indoorOutdoor": "indoor",
+      "heroMediaId": "media_immersive"
     },
     {
       "activityId": "act_osaka",
@@ -485,7 +489,82 @@
       "semanticType": "info"
     }
   ],
-  "media": [],
+  "media": [
+    {
+      "mediaId": "media_tokyo",
+      "type": "photo",
+      "creator": "David Kernan",
+      "originalSourceUrl": "https://commons.wikimedia.org/wiki/File:Tokyo_Tower,_Minato_City.jpg",
+      "license": "CC BY",
+      "licenseVersion": "4.0",
+      "requiredCreditText": "Tokyo Tower, Minato City — David Kernan",
+      "dateVerified": "2026-10-06",
+      "allowedUses": [
+        "commercial",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "Tokyo Tower illuminated among the city lights of Minato at night.",
+      "webAssetReference": "media/tokyo.webp"
+    },
+    {
+      "mediaId": "media_nezu",
+      "type": "photo",
+      "creator": "DavideGorla",
+      "originalSourceUrl": "https://www.flickr.com/photos/66321334@N00/33630316955/",
+      "license": "CC BY",
+      "licenseVersion": "2.0",
+      "requiredCreditText": "Nezu Shrine, Tokyo — DavideGorla",
+      "dateVerified": "2026-10-06",
+      "allowedUses": [
+        "commercial",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "A path through vermilion torii gates at Nezu Shrine.",
+      "webAssetReference": "media/nezu.webp"
+    },
+    {
+      "mediaId": "media_shibuya",
+      "type": "photo",
+      "creator": "Syced",
+      "originalSourceUrl": "https://commons.wikimedia.org/wiki/File:Shibuya_crossing,_seen_from_Shibuya_Stream.jpg",
+      "license": "CC0",
+      "licenseVersion": "1.0",
+      "requiredCreditText": "Shibuya crossing, seen from Shibuya Stream — Syced",
+      "dateVerified": "2026-10-06",
+      "allowedUses": [
+        "commercial",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "A high-angle city view of Shibuya Crossing.",
+      "webAssetReference": "media/shibuya.webp"
+    },
+    {
+      "mediaId": "media_immersive",
+      "type": "illustration",
+      "creator": "Mystik Compass Solutions",
+      "license": "MCS original asset",
+      "requiredCreditText": "",
+      "dateVerified": "2026-10-06",
+      "allowedUses": [
+        "commercial",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "Abstract blue and violet light illustration; not a photograph of the experience.",
+      "webAssetReference": "media/immersive.svg"
+    }
+  ],
   "themes": [
     {
       "themeId": "japan",

@@ -128,7 +128,8 @@
       "verificationRecordIds": [],
       "status": "draft",
       "weatherSensitivity": "high",
-      "recommendedDurationMinutes": 600
+      "recommendedDurationMinutes": 600,
+      "heroMediaId": "media_iceland"
     },
     {
       "activityId": "act_scenic",
@@ -148,7 +149,8 @@
       "verificationRecordIds": [],
       "status": "draft",
       "weatherSensitivity": "high",
-      "recommendedDurationMinutes": 600
+      "recommendedDurationMinutes": 600,
+      "heroMediaId": "media_iceland"
     },
     {
       "activityId": "act_classic",
@@ -168,7 +170,8 @@
       "verificationRecordIds": [],
       "status": "draft",
       "weatherSensitivity": "high",
-      "recommendedDurationMinutes": 480
+      "recommendedDurationMinutes": 480,
+      "heroMediaId": "media_iceland"
     },
     {
       "activityId": "act_spa",
@@ -193,7 +196,8 @@
       },
       "optionalUpgradeIds": [
         "cost_spa_upgrade"
-      ]
+      ],
+      "heroMediaId": "media_iceland"
     },
     {
       "activityId": "act_city_walk",
@@ -211,7 +215,8 @@
         "source_prototype"
       ],
       "verificationRecordIds": [],
-      "status": "draft"
+      "status": "draft",
+      "heroMediaId": "media_iceland"
     },
     {
       "activityId": "act_cafe",
@@ -229,7 +234,8 @@
         "source_prototype"
       ],
       "verificationRecordIds": [],
-      "status": "draft"
+      "status": "draft",
+      "heroMediaId": "media_iceland"
     }
   ],
   "options": [
@@ -485,7 +491,25 @@
       "semanticType": "info"
     }
   ],
-  "media": [],
+  "media": [
+    {
+      "mediaId": "media_iceland",
+      "type": "illustration",
+      "creator": "Mystik Compass Solutions",
+      "license": "MCS original asset",
+      "requiredCreditText": "",
+      "dateVerified": "2026-10-06",
+      "allowedUses": [
+        "commercial",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "Illustrative mountain landscape; not a photograph of a destination.",
+      "webAssetReference": "media/iceland.svg"
+    }
+  ],
   "themes": [
     {
       "themeId": "iceland",
