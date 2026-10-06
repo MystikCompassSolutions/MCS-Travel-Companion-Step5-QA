@@ -2,7 +2,7 @@
 <html lang="en-US">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#211E43">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="description" content="MCS Travel Companion engineering QA sample. Not for travel use.">
@@ -15,11 +15,13 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <header><strong>MCS <span>Travel Companion</span></strong><button id="my-trip">My Trip</button></header>
-  <aside class="notice">Engineering sample · Unverified content · Not for travel use</aside>
-  <p id="connection" role="status" aria-live="polite"></p>
-  <div id="sync" role="status" aria-live="polite"></div>
-  <main id="main" tabindex="-1"><p>Loading your Companion…</p></main>
+  <div id="app-scroll">
+    <header><strong>MCS <span>Travel Companion</span></strong><button id="my-trip">My Trip</button></header>
+    <aside class="notice">Engineering sample · Unverified content · Not for travel use</aside>
+    <p id="connection" role="status" aria-live="polite"></p>
+    <div id="sync" role="status" aria-live="polite"></div>
+    <main id="main" tabindex="-1"><p>Loading your Companion…</p></main>
+  </div>
   <nav id="nav" aria-label="Main navigation"></nav>
   <dialog id="personal" aria-labelledby="personal-title"><form method="dialog"><button class="close" aria-label="Close My Trip">Close</button></form><div id="personal-content"></div></dialog>
   <noscript>This local sample needs JavaScript. No personal data is sent to MCS.</noscript>

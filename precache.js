@@ -1,5 +1,6 @@
-self.MCS_PRECACHE_VERSION="0d18d27dc1781568";
+self.MCS_PRECACHE_VERSION="ccffb460333b66aa";
 self.MCS_PRECACHE=[
+  "./assets/app/app/day-navigation.js",
   "./assets/app/app/dom.js",
   "./assets/app/app/main.js",
   "./assets/app/app/runtime-contracts.js",
