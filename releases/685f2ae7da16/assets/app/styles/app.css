@@ -88,15 +88,13 @@ nav [aria-current="page"] { background: var(--paper); color: var(--indigo-900); 
 .place-actions { display: flex; flex-wrap: wrap; gap: 2px 8px; }
 .budget-overview { padding: 8px 0 12px; border-bottom: 1px solid #d4cfdd; }
 .budget-overview h2 { margin: 0 0 8px; font-size: 1.125rem; }
-.budget-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
-.budget-scope button { min-height: 44px; padding: 5px 10px; }
-.budget-scope button[aria-pressed="true"] { background: var(--indigo-900); color: var(--paper); }
 .budget-estimates { display: grid; gap: 6px; margin: 0 0 10px; }
-.estimate-row { min-width: 0; padding: 8px 10px; border-left: 2px solid #d4cfdd; background: var(--paper); }
-.estimate-row.selected { border-left-color: var(--accent); }
+.estimate-row { min-width: 0; padding: 8px 10px; border-left: 2px solid var(--accent); background: var(--paper); }
 .estimate-row h3, .estimate-row p { margin: 0 0 2px; }
 .estimate-row h3 { font-size: .875rem; }
 .planning-conversion { font-size: .875rem; }
+.my-budget-total { padding: 4px 0 8px; }
+.my-budget-total p { margin: 0; }
 .budget-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 10px; }
 .budget-metrics div { min-width: 0; padding: 8px 10px; background: var(--paper); border-radius: 8px; }
 .budget-metrics dt { color: var(--indigo-700); font-size: .75rem; }

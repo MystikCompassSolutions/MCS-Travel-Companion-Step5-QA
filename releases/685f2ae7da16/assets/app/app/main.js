@@ -4,7 +4,7 @@ import {chooseOption, resolveDay, selectedOptions, effectiveOptions, optionSched
   calendarDay, currentTripDay} from '../domain/itinerary.js';
 import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
 import {exploreFilterChoices} from './explore-navigation.js';
-import {plannedBudget, actualBudget, availableUpgradeCosts, formatMoney, parseMoney, currencyDigits,
+import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, parseMoney, currencyDigits,
   convertPlanningEstimate} from '../domain/budget.js';
 import {newTravelerState, createTravelerStore, reconcileContent, serializeTravelerState,
   parseTravelerExport, EXPORT_LIMIT_BYTES, STATE_VERSION, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
@@ -23,7 +23,7 @@ const myTripButton = document.querySelector('#my-trip');
 let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0;
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
-let exploreFilter = 'all', budgetScope = 'me', personalPageScrollTop = 0;
+let exploreFilter = 'all', personalPageScrollTop = 0;
 
 function status() {
   connection.textContent = navigator.onLine ? (offlineStatus || 'Preparing offline sample…') :
@@ -109,11 +109,11 @@ function badges(activity) {
     el('span', {class: 'badge'}, bundle.badges.find(badge => badge.badgeId === id).label)));
 }
 function estimates() {
-  return Object.entries(plannedBudget(bundle, state)).map(([currency, total]) => {
+  return Object.entries(travelerEstimate(bundle, state)).map(([currency, total]) => {
     const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
       `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
         '–' + formatMoney(total.maximumMinor, currency) : ''}`;
-    return el('p', {}, `MCS ${state.partySize > 1 ? `party estimate (${state.partySize} travelers)` : 'estimate per traveler'}: ${range} ${currency}`,
+    return el('p', {}, `MCS estimate per traveler: ${range} ${currency}`,
       total.unknownCosts ? ` · ${total.unknownCosts} unpriced` : '');
   });
 }
@@ -458,7 +458,7 @@ function explore() {
   return [el('h1', {}, 'Explore'), strip, picker, activeDay, results, list];
 }
 
-function budgetEstimate(total, currency, label, activeRate, selected) {
+function budgetEstimate(total, currency, activeRate) {
   const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
     `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
       `–${formatMoney(total.maximumMinor, currency)}` : ''}`;
@@ -471,20 +471,14 @@ function budgetEstimate(total, currency, label, activeRate, selected) {
     conversion = el('p', {class: 'planning-conversion'}, `≈ ${formatMoney(min, state.homeCurrency)}${
       max !== null && max !== min ? `–${formatMoney(max, state.homeCurrency)}` : ''} ${state.homeCurrency}`);
   }
-  return el('div', {class: `estimate-row${selected ? ' selected' : ''}`},
-    el('h3', {}, label), el('p', {class: 'compact-value'}, `${range} ${currency}`), conversion,
+  return el('div', {class: 'estimate-row'},
+    el('p', {class: 'section-kicker'}, 'MCS estimate · per traveler'),
+    el('p', {class: 'compact-value'}, `${range} ${currency}`), conversion,
     total.unknownCosts ? el('small', {}, `${total.unknownCosts} unpriced item${total.unknownCosts === 1 ? '' : 's'}`) : null);
 }
 
 function budget() {
-  if (state.partySize === 1) budgetScope = 'me';
   const actual = actualBudget(state);
-  const party = el('input', {type: 'number', min: 1, max: 20, step: 1, required: true, value: state.partySize});
-  const partyForm = el('form', {class: 'inline-form', onSubmit: event => {
-    event.preventDefault(); const size = Number(party.value);
-    if (!Number.isInteger(size) || size < 1 || size > 20) {alert('Party size must be 1–20.'); return;}
-    commit(current => ({...current, partySize: size})).catch(() => {});
-  }}, field('Travelers (1–20)', party), el('button', {type: 'submit', disabled: !!storageIssue}, 'Update party'));
   const total = el('input', {type: 'text', inputmode: 'decimal', required: true,
     value: String(state.budgetPlan.totalMinor / (10 ** currencyDigits(state.homeCurrency)))});
   const form = el('form', {class: 'inline-form', onSubmit: event => {
@@ -521,9 +515,8 @@ function budget() {
         actualExpenses: current.actualExpenses.filter(entry => entry.id !== expense.id)})).catch(() => {});
     }, {disabled: !!storageIssue}))));
   const upgrades = availableUpgradeCosts(bundle, state);
-  const partyEstimate = plannedBudget(bundle, state);
-  const oneEstimate = plannedBudget(bundle, {...state, partySize: 1});
-  const destinationCurrency = Object.keys(partyEstimate)[0] ?? bundle.costs[0]?.currency;
+  const estimate = travelerEstimate(bundle, state);
+  const destinationCurrency = Object.keys(estimate)[0] ?? bundle.costs[0]?.currency;
   const activeRate = state.planningRate?.fromCurrency === destinationCurrency &&
     state.planningRate.toCurrency === state.homeCurrency ? state.planningRate : null;
   const rateInput = el('input', {type: 'text', inputmode: 'decimal', pattern: '(?:0|[1-9][0-9]{0,5})(?:\\.[0-9]{1,8})?',
@@ -539,39 +532,30 @@ function budget() {
       } catch (error) {alert(error.message);}
     }}, field(`Planning rate: 1 ${destinationCurrency} equals how many ${state.homeCurrency}?`, rateInput),
     el('button', {type: 'submit', disabled: !!storageIssue}, activeRate ? 'Update rate' : 'Save rate')) : null;
-  const scopeControl = el('div', {id: 'budget-scope', class: 'budget-scope', role: 'group',
-    'aria-label': 'Budget estimate scope'}, el('strong', {}, 'Budget for:'),
-    ...[['me', 'Me'], ['party', 'My travel party']].map(([id, label]) => button(label, () => {
-      budgetScope = id; render();
-      main.querySelector(`#budget-scope button[data-scope="${id}"]`)?.focus({preventScroll: true});
-    }, {'data-scope': id, 'aria-pressed': String(budgetScope === id),
-      disabled: id === 'party' && state.partySize === 1})));
-  const estimateRows = [
-    ...Object.entries(oneEstimate).map(([currency, total]) => budgetEstimate(total, currency,
-      'Estimated per traveler', activeRate, budgetScope === 'me')),
-    ...(state.partySize > 1 ? Object.entries(partyEstimate).map(([currency, total]) =>
-      budgetEstimate(total, currency, `Estimated party total — ${state.partySize} travelers`,
-        activeRate, budgetScope === 'party')) : [])];
+  const estimateRows = Object.entries(estimate).map(([currency, total]) =>
+    budgetEstimate(total, currency, activeRate));
   return [el('h1', {}, 'Budget'),
-    el('section', {class: 'budget-overview'}, scopeControl,
+    el('section', {class: 'budget-overview'},
       el('div', {class: 'budget-estimates'}, estimateRows),
-      activeRate ? el('p', {class: 'day-meta'}, `Approximate planning conversion only · 1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}. Not a current bank or card rate.`) :
-        rateForm ? el('p', {class: 'day-meta'}, `Set your own planning rate to see approximate ${state.homeCurrency} conversions. No live exchange rate is used.`) : null,
-      el('h2', {}, 'My budget · home currency'),
+      activeRate ? el('p', {class: 'day-meta'}, `Using planning rate 1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}. Approximate; not a current bank or card rate.`) : null,
+      el('div', {class: 'my-budget-total'}, el('p', {class: 'section-kicker'}, `My budget · ${state.homeCurrency}`),
+        el('p', {class: 'compact-value'}, formatMoney(state.budgetPlan.totalMinor, state.homeCurrency))),
       el('dl', {class: 'budget-metrics'},
-        el('div', {}, el('dt', {}, 'My budget'), el('dd', {}, formatMoney(state.budgetPlan.totalMinor, state.homeCurrency))),
         el('div', {}, el('dt', {}, 'Spent'), el('dd', {}, formatMoney(actual.spentMinor, state.homeCurrency))),
-        el('div', {}, el('dt', {}, 'Remaining'), el('dd', {}, formatMoney(actual.remainingMinor, state.homeCurrency))),
-        el('div', {}, el('dt', {}, 'Travelers'), el('dd', {}, String(state.partySize)))),
+        el('div', {}, el('dt', {}, 'Remaining'), el('dd', {}, formatMoney(actual.remainingMinor, state.homeCurrency)))),
       actual.unconverted.length ? el('p', {class: 'day-meta'}, `${actual.unconverted.length} other-currency expense${actual.unconverted.length === 1 ? '' : 's'} not included yet.`) : null,
-      form, partyForm),
-    rateForm ? disclosure('Planning exchange rate', [el('p', {}, 'Enter a rate you recorded for planning. Converted figures are approximate and can differ from bank or card charges.'), rateForm],
-      {id: 'planning-rate'}) : null,
-    disclosure('How estimates work', [el('p', {}, 'Sample costs are fictional. Per-person amounts use your party size; group, one-way and round-trip costs apply once per stop. Daily and nightly costs use the authored quantity.'),
-      el('p', {}, 'Your saved budget and expenses remain personal and in your home currency. The scope control highlights an MCS estimate; it never changes saved budget amounts. Unpriced and open-ended costs are flagged.')], {id: 'estimate-rules'}),
+    ),
+    disclosure('Set my budget', form, {id: 'set-budget'}),
+    disclosure('Planning rate / currency settings', [
+      el('p', {}, 'Home currency is set in My Trip. Destination estimates stay in their authored currency.'),
+      rateForm ? el('p', {}, 'Use a rate you recorded for planning. Converted amounts are approximate and can differ from bank or card charges.') :
+        el('p', {}, 'Your home and destination currency match; no conversion is needed.'),
+      rateForm], {id: 'planning-rate'}),
+    disclosure('How estimates work', [el('p', {}, 'Sample costs are fictional. This is a solo-traveler planning estimate. Authored group, one-way and round-trip costs are shown at their full value; no shared cost is automatically split.'),
+      el('p', {}, 'My budget, spent and remaining are individual amounts in Home Currency. For shared lodging, transport or meals, record only your personal share as an actual expense. Unpriced and open-ended costs are flagged.')], {id: 'estimate-rules'}),
     upgrades.length ? disclosure('Optional upgrades', [el('p', {}, 'Only upgrades for selected activities appear here.'),
       ...upgrades.flatMap(entry => upgradeChoices(entry.activity))], {id: 'upgrades'}) : null,
-    disclosure('Add actual spending', expenseForm, {id: 'add-expense'}),
+    disclosure('Add actual spending', [el('p', {}, 'For a shared cost, enter only your personal share. No automatic splitting.'), expenseForm], {id: 'add-expense'}),
     disclosure(`Spending history · ${state.actualExpenses.length}`, expenses, {id: 'expenses'})].filter(Boolean);
 }
 

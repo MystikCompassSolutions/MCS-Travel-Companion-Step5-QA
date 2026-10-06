@@ -1,4 +1,4 @@
-self.MCS_PRECACHE_VERSION="07854632ecf8bcb2";
+self.MCS_PRECACHE_VERSION="2fded2576866b25b";
 self.MCS_PRECACHE=[
   "./assets/compass-180.png",
   "./assets/compass-192.png",
@@ -8,20 +8,20 @@ self.MCS_PRECACHE=[
   "./assets/compass.svg",
   "./index.html",
   "./manifest.webmanifest",
-  "./releases/982144da8a2b/assets/app/app/day-navigation.js",
-  "./releases/982144da8a2b/assets/app/app/dom.js",
-  "./releases/982144da8a2b/assets/app/app/explore-navigation.js",
-  "./releases/982144da8a2b/assets/app/app/main.js",
-  "./releases/982144da8a2b/assets/app/app/runtime-contracts.js",
-  "./releases/982144da8a2b/assets/app/domain/budget.js",
-  "./releases/982144da8a2b/assets/app/domain/content.js",
-  "./releases/982144da8a2b/assets/app/domain/itinerary.js",
-  "./releases/982144da8a2b/assets/app/domain/schema.js",
-  "./releases/982144da8a2b/assets/app/offline/register.js",
-  "./releases/982144da8a2b/assets/app/storage/tab-coordination.js",
-  "./releases/982144da8a2b/assets/app/storage/traveler-state.js",
-  "./releases/982144da8a2b/assets/app/styles/app.css",
-  "./releases/982144da8a2b/assets/app/styles/tokens.css",
-  "./releases/982144da8a2b/content/samples/iceland.json",
-  "./releases/982144da8a2b/content/samples/japan.json"
+  "./releases/685f2ae7da16/assets/app/app/day-navigation.js",
+  "./releases/685f2ae7da16/assets/app/app/dom.js",
+  "./releases/685f2ae7da16/assets/app/app/explore-navigation.js",
+  "./releases/685f2ae7da16/assets/app/app/main.js",
+  "./releases/685f2ae7da16/assets/app/app/runtime-contracts.js",
+  "./releases/685f2ae7da16/assets/app/domain/budget.js",
+  "./releases/685f2ae7da16/assets/app/domain/content.js",
+  "./releases/685f2ae7da16/assets/app/domain/itinerary.js",
+  "./releases/685f2ae7da16/assets/app/domain/schema.js",
+  "./releases/685f2ae7da16/assets/app/offline/register.js",
+  "./releases/685f2ae7da16/assets/app/storage/tab-coordination.js",
+  "./releases/685f2ae7da16/assets/app/storage/traveler-state.js",
+  "./releases/685f2ae7da16/assets/app/styles/app.css",
+  "./releases/685f2ae7da16/assets/app/styles/tokens.css",
+  "./releases/685f2ae7da16/content/samples/iceland.json",
+  "./releases/685f2ae7da16/content/samples/japan.json"
 ];

@@ -116,6 +116,10 @@ export function plannedBudget(bundle, state) {
   return totals;
 }
 
+export function travelerEstimate(bundle, state) {
+  return plannedBudget(bundle, {...state, partySize: 1});
+}
+
 export function actualBudget(state) {
   let spentMinor = 0;
   const unconverted = [];
