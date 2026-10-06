@@ -8,7 +8,7 @@ import {newTravelerState, createTravelerStore, reconcileContent, serializeTravel
   parseTravelerExport, EXPORT_LIMIT_BYTES, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
 import {createTabCoordinator} from '../storage/tab-coordination.js';
 import {loadRuntimeContracts} from './runtime-contracts.js';
-import {registerOffline} from '../offline/register.js';
+import {registerOffline, repairAppFiles} from '../offline/register.js';
 
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
@@ -20,6 +20,7 @@ const myTripButton = document.querySelector('#my-trip');
 let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0;
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
+let exploreFilter = 'all', personalPageScrollTop = 0;
 
 function status() {
   connection.textContent = navigator.onLine ? (offlineStatus || 'Preparing offline sample…') :
@@ -27,11 +28,19 @@ function status() {
 }
 addEventListener('online', status);
 addEventListener('offline', status);
-dialog.addEventListener('close', () => myTripButton.focus());
+dialog.addEventListener('close', () => {
+  appScroll.style.overflowY = '';
+  appScroll.scrollTop = personalPageScrollTop;
+  myTripButton.focus({preventScroll: true});
+});
 dialog.addEventListener('keydown', event => {
   if (event.key !== 'Tab') return;
   const focusable = [...dialog.querySelectorAll('a[href], button, input, select, textarea, summary, [tabindex]')]
-    .filter(element => !element.disabled && element.tabIndex >= 0 && element.getClientRects().length);
+    .filter(element => {
+      const closed = element.closest('details:not([open])');
+      return !element.disabled && element.tabIndex >= 0 && element.getClientRects().length &&
+        (!closed || closed.querySelector(':scope > summary') === element);
+    });
   if (!focusable.length) return;
   const first = focusable[0], last = focusable.at(-1);
   if (event.shiftKey && document.activeElement === first) {event.preventDefault(); last.focus();}
@@ -88,6 +97,10 @@ function commit(transform) {
 }
 
 function go(name) {view = name; if (name === 'Home') resetDay(); render(); appScroll.scrollTop = 0; main.focus();}
+function disclosure(title, body, {id, open = false, className = ''} = {}) {
+  return el('details', {class: `compact-disclosure ${className}`, 'data-section': id, open},
+    el('summary', {}, title), el('div', {class: 'disclosure-body'}, body));
+}
 function badges(activity) {
   return el('div', {}, activity.badgeIds.slice(0, 3).map(id =>
     el('span', {class: 'badge'}, bundle.badges.find(badge => badge.badgeId === id).label)));
@@ -97,9 +110,7 @@ function estimates() {
     const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
       `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
         '–' + formatMoney(total.maximumMinor, currency) : ''}`;
-    return el('p', {}, `MCS sample estimate: ${range} for ${state.partySize} ${state.partySize === 1 ? 'traveler' : 'travelers'}.`,
-      total.unknownCosts ? ` ${total.unknownCosts} unpriced cost${total.unknownCosts === 1 ? '' : 's'} excluded.` : '',
-      ' No automatic currency conversion.');
+    return el('p', {}, `MCS estimate: ${range}`, total.unknownCosts ? ` · ${total.unknownCosts} unpriced` : '');
   });
 }
 function dayLabel(day) {
@@ -115,18 +126,20 @@ function home() {
   const phase = {unscheduled: 'Set a start date in My Trip to show your current day.',
     upcoming: 'Your trip has not started yet.', active: 'Current day in the destination time zone.',
     past: 'Your trip dates have passed; showing the final day.'}[today.phase];
-  return [el('p', {class: 'eyebrow'}, bundle.trip.title),
-    el('h1', {}, 'Your trip is already planned.'), el('p', {}, 'Make it yours.'),
-    card(el('h2', {}, dayLabel(day)), el('p', {}, phase), el('p', {}, day.pace ?? day.dayType),
-      button('Continue Today’s Plan', () => {dayIndex = today.index; go('Itinerary');}, {class: 'primary'})),
-    upcoming ? card(el('h2', {}, 'Booking to consider'), button(upcoming.name, () => detail(upcoming)),
-      el('p', {}, upcoming.reservationInfo.bookAheadGuidance)) : null,
-    card(el('h2', {}, 'Budget snapshot'), ...estimates(),
-      el('p', {}, `My spending: ${formatMoney(actualBudget(state).spentMinor, state.homeCurrency)}`)),
-    button('Emergency Help', () => info(true)), el('h2', {}, 'Architecture samples'),
-    field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
-      ['japan', 'iceland'].map(name => el('option', {value: name, selected: name === packName},
-        name === 'japan' ? 'Japan sample' : 'Iceland sample'))))];
+  return [el('section', {class: 'home-hero'}, el('p', {class: 'section-kicker'}, bundle.trip.title),
+    el('h1', {}, 'Your trip, day by day.')),
+  el('section', {class: 'compact-section home-day'},
+    el('p', {class: 'section-kicker'}, today.phase === 'active' ? 'Today' : 'Your plan'),
+    el('h2', {}, dayLabel(day)), el('p', {}, phase),
+    button('Continue Today’s Plan', () => {dayIndex = today.index; go('Itinerary');}, {class: 'primary'})),
+  upcoming ? el('section', {class: 'compact-section'}, el('p', {class: 'section-kicker'}, 'Next reservation to review'),
+    button(upcoming.name, () => detail(upcoming), {class: 'text-action'})) : null,
+  el('section', {class: 'compact-section'}, el('h2', {}, 'Budget at a glance'), ...estimates(),
+    el('p', {}, `Spent: ${formatMoney(actualBudget(state).spentMinor, state.homeCurrency)}`)),
+  el('div', {class: 'row'}, button('Emergency Help', () => info(true), {class: 'text-action'})),
+  disclosure('Sample content packs', field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
+    ['japan', 'iceland'].map(name => el('option', {value: name, selected: name === packName},
+      name === 'japan' ? 'Japan sample' : 'Iceland sample')))), {id: 'sample-packs'})];
 }
 
 function optionGroup(group, headingTag = 'h2') {
@@ -308,53 +321,115 @@ function detail(activity) {
   const place = bundle.places.find(candidate => candidate.placeId === activity.placeId);
   const nodes = [button('Back to day', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;}),
     el('h1', {}, activity.name), badges(activity),
-    el('p', {}, activity.summary),
-    el('p', {}, `${activity.recommendedDurationMinutes ?? 'Flexible'}${activity.recommendedDurationMinutes ? ' minutes' : ''} · ${activity.indoorOutdoor ?? 'Environment not verified'}`),
-    card(el('h2', {}, 'MCS note'), el('p', {}, activity.mcsNote ?? 'Detailed guidance pending content research.')),
-    place ? card(el('h2', {}, 'Location'), el('p', {}, place.address), button('Open Explore', () => go('Explore'))) : null,
-    activity.reservationInfo ? card(el('h2', {}, 'Booking'), el('p', {}, activity.reservationInfo.bookAheadGuidance)) : null,
-    activity.optionalUpgradeIds?.length ? card(el('h2', {}, 'Optional sample upgrades'),
-      el('p', {}, 'These are fictional planning costs; availability and prices are unverified.'), ...upgradeChoices(activity)) : null,
+    el('p', {class: 'detail-summary'}, activity.summary),
+    el('div', {class: 'detail-facts'},
+      el('span', {}, activity.recommendedDurationMinutes ? `${activity.recommendedDurationMinutes} minutes` : 'Flexible duration'),
+      el('span', {}, activity.indoorOutdoor ?? 'Environment not verified')),
+    el('div', {class: 'detail-actions'},
+      place ? button('See in Explore', () => go('Explore'), {class: 'text-action'}) : null,
+      place && navigator.onLine ? el('a', {class: 'text-action',
+        href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
+        target: '_blank', rel: 'noopener noreferrer'}, 'Open external map') : null),
+    el('section', {class: 'compact-section'}, el('h2', {}, 'MCS note'),
+      el('p', {}, activity.mcsNote ?? 'Detailed guidance pending content research.')),
+    place ? disclosure('Location', el('p', {}, place.address ?? 'Address pending verification'), {id: 'location'}) : null,
+    activity.reservationInfo ? disclosure('Booking', el('p', {}, activity.reservationInfo.bookAheadGuidance), {id: 'booking'}) : null,
+    activity.whatToBring?.length ? disclosure('What to bring',
+      el('ul', {}, activity.whatToBring.map(item => el('li', {}, item))), {id: 'bring'}) : null,
+    activity.inclusions?.length ? disclosure('Included',
+      el('ul', {}, activity.inclusions.map(item => el('li', {}, item))), {id: 'inclusions'}) : null,
+    activity.exclusions?.length ? disclosure('Not included',
+      el('ul', {}, activity.exclusions.map(item => el('li', {}, item))), {id: 'exclusions'}) : null,
+    activity.accessibilityNotes ? disclosure('Accessibility',
+      el('p', {}, activity.accessibilityNotes), {id: 'accessibility'}) : null,
+    activity.optionalUpgradeIds?.length ? disclosure('Optional sample upgrades',
+      [el('p', {}, 'Fictional planning values; confirm current availability and prices.'), ...upgradeChoices(activity)],
+      {id: 'upgrades'}) : null,
     ...bundle.optionGroups.filter(group => group.optionIds.some(id =>
-      bundle.options.find(option => option.optionId === id)?.activityIds.includes(activity.activityId))).map(group => optionGroup(group))];
+      bundle.options.find(option => option.optionId === id)?.activityIds.includes(activity.activityId)))
+      .map(group => disclosure(group.title, optionGroup(group), {id: `option-${group.optionGroupId}`}))];
   main.replaceChildren(...nodes.filter(Boolean)); main.focus();
 }
 
 function explore() {
-  const dayPlaces = new Set(resolveDay(bundle, state, bundle.days[dayIndex])
-    .map(item => bundle.activities.find(activity => activity.activityId === item.referencedEntityId)?.placeId)
-    .filter(Boolean));
-  const filter = el('select', {}, ['today', 'all', 'shopping', 'attraction'].map(value =>
-    el('option', {value}, {today: 'Selected day’s stops', all: 'All places', shopping: 'Shopping', attraction: 'Attractions'}[value])));
-  const list = el('ol');
-  function update() {
-    const places = bundle.places.filter(place => filter.value === 'all' ||
-      (filter.value === 'today' && dayPlaces.has(place.placeId)) || place.category === filter.value);
-    list.replaceChildren(...places.map(place => el('li', {}, card(el('h2', {}, place.name),
-      el('p', {}, place.address ?? 'Address pending verification'),
-      ...bundle.activities.filter(activity => activity.placeId === place.placeId)
-        .map(activity => button(`Activity details: ${activity.name}`, () => detail(activity))),
-      navigator.onLine ? el('a', {href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
-        target: '_blank', rel: 'noopener noreferrer'}, 'Open external map (internet required)') :
-        el('small', {}, 'External maps require internet.')))));
-    if (!places.length) list.append(el('li', {}, 'No mapped places in this sample.'));
+  const filters = [{id: 'all', label: 'All'},
+    ...bundle.days.map((day, index) => ({id: `day:${index}`, label: `Day ${day.dayNumber}`})),
+    {id: 'food', label: 'Food'}, {id: 'shopping', label: 'Shopping'},
+    {id: 'attraction', label: 'Attractions'}, {id: 'picks', label: 'MCS Picks'},
+    {id: 'alternatives', label: 'Alternatives'}];
+  if (!filters.some(filter => filter.id === exploreFilter)) exploreFilter = 'all';
+  const picks = new Set(bundle.badges.filter(badge => badge.label === 'MCS PICK').map(badge => badge.badgeId));
+  const alternatives = new Set(bundle.optionGroups.flatMap(group => group.optionIds
+    .filter(id => id !== group.defaultOptionId && id !== group.baseOptionId)
+    .flatMap(id => bundle.options.find(option => option.optionId === id)?.activityIds ?? [])));
+  const chips = filters.map(filter => button(filter.label, () => select(filter.id),
+    {class: 'filter-chip', 'aria-pressed': String(filter.id === exploreFilter),
+      'aria-label': `Show ${filter.label} places`}));
+  const strip = el('div', {class: 'filter-strip', role: 'group', 'aria-label': 'Explore place filters'}, chips);
+  const list = el('ul', {class: 'place-list'});
+  const results = el('p', {class: 'visually-hidden', role: 'status', 'aria-live': 'polite'});
+  function matches(place) {
+    const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
+    if (exploreFilter === 'all') return true;
+    if (exploreFilter.startsWith('day:')) {
+      const index = Number(exploreFilter.slice(4));
+      return resolveDay(bundle, state, bundle.days[index]).some(item =>
+        activities.some(activity => activity.activityId === item.referencedEntityId));
+    }
+    if (exploreFilter === 'picks') return activities.some(activity => activity.badgeIds.some(id => picks.has(id)));
+    if (exploreFilter === 'alternatives') return activities.some(activity => alternatives.has(activity.activityId));
+    return place.category === exploreFilter;
   }
-  filter.addEventListener('change', update); update();
-  return [el('h1', {}, 'Explore'), el('p', {}, 'Saved place list and itinerary order work offline. Sample addresses are unverified.'),
-    field('Filter places', filter), list];
+  function update(announce = false) {
+    chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(filters[index].id === exploreFilter)));
+    const places = bundle.places.filter(matches);
+    list.replaceChildren(...places.map(place => {
+      const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
+      return el('li', {class: 'place-row'}, el('h2', {}, place.name),
+        el('p', {}, place.address ?? 'Address pending verification'),
+        el('div', {class: 'place-actions'},
+          ...activities.map(activity => button(activities.length === 1 ? 'Details' : activity.name, () => detail(activity),
+            {class: 'text-action', 'aria-label': `Activity detail: ${activity.name}`})),
+          navigator.onLine ? el('a', {class: 'text-action',
+            href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
+            target: '_blank', rel: 'noopener noreferrer', 'aria-label': `Open external map for ${place.name}`}, 'Map ↗') :
+            el('small', {}, 'Map needs internet')));
+    }));
+    if (!places.length) list.append(el('li', {class: 'place-row'}, 'No mapped places in this sample filter.'));
+    if (announce) results.textContent = `${places.length} ${places.length === 1 ? 'place' : 'places'} in ${filters.find(filter => filter.id === exploreFilter).label}.`;
+  }
+  function select(id, focus = false) {
+    exploreFilter = id; update(true);
+    const index = filters.findIndex(filter => filter.id === id);
+    const chip = chips[index];
+    strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;
+    if (focus) chip.focus({preventScroll: true});
+  }
+  strip.addEventListener('keydown', event => {
+    const index = filters.findIndex(filter => filter.id === exploreFilter);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? filters.length - 1 :
+      event.key === 'ArrowRight' ? Math.min(filters.length - 1, index + 1) :
+      event.key === 'ArrowLeft' ? Math.max(0, index - 1) : -1;
+    if (next < 0) return;
+    event.preventDefault(); select(filters[next].id, true);
+  });
+  update();
+  requestAnimationFrame(() => {const chip = chips[filters.findIndex(filter => filter.id === exploreFilter)];
+    strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;});
+  return [el('h1', {}, 'Explore'), strip, results, list];
 }
 
 function budget() {
   const actual = actualBudget(state);
   const party = el('input', {type: 'number', min: 1, max: 20, step: 1, required: true, value: state.partySize});
-  const partyForm = el('form', {onSubmit: event => {
+  const partyForm = el('form', {class: 'inline-form', onSubmit: event => {
     event.preventDefault(); const size = Number(party.value);
     if (!Number.isInteger(size) || size < 1 || size > 20) {alert('Party size must be 1–20.'); return;}
     commit(current => ({...current, partySize: size})).catch(() => {});
-  }}, field('Travelers in the sample estimate (1–20)', party), el('button', {type: 'submit', disabled: !!storageIssue}, 'Save party size'));
+  }}, field('Travelers (1–20)', party), el('button', {type: 'submit', disabled: !!storageIssue}, 'Update party'));
   const total = el('input', {type: 'text', inputmode: 'decimal', required: true,
     value: String(state.budgetPlan.totalMinor / (10 ** currencyDigits(state.homeCurrency)))});
-  const form = el('form', {onSubmit: event => {
+  const form = el('form', {class: 'inline-form', onSubmit: event => {
     event.preventDefault();
     try {const value = parseMoney(total.value, state.homeCurrency);
       commit(current => ({...current, budgetPlan: {...current.budgetPlan, totalMinor: value}})).catch(() => {});
@@ -388,26 +463,36 @@ function budget() {
         actualExpenses: current.actualExpenses.filter(entry => entry.id !== expense.id)})).catch(() => {});
     }, {disabled: !!storageIssue}))));
   const upgrades = availableUpgradeCosts(bundle, state);
-  return [el('h1', {}, 'Budget'), card(el('h2', {}, 'MCS itinerary estimate'), ...estimates(),
-    el('p', {}, 'Sample amounts are fictional. Per-person costs use your party size. Group, one-way and round-trip costs apply once per stop; daily and nightly costs use the listed quantity. Unpriced and open-ended costs are marked.'), partyForm),
-  upgrades.length ? card(el('h2', {}, 'Optional upgrades'),
-    el('p', {}, 'Available only for activities in your selected itinerary. Unverified sample values.'),
-    ...upgrades.map(entry => upgradeChoices(entry.activity))) : null,
-  card(el('h2', {}, 'My budget · stored on this device'), form,
-    el('p', {}, `Spent: ${formatMoney(actual.spentMinor, state.homeCurrency)} · Remaining: ${formatMoney(actual.remainingMinor, state.homeCurrency)}`),
-    actual.unconverted.length ? el('p', {}, `${actual.unconverted.length} expenses in other currencies are excluded until you enter a manual conversion.`) : null),
-  card(el('h2', {}, 'Add actual spending'), expenseForm), expenses].filter(Boolean);
+  const estimate = estimates();
+  return [el('h1', {}, 'Budget'),
+    el('section', {class: 'budget-overview'}, el('h2', {}, 'Your budget at a glance'),
+      el('dl', {class: 'budget-metrics'},
+        el('div', {}, el('dt', {}, 'My budget'), el('dd', {}, formatMoney(state.budgetPlan.totalMinor, state.homeCurrency))),
+        el('div', {}, el('dt', {}, 'Spent'), el('dd', {}, formatMoney(actual.spentMinor, state.homeCurrency))),
+        el('div', {}, el('dt', {}, 'Remaining'), el('dd', {}, formatMoney(actual.remainingMinor, state.homeCurrency))),
+        el('div', {}, el('dt', {}, 'Travelers'), el('dd', {}, String(state.partySize)))),
+      el('div', {class: 'section-kicker'}, 'MCS itinerary estimate'), ...estimate,
+      actual.unconverted.length ? el('p', {class: 'day-meta'}, `${actual.unconverted.length} other-currency expense${actual.unconverted.length === 1 ? '' : 's'} not included yet.`) : null,
+      form, partyForm),
+    disclosure('How estimates work', [el('p', {}, 'Sample costs are fictional. Per-person amounts use your party size; group, one-way and round-trip costs apply once per stop. Daily and nightly costs use the authored quantity.'),
+      el('p', {}, 'Unpriced and open-ended amounts are flagged. Currencies are never converted automatically.')], {id: 'estimate-rules'}),
+    upgrades.length ? disclosure('Optional upgrades', [el('p', {}, 'Only upgrades for selected activities appear here.'),
+      ...upgrades.flatMap(entry => upgradeChoices(entry.activity))], {id: 'upgrades'}) : null,
+    disclosure('Add actual spending', expenseForm, {id: 'add-expense'}),
+    disclosure(`Spending history · ${state.actualExpenses.length}`, expenses, {id: 'expenses'})].filter(Boolean);
 }
 
 function info(emergencyOnly = false) {
   if (emergencyOnly) {view = 'Info'; renderNav();}
   const nodes = [el('h1', {}, emergencyOnly ? 'Emergency Help' : 'Travel Info'),
-    el('p', {}, bundle.trip.internationalBuyerNotice),
-    el('p', {}, 'Sample resources are unverified. Verification dates and authoritative links are required before release.'),
-    ...(!emergencyOnly ? bundle.travelInfo.map(article => card(el('h2', {}, article.title),
-      ...article.contentBlocks.map(block => el('p', {}, block.text ?? block.items?.join(' · ') ?? '')))) : []),
-    ...bundle.emergencyResources.map(resource => card(el('h2', {}, resource.organizationName),
-      el('p', {}, resource.instructions), el('strong', {}, 'Pending verification · No emergency number is supplied.')))];
+    el('p', {class: 'day-meta'}, 'Sample information is unverified; confirm current official guidance before travel.'),
+    ...bundle.emergencyResources.map(resource => el('section', {class: 'compact-section'},
+      el('p', {class: 'section-kicker'}, 'Emergency help'), el('h2', {}, resource.organizationName),
+      el('p', {}, resource.instructions), el('strong', {}, 'Pending verification · No emergency number is supplied.'))),
+    ...(!emergencyOnly ? [disclosure('Traveler requirements', el('p', {}, bundle.trip.internationalBuyerNotice), {id: 'traveler-requirements'}),
+      ...bundle.travelInfo.map(article => disclosure(article.title,
+        article.contentBlocks.map(block => el('p', {}, block.text ?? block.items?.join(' · ') ?? '')),
+        {id: article.articleId}))] : [])];
   if (emergencyOnly) {main.replaceChildren(...nodes); main.focus();}
   return nodes;
 }
@@ -455,7 +540,7 @@ function bookingForm(key, label, existing = null) {
 }
 
 function bookingSection(key, label) {
-  return card(el('h2', {}, label),
+  return disclosure(el('span', {}, label, el('small', {}, ` · ${state[key].length} saved`)), [
     ...state[key].map(entry => el('div', {class: 'booking-entry'},
       el('strong', {}, entry.name ?? entry.id),
       el('details', {}, el('summary', {}, `Edit ${entry.name ?? label}`), bookingForm(key, label, entry)),
@@ -464,7 +549,8 @@ function bookingSection(key, label) {
           commit(current => ({...current, [key]: current[key].filter(item => item.id !== entry.id)}))
             .then(myTrip).catch(() => {});
       }))),
-    el('details', {}, el('summary', {}, `Add ${label.toLowerCase()}`), bookingForm(key, label)));
+    el('details', {}, el('summary', {}, `Add ${label.toLowerCase()}`), bookingForm(key, label))],
+  {id: key, className: 'trip-disclosure'});
 }
 
 function downloadText(filename, text) {
@@ -473,9 +559,19 @@ function downloadText(filename, text) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function showPersonal() {
+  if (dialog.open) return;
+  personalPageScrollTop = appScroll.scrollTop;
+  appScroll.style.overflowY = 'hidden';
+  dialog.showModal();
+  dialog.querySelector('.close').focus({preventScroll: true});
+}
+
 function myTrip() {
-  personal.replaceChildren(el('h1', {id: 'personal-title'}, 'My Trip'),
-    el('p', {}, 'Stored on this device. No MCS account or cloud sync. Anyone using this browser profile may be able to read your entries. Keep exported backups private.'),
+  const openSections = new Set([...personal.querySelectorAll('details[data-section][open]')]
+    .map(section => section.dataset.section));
+  const scroll = dialog.open ? personal.scrollTop : 0;
+  personal.replaceChildren(el('p', {class: 'day-meta'}, 'Private to this device · Export a backup before changing browsers.'),
     el('p', {id: 'save-status', role: 'status'}, ''));
   if (storageIssue) {
     personal.append(el('p', {class: 'error', role: 'alert'}, storageIssue.message));
@@ -487,14 +583,20 @@ function myTrip() {
         try {await store.remove(bundle.trip.tripId); storageIssue = null; state = newTravelerState(bundle);
           coordinator?.publish(0); clearSync(); render(); myTrip();} catch (error) {alert(error.message, personal);}
       }));
-    if (!dialog.open) dialog.showModal();
+    else personal.append(button('Retry local storage', () => {
+      reloadLatest().then(myTrip).catch(error => alert(error.message, personal));
+    }));
+    personal.append(button('Repair app files (keep My Trip data)', () => {
+      repairAppFiles().catch(error => alert(error.message, personal));
+    }));
+    showPersonal();
     return;
   }
   const note = el('textarea', {maxLength: 10000, value: state.notes.trip ?? ''});
   const start = el('input', {type: 'date', value: state.tripStartDate ?? ''});
   const currency = el('select', {}, ['USD', 'JPY', 'ISK', 'EUR', 'GBP', 'CAD', 'AUD'].map(value =>
     el('option', {value, selected: value === state.homeCurrency}, value)));
-  personal.append(el('form', {onSubmit: event => {
+  personal.append(el('form', {class: 'personal-essentials', onSubmit: event => {
     event.preventDefault();
     if (currency.value !== state.homeCurrency &&
         (state.budgetPlan.totalMinor > 0 || state.actualExpenses.length ||
@@ -512,7 +614,8 @@ function myTrip() {
   for (const [key, label] of [['personalFlights', 'Flights'], ['personalLodging', 'Lodging'],
     ['personalReservations', 'Reservations']]) personal.append(bookingSection(key, label));
   const packing = el('input', {required: true, maxLength: 1000});
-  personal.append(card(el('h2', {}, 'Packing checklist'),
+  personal.append(disclosure(el('span', {}, 'Packing Checklist', el('small', {},
+    ` · ${state.packingChecklist.filter(item => item.checked).length} / ${state.packingChecklist.length}`)), [
     ...state.packingChecklist.map(item => el('div', {class: 'packing-row'},
       field(item.label, el('input', {type: 'checkbox', checked: item.checked, onChange: event => {
         const checked = event.target.checked;
@@ -526,9 +629,12 @@ function myTrip() {
     el('form', {onSubmit: event => {
       event.preventDefault(); const item = {id: `packing_${crypto.randomUUID()}`, label: packing.value, checked: false};
       commit(current => ({...current, packingChecklist: [...current.packingChecklist, item]})).then(myTrip).catch(() => {});
-    }}, field('Packing item', packing), el('button', {type: 'submit'}, 'Add item'))));
-  personal.append(el('h2', {}, 'Chosen alternatives'), ...bundle.optionGroups.map(group => optionGroup(group)));
-  personal.append(button('Export My Trip', () => {
+    }}, field('Packing item', packing), el('button', {type: 'submit'}, 'Add item'))],
+  {id: 'packing', className: 'trip-disclosure'}));
+  personal.append(disclosure('Chosen Alternatives', bundle.optionGroups.map(group => optionGroup(group)),
+    {id: 'alternatives', className: 'trip-disclosure'}));
+  const backupBody = el('div');
+  backupBody.append(button('Export My Trip', () => {
     try {downloadText(`${state.tripId}.traveler-state.json`, serializeTravelerState(state, schemas.export));}
     catch (error) {alert(error.message, personal);}
   }));
@@ -543,22 +649,29 @@ function myTrip() {
         button('Replace local trip with this backup', () => commit(current =>
           reconcileContent({...imported, revision: current.revision}, bundle).state).then(myTrip).catch(() => {})),
         button('Cancel import', () => preview.remove()));
-      personal.append(preview);
+      backupBody.append(preview);
     } catch (error) {alert(error.message, personal);}
   }});
-  personal.append(field('Import My Trip · review before replacing', file));
-  personal.append(button('Delete this trip’s local data', () => {
+  backupBody.append(field('Import My Trip · review before replacing', file));
+  backupBody.append(button('Delete this trip’s local data', () => {
     if (confirm('Delete this trip’s personal data from this browser? Export a backup first if you want to keep it.'))
       commit(current => ({...newTravelerState(bundle), revision: current.revision})).then(myTrip).catch(() => {});
   }));
-  if (navigator.storage?.persist) personal.append(button('Ask browser to keep local trip data', async () => {
+  if (navigator.storage?.persist) backupBody.append(button('Ask browser to keep local trip data', async () => {
     try {const granted = await navigator.storage.persist();
       document.querySelector('#save-status').textContent = granted ?
         'This browser granted persistent local storage. Backups are still recommended.' :
         'Persistent storage was not granted. Export backups regularly.';
     } catch {document.querySelector('#save-status').textContent = 'Persistent storage could not be requested. Export backups regularly.';}
   }));
-  if (!dialog.open) dialog.showModal();
+  backupBody.append(button('Repair app files (keep My Trip data)', () => {
+    repairAppFiles().catch(error => alert(error.message, personal));
+  }));
+  personal.append(disclosure('Backup / Export / Import', backupBody, {id: 'backup', className: 'trip-disclosure'}));
+  for (const section of personal.querySelectorAll('details[data-section]'))
+    if (openSections.has(section.dataset.section)) section.open = true;
+  showPersonal();
+  personal.scrollTop = scroll;
 }
 
 function navIcon(name) {
@@ -608,7 +721,7 @@ async function switchPack(name) {
     let loaded; storageIssue = null;
     try {loaded = await store.load(next.trip.tripId);} catch (error) {storageIssue = error;}
     const result = reconcileContent(loaded ?? newTravelerState(next), next);
-    bundle = next; state = result.state; packName = name; view = 'Home';
+    bundle = next; state = result.state; packName = name; view = 'Home'; exploreFilter = 'all';
     try {localStorage.setItem('mcs-active-sample', name);} catch {}
     resetDay(); clearSync(); render();
     coordinator = createTabCoordinator(bundle.trip.tripId, revision => {
@@ -617,7 +730,7 @@ async function switchPack(name) {
     });
     if (storageIssue) alert(storageIssue.message);
     if (result.changedItems.length) alert('Some saved items changed in this content revision. Previous choices remain in exports.');
-  } catch (error) {alert(error.message);}
+  } catch (error) {if (!bundle) throw error; alert(error.message);}
 }
 
 async function start() {
@@ -629,7 +742,13 @@ async function start() {
     } catch {}
     await switchPack(packName);
     myTripButton.addEventListener('click', () => {saveQueue.then(myTrip).catch(error => alert(error.message));});
-    try {await registerOffline(message => {offlineStatus = message; status();});}
+    try {await registerOffline(message => {offlineStatus = message; status();}, apply => {
+      syncNotice('A complete app update is ready. Your saved trip stays on this device.',
+        [button('Apply app update', () => {
+          saveQueue.then(apply).catch(error => alert(error.message));
+        }), button('Later', clearSync)]);
+    }, message => syncNotice(message,
+      [button('Repair app files', () => repairAppFiles().catch(error => alert(error.message)))]));}
     catch (error) {offlineStatus = `Offline setup failed: ${error.message}`;}
     status();
     document.addEventListener('visibilitychange', () => {
@@ -643,8 +762,11 @@ async function start() {
       }
     });
   } catch (error) {
-    alert(error.message, main);
-    connection.textContent = 'The sample could not start. Reopen it while connected.';
+    main.replaceChildren(el('h1', {}, 'The app could not start'),
+      el('p', {class: 'error', role: 'alert'}, error.message),
+      el('p', {}, 'Your local trip data has not been cleared.'),
+      button('Repair app files (keep My Trip data)', () => repairAppFiles().catch(repairError => alert(repairError.message))));
+    connection.textContent = 'Reconnect to repair the app files. Your trip data stays on this device.';
   }
 }
 start();

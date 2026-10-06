@@ -95,7 +95,9 @@ export function validateBundle(bundle,schema,{publish=false,now=new Date()}={}) 
 export async function loadSamplePack(name,schema,fetcher=fetch) {
  if(!['japan','iceland'].includes(name))throw new Error('Unknown sample pack');
  const root=typeof document==='undefined'?new URL('../../',import.meta.url):document.baseURI;
- const r=await fetcher(new URL(`content/samples/${name}.json`,root));if(!r.ok)throw new Error('Content unavailable');
+ const sampleRoot=typeof document==='undefined'?'content/samples/':
+  document.querySelector('meta[name="mcs-sample-root"]')?.content??'content/samples/';
+ const r=await fetcher(new URL(`${sampleRoot}${name}.json`,root));if(!r.ok)throw new Error('Content unavailable');
  const bundle=validateBundle(await r.json(),schema);
  if(bundle.manifest.classification!=='sample')throw new Error('Static loader accepts samples only');return bundle;
 }
