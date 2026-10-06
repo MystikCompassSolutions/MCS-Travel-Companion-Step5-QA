@@ -12,7 +12,8 @@ export async function repairAppFiles() {
 export async function registerOffline(onStatus,onUpdate=()=>{},onRepair=()=>{}) {
  if(!('serviceWorker' in navigator)) {onStatus('Offline storage is unavailable in this browser.');return null;}
  if(!window.isSecureContext) {onStatus('Offline installation requires HTTPS or localhost.');return null;}
- const registration=await navigator.serviceWorker.register(new URL('sw.js',document.baseURI),{scope:new URL('./',document.baseURI).pathname});
+ const registration=await navigator.serviceWorker.register(new URL('sw.js',document.baseURI),{
+  scope:new URL('./',document.baseURI).pathname,updateViaCache:'none'});
  navigator.serviceWorker.addEventListener('message',event=>{
   if(event.data?.type==='OFFLINE_READY')onStatus('Sample content is saved for offline use. Outside links and maps need internet.');
   if(event.data?.type==='OFFLINE_INCOMPLETE')onRepair('Offline app files are incomplete. Repair app files while connected; your trip data will remain.');
@@ -33,6 +34,16 @@ export async function registerOffline(onStatus,onUpdate=()=>{},onRepair=()=>{}) 
  };
  offerUpdate();
  registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)offerUpdate();});});
- void registration.update().catch(()=>{});
+ let checking=false;
+ const checkForUpdate=async()=>{
+  if(checking||!navigator.onLine)return;
+  checking=true;
+  try {await registration.update();offerUpdate();} catch {}
+  finally {checking=false;}
+ };
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkForUpdate();});
+ window.addEventListener('pageshow',()=>{void checkForUpdate();});
+ window.addEventListener('focus',()=>{void checkForUpdate();});
+ void checkForUpdate();
  return registration;
 }

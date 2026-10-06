@@ -28,3 +28,5 @@ self.addEventListener('message',event=>{
  if(event.data?.type==='CHECK_OFFLINE')event.waitUntil((async()=>{const cache=await caches.open(CACHE);const complete=(await Promise.all(URLS.map(url=>cache.match(url)))).every(Boolean);event.source?.postMessage({type:complete?'OFFLINE_READY':'OFFLINE_INCOMPLETE'});})());
  if(event.data?.type==='ACTIVATE_UPDATE')event.waitUntil(self.skipWaiting());
 });
+
+// Release 982144da8a2b

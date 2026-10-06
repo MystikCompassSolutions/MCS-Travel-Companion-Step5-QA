@@ -20,6 +20,21 @@ export function parseMoney(input, currency) {
   return result;
 }
 
+export function convertPlanningEstimate(minor, fromCurrency, toCurrency, rate) {
+  if (!Number.isSafeInteger(minor) || minor < 0 ||
+      typeof rate !== 'string' || !/^(?:0|[1-9]\d{0,5})(?:\.\d{1,8})?$/.test(rate) || Number(rate) <= 0) {
+    throw new Error('Enter a positive planning rate with up to eight decimal places.');
+  }
+  const [whole, fraction = ''] = rate.split('.');
+  const numerator = BigInt(whole + fraction);
+  const denominator = 10n ** BigInt(fraction.length);
+  const scaled = BigInt(minor) * numerator * (10n ** BigInt(currencyDigits(toCurrency)));
+  const divisor = denominator * (10n ** BigInt(currencyDigits(fromCurrency)));
+  const rounded = (scaled + divisor / 2n) / divisor;
+  if (rounded > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Planning conversion is too large.');
+  return Number(rounded);
+}
+
 function costIdsForEntity(bundle, item) {
   const collection = item.itemType === 'transport' ? bundle.transport :
     item.itemType === 'lodging' ? bundle.lodgingGuidance : bundle.activities;

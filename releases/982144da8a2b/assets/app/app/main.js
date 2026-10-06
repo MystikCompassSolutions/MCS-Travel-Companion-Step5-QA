@@ -3,9 +3,11 @@ import {loadSamplePack} from '../domain/content.js';
 import {chooseOption, resolveDay, selectedOptions, effectiveOptions, optionScheduleItems,
   calendarDay, currentTripDay} from '../domain/itinerary.js';
 import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
-import {plannedBudget, actualBudget, availableUpgradeCosts, formatMoney, parseMoney, currencyDigits} from '../domain/budget.js';
+import {exploreFilterChoices} from './explore-navigation.js';
+import {plannedBudget, actualBudget, availableUpgradeCosts, formatMoney, parseMoney, currencyDigits,
+  convertPlanningEstimate} from '../domain/budget.js';
 import {newTravelerState, createTravelerStore, reconcileContent, serializeTravelerState,
-  parseTravelerExport, EXPORT_LIMIT_BYTES, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
+  parseTravelerExport, EXPORT_LIMIT_BYTES, STATE_VERSION, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
 import {createTabCoordinator} from '../storage/tab-coordination.js';
 import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
@@ -16,11 +18,12 @@ const dialog = document.querySelector('#personal');
 const personal = document.querySelector('#personal-content');
 const connection = document.querySelector('#connection');
 const sync = document.querySelector('#sync');
+const appUpdate = document.querySelector('#app-update');
 const myTripButton = document.querySelector('#my-trip');
 let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0;
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
-let exploreFilter = 'all', personalPageScrollTop = 0;
+let exploreFilter = 'all', budgetScope = 'me', personalPageScrollTop = 0;
 
 function status() {
   connection.textContent = navigator.onLine ? (offlineStatus || 'Preparing offline sample…') :
@@ -110,7 +113,8 @@ function estimates() {
     const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
       `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
         '–' + formatMoney(total.maximumMinor, currency) : ''}`;
-    return el('p', {}, `MCS estimate: ${range}`, total.unknownCosts ? ` · ${total.unknownCosts} unpriced` : '');
+    return el('p', {}, `MCS ${state.partySize > 1 ? `party estimate (${state.partySize} travelers)` : 'estimate per traveler'}: ${range} ${currency}`,
+      total.unknownCosts ? ` · ${total.unknownCosts} unpriced` : '');
   });
 }
 function dayLabel(day) {
@@ -352,27 +356,50 @@ function detail(activity) {
 }
 
 function explore() {
-  const filters = [{id: 'all', label: 'All'},
-    ...bundle.days.map((day, index) => ({id: `day:${index}`, label: `Day ${day.dayNumber}`})),
-    {id: 'food', label: 'Food'}, {id: 'shopping', label: 'Shopping'},
-    {id: 'attraction', label: 'Attractions'}, {id: 'picks', label: 'MCS Picks'},
-    {id: 'alternatives', label: 'Alternatives'}];
-  if (!filters.some(filter => filter.id === exploreFilter)) exploreFilter = 'all';
+  const today = currentDay();
+  const todayIndex = today.phase === 'active' ? today.index : null;
+  let selectedDay = exploreFilter.startsWith('day:') ? Number(exploreFilter.slice(4)) : null;
+  if (selectedDay !== null && (!Number.isInteger(selectedDay) || selectedDay < 0 || selectedDay >= bundle.days.length)) {
+    exploreFilter = 'all'; selectedDay = null;
+  }
+  if (exploreFilter === 'today' && todayIndex === null) exploreFilter = 'all';
+  const filters = exploreFilterChoices(bundle.days.length, todayIndex, selectedDay);
+  if (!filters.some(filter => filter.id === exploreFilter) && selectedDay === null) exploreFilter = 'all';
   const picks = new Set(bundle.badges.filter(badge => badge.label === 'MCS PICK').map(badge => badge.badgeId));
   const alternatives = new Set(bundle.optionGroups.flatMap(group => group.optionIds
     .filter(id => id !== group.defaultOptionId && id !== group.baseOptionId)
     .flatMap(id => bundle.options.find(option => option.optionId === id)?.activityIds ?? [])));
-  const chips = filters.map(filter => button(filter.label, () => select(filter.id),
-    {class: 'filter-chip', 'aria-pressed': String(filter.id === exploreFilter),
-      'aria-label': `Show ${filter.label} places`}));
+  const chips = filters.map(filter => button(filter.label,
+    () => filter.id === 'days' ? togglePicker() : select(filter.id),
+    {class: 'filter-chip', 'aria-pressed': String(filter.id === exploreFilter ||
+      (filter.id === 'days' && exploreFilter.startsWith('day:'))),
+      'aria-label': filter.id === 'days' ? 'Choose itinerary day' : `Show ${filter.label} places`,
+      ...(filter.id === 'days' ? {'aria-expanded': 'false', 'aria-controls': 'explore-day-picker'} : {})}));
   const strip = el('div', {class: 'filter-strip', role: 'group', 'aria-label': 'Explore place filters'}, chips);
+  const daysChip = chips[filters.findIndex(filter => filter.id === 'days')];
+  const picker = el('section', {id: 'explore-day-picker', class: 'explore-day-picker',
+    'aria-label': 'Choose a day to filter places', hidden: true},
+    el('div', {class: 'explore-day-picker-head'}, el('strong', {}, 'Itinerary days'),
+      button('Clear day filter', () => {select('all', true);closePicker();}, {class: 'text-action'})),
+    el('div', {class: 'explore-day-list'}, bundle.days.map((day, index) =>
+      button(`Day ${day.dayNumber} · ${day.title}`, () => {
+        selectedDay = index; select(`day:${index}`, true); closePicker();
+      }, {'aria-label': `Show places for Day ${day.dayNumber}: ${day.title}`}))));
+  const activeDay = el('p', {class: 'explore-active-day', hidden: true});
+  function closePicker() {picker.hidden = true;daysChip.setAttribute('aria-expanded', 'false');daysChip.focus({preventScroll: true});}
+  function togglePicker() {
+    picker.hidden = !picker.hidden;
+    daysChip.setAttribute('aria-expanded', String(!picker.hidden));
+    if (!picker.hidden) picker.querySelector('button').focus({preventScroll: true});
+  }
+  picker.addEventListener('keydown', event => {if (event.key === 'Escape') {event.preventDefault();closePicker();}});
   const list = el('ul', {class: 'place-list'});
   const results = el('p', {class: 'visually-hidden', role: 'status', 'aria-live': 'polite'});
   function matches(place) {
     const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
     if (exploreFilter === 'all') return true;
-    if (exploreFilter.startsWith('day:')) {
-      const index = Number(exploreFilter.slice(4));
+    if (exploreFilter.startsWith('day:') || exploreFilter === 'today') {
+      const index = exploreFilter === 'today' ? todayIndex : Number(exploreFilter.slice(4));
       return resolveDay(bundle, state, bundle.days[index]).some(item =>
         activities.some(activity => activity.activityId === item.referencedEntityId));
     }
@@ -381,7 +408,12 @@ function explore() {
     return place.category === exploreFilter;
   }
   function update(announce = false) {
-    chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(filters[index].id === exploreFilter)));
+    chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(filters[index].id === exploreFilter ||
+      (filters[index].id === 'days' && exploreFilter.startsWith('day:')))));
+    daysChip.textContent = selectedDay === null ? 'Days ▾' : `Day ${bundle.days[selectedDay].dayNumber} ▾`;
+    activeDay.hidden = !exploreFilter.startsWith('day:');
+    if (!activeDay.hidden) activeDay.replaceChildren(`Showing Day ${bundle.days[selectedDay].dayNumber}: ${bundle.days[selectedDay].title} · `,
+      button('Clear filter', () => select('all', true), {class: 'text-action'}));
     const places = bundle.places.filter(matches);
     list.replaceChildren(...places.map(place => {
       const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
@@ -396,30 +428,56 @@ function explore() {
             el('small', {}, 'Map needs internet')));
     }));
     if (!places.length) list.append(el('li', {class: 'place-row'}, 'No mapped places in this sample filter.'));
-    if (announce) results.textContent = `${places.length} ${places.length === 1 ? 'place' : 'places'} in ${filters.find(filter => filter.id === exploreFilter).label}.`;
+    if (announce) results.textContent = `${places.length} ${places.length === 1 ? 'place' : 'places'} for ${
+      exploreFilter.startsWith('day:') ? `Day ${bundle.days[selectedDay].dayNumber}` :
+        filters.find(filter => filter.id === exploreFilter).label}.`;
   }
   function select(id, focus = false) {
+    if (!id.startsWith('day:')) selectedDay = null;
     exploreFilter = id; update(true);
-    const index = filters.findIndex(filter => filter.id === id);
+    const index = filters.findIndex(filter => filter.id === (id.startsWith('day:') ? 'days' : id));
     const chip = chips[index];
     strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;
     if (focus) chip.focus({preventScroll: true});
   }
   strip.addEventListener('keydown', event => {
-    const index = filters.findIndex(filter => filter.id === exploreFilter);
+    const index = filters.findIndex(filter => filter.id ===
+      (exploreFilter.startsWith('day:') ? 'days' : exploreFilter));
     const next = event.key === 'Home' ? 0 : event.key === 'End' ? filters.length - 1 :
       event.key === 'ArrowRight' ? Math.min(filters.length - 1, index + 1) :
       event.key === 'ArrowLeft' ? Math.max(0, index - 1) : -1;
     if (next < 0) return;
-    event.preventDefault(); select(filters[next].id, true);
+    event.preventDefault();
+    if (filters[next].id === 'days') {chips[next].focus({preventScroll: true});return;}
+    select(filters[next].id, true);
   });
   update();
-  requestAnimationFrame(() => {const chip = chips[filters.findIndex(filter => filter.id === exploreFilter)];
+  requestAnimationFrame(() => {const chip = chips[filters.findIndex(filter => filter.id ===
+    (exploreFilter.startsWith('day:') ? 'days' : exploreFilter))];
     strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;});
-  return [el('h1', {}, 'Explore'), strip, results, list];
+  return [el('h1', {}, 'Explore'), strip, picker, activeDay, results, list];
+}
+
+function budgetEstimate(total, currency, label, activeRate, selected) {
+  const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
+    `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
+      `–${formatMoney(total.maximumMinor, currency)}` : ''}`;
+  let conversion = null;
+  if (activeRate?.fromCurrency === currency) {
+    const min = convertPlanningEstimate(total.minimumMinor, currency, state.homeCurrency,
+      activeRate.homePerDestination);
+    const max = total.maximumMinor === null ? null : convertPlanningEstimate(total.maximumMinor,
+      currency, state.homeCurrency, activeRate.homePerDestination);
+    conversion = el('p', {class: 'planning-conversion'}, `≈ ${formatMoney(min, state.homeCurrency)}${
+      max !== null && max !== min ? `–${formatMoney(max, state.homeCurrency)}` : ''} ${state.homeCurrency}`);
+  }
+  return el('div', {class: `estimate-row${selected ? ' selected' : ''}`},
+    el('h3', {}, label), el('p', {class: 'compact-value'}, `${range} ${currency}`), conversion,
+    total.unknownCosts ? el('small', {}, `${total.unknownCosts} unpriced item${total.unknownCosts === 1 ? '' : 's'}`) : null);
 }
 
 function budget() {
+  if (state.partySize === 1) budgetScope = 'me';
   const actual = actualBudget(state);
   const party = el('input', {type: 'number', min: 1, max: 20, step: 1, required: true, value: state.partySize});
   const partyForm = el('form', {class: 'inline-form', onSubmit: event => {
@@ -463,19 +521,54 @@ function budget() {
         actualExpenses: current.actualExpenses.filter(entry => entry.id !== expense.id)})).catch(() => {});
     }, {disabled: !!storageIssue}))));
   const upgrades = availableUpgradeCosts(bundle, state);
-  const estimate = estimates();
+  const partyEstimate = plannedBudget(bundle, state);
+  const oneEstimate = plannedBudget(bundle, {...state, partySize: 1});
+  const destinationCurrency = Object.keys(partyEstimate)[0] ?? bundle.costs[0]?.currency;
+  const activeRate = state.planningRate?.fromCurrency === destinationCurrency &&
+    state.planningRate.toCurrency === state.homeCurrency ? state.planningRate : null;
+  const rateInput = el('input', {type: 'text', inputmode: 'decimal', pattern: '(?:0|[1-9][0-9]{0,5})(?:\\.[0-9]{1,8})?',
+    placeholder: 'e.g. 0.0067', required: true, value: activeRate?.homePerDestination ?? ''});
+  const rateForm = destinationCurrency && destinationCurrency !== state.homeCurrency ?
+    el('form', {class: 'inline-form', onSubmit: event => {
+      event.preventDefault();
+      try {
+        convertPlanningEstimate(1, destinationCurrency, state.homeCurrency, rateInput.value.trim());
+        commit(current => ({...current, planningRate: {fromCurrency: destinationCurrency,
+          toCurrency: current.homeCurrency, homePerDestination: rateInput.value.trim(),
+          recordedAt: new Date().toISOString()}})).catch(() => {});
+      } catch (error) {alert(error.message);}
+    }}, field(`Planning rate: 1 ${destinationCurrency} equals how many ${state.homeCurrency}?`, rateInput),
+    el('button', {type: 'submit', disabled: !!storageIssue}, activeRate ? 'Update rate' : 'Save rate')) : null;
+  const scopeControl = el('div', {id: 'budget-scope', class: 'budget-scope', role: 'group',
+    'aria-label': 'Budget estimate scope'}, el('strong', {}, 'Budget for:'),
+    ...[['me', 'Me'], ['party', 'My travel party']].map(([id, label]) => button(label, () => {
+      budgetScope = id; render();
+      main.querySelector(`#budget-scope button[data-scope="${id}"]`)?.focus({preventScroll: true});
+    }, {'data-scope': id, 'aria-pressed': String(budgetScope === id),
+      disabled: id === 'party' && state.partySize === 1})));
+  const estimateRows = [
+    ...Object.entries(oneEstimate).map(([currency, total]) => budgetEstimate(total, currency,
+      'Estimated per traveler', activeRate, budgetScope === 'me')),
+    ...(state.partySize > 1 ? Object.entries(partyEstimate).map(([currency, total]) =>
+      budgetEstimate(total, currency, `Estimated party total — ${state.partySize} travelers`,
+        activeRate, budgetScope === 'party')) : [])];
   return [el('h1', {}, 'Budget'),
-    el('section', {class: 'budget-overview'}, el('h2', {}, 'Your budget at a glance'),
+    el('section', {class: 'budget-overview'}, scopeControl,
+      el('div', {class: 'budget-estimates'}, estimateRows),
+      activeRate ? el('p', {class: 'day-meta'}, `Approximate planning conversion only · 1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}. Not a current bank or card rate.`) :
+        rateForm ? el('p', {class: 'day-meta'}, `Set your own planning rate to see approximate ${state.homeCurrency} conversions. No live exchange rate is used.`) : null,
+      el('h2', {}, 'My budget · home currency'),
       el('dl', {class: 'budget-metrics'},
         el('div', {}, el('dt', {}, 'My budget'), el('dd', {}, formatMoney(state.budgetPlan.totalMinor, state.homeCurrency))),
         el('div', {}, el('dt', {}, 'Spent'), el('dd', {}, formatMoney(actual.spentMinor, state.homeCurrency))),
         el('div', {}, el('dt', {}, 'Remaining'), el('dd', {}, formatMoney(actual.remainingMinor, state.homeCurrency))),
         el('div', {}, el('dt', {}, 'Travelers'), el('dd', {}, String(state.partySize)))),
-      el('div', {class: 'section-kicker'}, 'MCS itinerary estimate'), ...estimate,
       actual.unconverted.length ? el('p', {class: 'day-meta'}, `${actual.unconverted.length} other-currency expense${actual.unconverted.length === 1 ? '' : 's'} not included yet.`) : null,
       form, partyForm),
+    rateForm ? disclosure('Planning exchange rate', [el('p', {}, 'Enter a rate you recorded for planning. Converted figures are approximate and can differ from bank or card charges.'), rateForm],
+      {id: 'planning-rate'}) : null,
     disclosure('How estimates work', [el('p', {}, 'Sample costs are fictional. Per-person amounts use your party size; group, one-way and round-trip costs apply once per stop. Daily and nightly costs use the authored quantity.'),
-      el('p', {}, 'Unpriced and open-ended amounts are flagged. Currencies are never converted automatically.')], {id: 'estimate-rules'}),
+      el('p', {}, 'Your saved budget and expenses remain personal and in your home currency. The scope control highlights an MCS estimate; it never changes saved budget amounts. Unpriced and open-ended costs are flagged.')], {id: 'estimate-rules'}),
     upgrades.length ? disclosure('Optional upgrades', [el('p', {}, 'Only upgrades for selected activities appear here.'),
       ...upgrades.flatMap(entry => upgradeChoices(entry.activity))], {id: 'upgrades'}) : null,
     disclosure('Add actual spending', expenseForm, {id: 'add-expense'}),
@@ -606,6 +699,7 @@ function myTrip() {
     }
     commit(current => {
       const next = {...current, notes: {...current.notes, trip: note.value}, homeCurrency: currency.value};
+      if (currency.value !== current.homeCurrency) delete next.planningRate;
       if (start.value) next.tripStartDate = start.value; else delete next.tripStartDate;
       return next;
     }).then(() => {resetDay(); render(); myTrip(); document.querySelector('#save-status').textContent = 'Saved on this device.';}).catch(() => {});
@@ -668,6 +762,9 @@ function myTrip() {
     repairAppFiles().catch(error => alert(error.message, personal));
   }));
   personal.append(disclosure('Backup / Export / Import', backupBody, {id: 'backup', className: 'trip-disclosure'}));
+  personal.append(disclosure('About this app', el('p', {},
+    `App build ${document.querySelector('meta[name="mcs-build-version"]')?.content ?? 'development'} · Traveler State ${STATE_VERSION}`),
+  {id: 'about', className: 'trip-disclosure'}));
   for (const section of personal.querySelectorAll('details[data-section]'))
     if (openSections.has(section.dataset.section)) section.open = true;
   showPersonal();
@@ -743,10 +840,11 @@ async function start() {
     await switchPack(packName);
     myTripButton.addEventListener('click', () => {saveQueue.then(myTrip).catch(error => alert(error.message));});
     try {await registerOffline(message => {offlineStatus = message; status();}, apply => {
-      syncNotice('A complete app update is ready. Your saved trip stays on this device.',
-        [button('Apply app update', () => {
+      appUpdate.hidden = false;
+      appUpdate.replaceChildren(el('span', {}, 'New version available · Your saved trip stays on this device.'),
+        button('Update now', () => {
           saveQueue.then(apply).catch(error => alert(error.message));
-        }), button('Later', clearSync)]);
+        }), button('Later', () => {appUpdate.hidden = true;}));
     }, message => syncNotice(message,
       [button('Repair app files', () => repairAppFiles().catch(error => alert(error.message)))]));}
     catch (error) {offlineStatus = `Offline setup failed: ${error.message}`;}
