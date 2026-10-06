@@ -25,6 +25,32 @@ let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', stora
 let itineraryScrollTop = 0;
 let exploreFilter = 'all', personalPageScrollTop = 0;
 
+function keepFocusedFieldVisible() {
+  const field = document.activeElement;
+  if (!field?.matches?.('input, select, textarea')) return;
+  const inTrip = dialog.open && dialog.contains(field);
+  const scroll = inTrip ? personal : appScroll;
+  if (!scroll.contains(field)) return;
+  const viewport = window.visualViewport;
+  if (viewport?.scale > 1.01) return; // Leave deliberate pinch zoom under the traveler's control.
+  const viewportTop = viewport?.offsetTop ?? 0;
+  const viewportBottom = viewportTop + (viewport?.height ?? innerHeight);
+  const bounds = scroll.getBoundingClientRect();
+  const headerBottom = inTrip ? dialog.querySelector('.personal-header').getBoundingClientRect().bottom : bounds.top;
+  const top = Math.max(bounds.top, headerBottom, viewportTop) + 12;
+  const navTop = inTrip ? Infinity : document.querySelector('#nav').getBoundingClientRect().top;
+  const bottom = Math.min(bounds.bottom, viewportBottom, navTop) - 12;
+  const rect = field.getBoundingClientRect();
+  if (bottom <= top) return;
+  if (rect.bottom > bottom) scroll.scrollTop += rect.bottom - bottom;
+  else if (rect.top < top) scroll.scrollTop -= top - rect.top;
+}
+document.addEventListener('focusin', event => {
+  if (event.target.matches?.('input, select, textarea')) requestAnimationFrame(keepFocusedFieldVisible);
+});
+window.visualViewport?.addEventListener('resize', () => requestAnimationFrame(keepFocusedFieldVisible));
+window.visualViewport?.addEventListener('scroll', () => requestAnimationFrame(keepFocusedFieldVisible));
+
 function status() {
   connection.textContent = navigator.onLine ? (offlineStatus || 'Preparing offline sample…') :
     'Offline · Saved sample content and local trip data are available. Outside links and maps need internet.';

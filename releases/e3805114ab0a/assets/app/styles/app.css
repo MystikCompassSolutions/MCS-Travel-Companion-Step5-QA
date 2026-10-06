@@ -2,7 +2,7 @@
 :root { --app-nav-row: clamp(48px, 3rem, 88px); --app-nav-height: calc(var(--app-nav-row) + 8px + env(safe-area-inset-bottom)); }
 html { height: 100%; overscroll-behavior-y: none; }
 body { height: 100vh; height: 100dvh; overflow: hidden; overscroll-behavior-y: none; margin: 0; background: var(--cream); color: var(--indigo-900); font: 1.0625rem/1.55 var(--body-font); }
-#app-scroll { height: 100%; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--app-nav-height) + 24px); }
+#app-scroll { height: 100%; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--app-nav-height) + 24px); scroll-padding-bottom: calc(var(--app-nav-height) + 16px); }
 header { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: calc(16px + env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 16px max(20px, env(safe-area-inset-left)); background: var(--indigo-900); color: var(--paper); }
 header span { display: block; font-size: .875rem; font-weight: 400; }
 main { width: 100%; max-width: 760px; margin-inline: auto; padding: 16px 20px; overflow-wrap: anywhere; }
@@ -10,7 +10,7 @@ h1,h2 { font-family: var(--display-font); line-height: 1.2; } h1 { font-size: cl
 button,input,select,textarea { font: inherit; min-height: 44px; border-radius: 8px; padding: 8px 16px; border: 1px solid var(--indigo-700); }
 button { cursor: pointer; background: var(--paper); color: var(--indigo-900); } button.primary { background: var(--indigo-900); color: var(--paper); }
 button:active { transform: translateY(1px); } button:disabled { cursor: not-allowed; opacity: .65; }
-input,textarea,select { width: 100%; background: var(--paper); color: var(--indigo-900); margin: 8px 0 16px; }
+input,textarea,select { width: 100%; min-width: 0; max-width: 100%; font-size: max(1rem, 16px); background: var(--paper); color: var(--indigo-900); margin: 8px 0 16px; }
 input[type="checkbox"] { width: 44px; vertical-align: middle; margin: 8px; accent-color: var(--indigo-900); }
 textarea { min-height: 100px; } a { color: var(--indigo-700); text-underline-offset: 3px; }
 :focus-visible { outline: 3px solid var(--info); outline-offset: 4px; }
