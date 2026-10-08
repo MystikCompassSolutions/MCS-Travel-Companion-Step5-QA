@@ -54,6 +54,7 @@ window.visualViewport?.addEventListener('resize', () => requestAnimationFrame(ke
 window.visualViewport?.addEventListener('scroll', () => requestAnimationFrame(keepFocusedFieldVisible));
 
 function status() {
+  connection.dataset.state = navigator.onLine ? 'online' : 'offline';
   connection.textContent = navigator.onLine ? (offlineStatus || 'Preparing offline sample…') :
     'Offline · Saved sample content and local trip data are available. Outside links and maps need internet.';
 }
@@ -141,21 +142,15 @@ function badges(activity) {
     {const badge = bundle.badges.find(badge => badge.badgeId === id);
       return el('span', {class: `badge badge-${badge.semanticType}`}, badge.label);}));
 }
-function estimates() {
-  return Object.entries(travelerEstimate(bundle, state)).map(([currency, total]) => {
-    const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
-      `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
-        '–' + formatMoney(total.maximumMinor, currency) : ''}`;
-    return el('p', {}, `MCS estimate per traveler: ${range} ${currency}`,
-      total.unknownCosts ? ` · ${total.unknownCosts} unpriced` : '');
-  });
-}
 function dayLabel(day) {
   const date = calendarDay(state.tripStartDate, day.dayNumber);
   return `Day ${day.dayNumber}${date ? ' · ' + date : ''} — ${day.title}`;
 }
 function home() {
   const today = currentDay(); const day = bundle.days[today.index];
+  const personalBudget = actualBudget(state);
+  const personalProgress = budgetProgress(personalBudget.spentMinor, state.budgetPlan.totalMinor);
+  const hasPersonalBudget = state.budgetPlan.totalMinor > 0;
   const upcoming = resolveDay(bundle, state, day)
     .map(item => bundle.activities.find(activity => activity.activityId === item.referencedEntityId))
     .find(activity => activity?.reservationInfo?.reservationLevel !== undefined &&
@@ -167,37 +162,50 @@ function home() {
     today.phase === 'past' ? bundle.days.length : today.index + 1;
   const activities = resolveDay(bundle, state, day).map(item =>
     bundle.activities.find(activity => activity.activityId === item.referencedEntityId)).filter(Boolean);
-  return [el('section', {class: 'home-hero'}, mediaImage(bundle, bundle.media[0]?.mediaId, 'hero-image'),
+  const budgetSnapshot = el('section', {class: `compact-section home-snapshot home-budget-card${hasPersonalBudget ? '' : ' home-budget-empty'}`},
+    icon('Budget', 'snapshot-icon'),
+    el('div', {class: 'home-budget-copy'}, el('p', {class: 'section-kicker'}, `My Trip Budget · ${state.homeCurrency}`),
+      el('h2', {}, hasPersonalBudget ?
+        `${formatMoney(personalBudget.spentMinor, state.homeCurrency)} spent / ${formatMoney(state.budgetPlan.totalMinor, state.homeCurrency)} budget` :
+        'Set my budget'),
+      hasPersonalBudget ? el('progress', {class: 'home-budget-progress', max: 100, value: personalProgress.arc,
+        'aria-label': personalProgress.label}) : null,
+      hasPersonalBudget ? el('p', {class: 'home-budget-meta'},
+        el('span', {}, `${personalProgress.percent}% spent`),
+        el('span', {}, personalBudget.remainingMinor >= 0 ?
+          `${formatMoney(personalBudget.remainingMinor, state.homeCurrency)} remaining` :
+          `${formatMoney(Math.abs(personalBudget.remainingMinor), state.homeCurrency)} over budget`)) :
+        el('p', {class: 'day-meta'}, 'Set a personal budget to see spending progress.')),
+    button(hasPersonalBudget ? 'View budget →' : 'Set my budget →', () => go('Budget'), {class: 'text-action'}));
+  return [el('section', {class: 'home-hero', 'aria-labelledby': 'home-destination-title'},
+    mediaImage(bundle, bundle.media[0]?.mediaId, 'hero-image'),
     el('div', {class: 'hero-content'},
-      el('p', {class: 'hero-brand'}, icon('compass'), 'MCS · Your journey, thoughtfully curated'),
-      el('h1', {}, bundle.trip.title), el('p', {class: 'hero-subtitle'},
+      el('h1', {id: 'home-destination-title'}, bundle.trip.title), el('p', {class: 'hero-subtitle'},
         `${bundle.days.length} days · ${bundle.regions.map(region => region.name).join(' + ')}`),
       el('progress', {class: 'trip-progress', max: bundle.days.length, value: progress,
         'aria-label': 'Trip day progress'}),
       el('p', {class: 'progress-caption'}, `Day ${day.dayNumber} of ${bundle.days.length}`,
         today.phase === 'unscheduled' ? ' · Start date not set' : today.phase === 'upcoming' ? ' · Upcoming' : ''))),
-  el('section', {class: 'compact-section home-day'},
-    el('div', {class: 'home-day-copy'}, el('p', {class: 'section-kicker'}, today.phase === 'active' ? 'Today' : 'Your plan'),
-      el('h2', {}, day.title), el('p', {class: 'day-meta'}, phase)),
-    activities[0] ? mediaImage(bundle, activities[0].heroMediaId, 'day-thumbnail', true) : null,
-    button('Continue Today’s Plan →', () => {dayIndex = today.index; go('Itinerary');}, {class: 'primary gold-action'})),
-  el('section', {class: 'compact-section home-snapshot'}, icon('Budget', 'snapshot-icon'),
-    el('div', {}, el('h2', {}, 'Budget at a glance'), ...estimates(),
-      el('p', {class: 'day-meta'}, `My spending · ${formatMoney(actualBudget(state).spentMinor, state.homeCurrency)}`)),
-    button('View budget', () => go('Budget'), {class: 'text-action'})),
-  upcoming ? el('section', {class: 'compact-section home-upcoming'},
-    mediaImage(bundle, upcoming.heroMediaId, 'reservation-thumbnail', true),
-    el('div', {}, el('p', {class: 'section-kicker'}, 'Next reservation to review'),
-      button(upcoming.name, () => detail(upcoming), {class: 'text-action'}),
-      el('p', {class: 'day-meta'}, 'Review authored booking guidance')))
-    : el('section', {class: 'compact-section home-upcoming'}, icon('compass'),
-      el('div', {}, el('p', {class: 'section-kicker'}, 'A little room to breathe'),
-        el('p', {}, 'No reservation attention item in this sample day.'))),
-  el('div', {class: 'row home-help'}, button('Emergency Help', () => info(true), {class: 'text-action'})),
-  disclosure('Photography & visual credits', mediaCredits(bundle), {id: 'media-credits'}),
-  disclosure('Sample content packs', field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
-    ['japan', 'iceland'].map(name => el('option', {value: name, selected: name === packName},
-      name === 'japan' ? 'Japan sample' : 'Iceland sample')))), {id: 'sample-packs'})];
+  el('div', {class: 'home-content'},
+    el('section', {class: 'compact-section home-day'},
+      el('div', {class: 'home-day-copy'}, el('p', {class: 'section-kicker'}, today.phase === 'active' ? 'Today' : 'Your plan'),
+        el('h2', {}, day.title), el('p', {class: 'day-meta'}, phase)),
+      activities[0] ? mediaImage(bundle, activities[0].heroMediaId, 'day-thumbnail', true) : null,
+      button('Continue Today’s Plan →', () => {dayIndex = today.index; go('Itinerary');}, {class: 'primary gold-action'})),
+    budgetSnapshot,
+    upcoming ? el('section', {class: 'compact-section home-upcoming'},
+      mediaImage(bundle, upcoming.heroMediaId, 'reservation-thumbnail', true),
+      el('div', {}, el('p', {class: 'section-kicker'}, 'Next reservation to review'),
+        button(upcoming.name, () => detail(upcoming), {class: 'text-action'}),
+        el('p', {class: 'day-meta'}, 'Review authored booking guidance')))
+      : el('section', {class: 'compact-section home-upcoming home-upcoming-empty'}, icon('compass'),
+        el('div', {}, el('p', {class: 'section-kicker'}, 'A little room to breathe'),
+          el('p', {}, 'No reservation attention item in this sample day.'))),
+    el('div', {class: 'row home-help'}, button('Emergency Help', () => info(true), {class: 'text-action'})),
+    disclosure('Photography & visual credits', mediaCredits(bundle), {id: 'media-credits'}),
+    disclosure('Sample content packs', field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
+      ['japan', 'iceland'].map(name => el('option', {value: name, selected: name === packName},
+        name === 'japan' ? 'Japan sample' : 'Iceland sample')))), {id: 'sample-packs'}))];
 }
 
 function optionGroup(group, headingTag = 'h2') {
