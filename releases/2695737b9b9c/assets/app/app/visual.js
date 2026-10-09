@@ -63,11 +63,15 @@ export function homeHeroMediaId(bundle, currentDay) {
 }
 
 export function mediaCredits(bundle) {
-  return bundle.media.filter(asset => asset.type === 'photo').map(asset => el('p', {},
-    el('a', {href: asset.originalSourceUrl, target: '_blank', rel: 'noopener noreferrer'}, asset.requiredCreditText),
-    ' · ', el('a', {href: asset.license === 'CC0' ? 'https://creativecommons.org/publicdomain/zero/1.0/' :
-      `https://creativecommons.org/licenses/by/${asset.licenseVersion}/`, target: '_blank', rel: 'noopener noreferrer'},
-    `${asset.license} ${asset.licenseVersion}`), ' · Resized, WebP conversion and display cropping.'));
+  return bundle.media.filter(asset => asset.type === 'photo').map(asset => asset.sourceOwnership === 'mcs_owned' ?
+    el('p', {}, asset.requiredCreditText || asset.creator, ' · ', asset.license,
+      asset.rightsReviewStatus === 'required_before_production' ? ' · QA use only; depicted-rights review required before production.' : '',
+      ' · Resized, WebP conversion and display cropping.') :
+    el('p', {},
+      el('a', {href: asset.originalSourceUrl, target: '_blank', rel: 'noopener noreferrer'}, asset.requiredCreditText),
+      ' · ', el('a', {href: asset.license === 'CC0' ? 'https://creativecommons.org/publicdomain/zero/1.0/' :
+        `https://creativecommons.org/licenses/by/${asset.licenseVersion}/`, target: '_blank', rel: 'noopener noreferrer'},
+      `${asset.license} ${asset.licenseVersion}`), ' · Resized, WebP conversion and display cropping.'));
 }
 
 export function budgetProgress(spent, total) {

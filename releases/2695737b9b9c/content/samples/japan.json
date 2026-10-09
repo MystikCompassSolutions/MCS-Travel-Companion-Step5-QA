@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.0",
+    "contentVersion": "0.1.1",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.0",
+    "contentVersion": "0.1.1",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -151,19 +151,28 @@
       "dayId": "day_jp_02",
       "tripId": "trip_jp_sample",
       "dayNumber": 2,
-      "title": "Osaka validation day",
+      "title": "Osaka + Universal sample day",
       "primaryRegionId": "region_osaka",
-      "dayType": "city",
+      "dayType": "mixed",
       "scheduleItems": [
         {
           "scheduleItemId": "day_jp_02_item_1",
           "dayId": "day_jp_02",
           "sequence": 1,
           "itemType": "activity",
+          "referencedEntityId": "act_universal_osaka",
+          "suggestedTimeMode": "flexible"
+        },
+        {
+          "scheduleItemId": "day_jp_02_item_2",
+          "dayId": "day_jp_02",
+          "sequence": 2,
+          "itemType": "activity",
           "referencedEntityId": "act_osaka",
           "suggestedTimeMode": "flexible"
         }
-      ]
+      ],
+      "heroMediaId": "media_universal-osaka-mcs"
     }
   ],
   "activities": [
@@ -275,6 +284,22 @@
       ],
       "verificationRecordIds": [],
       "status": "draft"
+    },
+    {
+      "activityId": "act_universal_osaka",
+      "name": "Universal Studios Japan — Super Nintendo World sample visit",
+      "category": "attraction",
+      "regionId": "region_osaka",
+      "summary": "Owner-supplied sample activity. Admission, access, operating details and scheduling remain unverified.",
+      "costIds": [],
+      "badgeIds": [
+        "badge_pick"
+      ],
+      "sourceIds": [],
+      "verificationRecordIds": [],
+      "status": "draft",
+      "indoorOutdoor": "mixed",
+      "heroMediaId": "media_universal-osaka-mcs"
     }
   ],
   "options": [
@@ -495,6 +520,7 @@
       "mediaId": "media_tokyo",
       "type": "photo",
       "creator": "David Kernan",
+      "sourceOwnership": "external",
       "originalSourceUrl": "https://commons.wikimedia.org/wiki/File:Tokyo_Tower,_Minato_City.jpg",
       "license": "CC BY",
       "licenseVersion": "4.0",
@@ -513,12 +539,12 @@
     {
       "mediaId": "media_nezu",
       "type": "photo",
-      "creator": "DavideGorla",
-      "originalSourceUrl": "https://www.flickr.com/photos/66321334@N00/33630316955/",
-      "license": "CC BY",
-      "licenseVersion": "2.0",
-      "requiredCreditText": "Nezu Shrine, Tokyo — DavideGorla",
-      "dateVerified": "2026-10-06",
+      "creator": "Mystik Compass Solutions",
+      "sourceOwnership": "mcs_owned",
+      "sourceAssetName": "IMG_9818.HEIC",
+      "license": "MCS-owned first-party photograph",
+      "requiredCreditText": "Nezu Shrine torii path — Mystik Compass Solutions",
+      "dateVerified": "2026-10-09",
       "allowedUses": [
         "commercial",
         "display",
@@ -526,13 +552,29 @@
         "resize"
       ],
       "modificationAllowed": true,
-      "altText": "A path through vermilion torii gates at Nezu Shrine.",
-      "webAssetReference": "media/nezu.webp"
+      "altText": "A sunlit path beneath vermilion torii gates at Nezu Shrine.",
+      "webAssetReference": "media/nezu.webp",
+      "intendedUses": [
+        "activity hero",
+        "itinerary thumbnail",
+        "Home Today card"
+      ],
+      "regionIds": [
+        "region_tokyo"
+      ],
+      "dayIds": [
+        "day_jp_01"
+      ],
+      "activityIds": [
+        "act_nezu"
+      ],
+      "rightsReviewStatus": "cleared"
     },
     {
       "mediaId": "media_shibuya",
       "type": "photo",
       "creator": "Syced",
+      "sourceOwnership": "external",
       "originalSourceUrl": "https://commons.wikimedia.org/wiki/File:Shibuya_crossing,_seen_from_Shibuya_Stream.jpg",
       "license": "CC0",
       "licenseVersion": "1.0",
@@ -564,6 +606,41 @@
       "modificationAllowed": true,
       "altText": "Abstract blue and violet light illustration; not a photograph of the experience.",
       "webAssetReference": "media/immersive.svg"
+    },
+    {
+      "mediaId": "media_universal-osaka-mcs",
+      "type": "photo",
+      "creator": "Mystik Compass Solutions",
+      "sourceOwnership": "mcs_owned",
+      "sourceAssetName": "IMG_9632.HEIC",
+      "license": "MCS-owned first-party photograph",
+      "requiredCreditText": "Super Nintendo World entrance — Mystik Compass Solutions",
+      "dateVerified": "2026-10-09",
+      "allowedUses": [
+        "qa",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "The colorful Super Nintendo World entrance at Universal Studios Japan beneath a blue sky.",
+      "webAssetReference": "media/universal-osaka-mcs.webp",
+      "intendedUses": [
+        "Day 2 Home hero",
+        "activity hero",
+        "itinerary thumbnail"
+      ],
+      "regionIds": [
+        "region_osaka"
+      ],
+      "dayIds": [
+        "day_jp_02"
+      ],
+      "activityIds": [
+        "act_universal_osaka"
+      ],
+      "rightsReviewStatus": "required_before_production",
+      "rightsReviewNotes": "Prominent Nintendo and Universal venue branding/IP and visible visitors require depicted-rights and privacy/publicity review before production commercial use."
     }
   ],
   "themes": [
