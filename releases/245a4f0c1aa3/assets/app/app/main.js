@@ -391,41 +391,99 @@ function upgradeChoices(activity) {
   });
 }
 
+function detailDuration(minutes) {
+  if (!minutes) return null;
+  const hours = Math.floor(minutes / 60), remainder = minutes % 60;
+  return [hours ? `${hours} hr` : '', remainder ? `${remainder} min` : ''].filter(Boolean).join(' ');
+}
+
+function detailCost(activity) {
+  const cost = activity.costIds.map(id => bundle.costs.find(candidate => candidate.costId === id)).find(Boolean);
+  if (!cost) return null;
+  const amount = cost.fixedMinor ?? cost.minimumMinor;
+  const value = amount === 0 ? 'Free · sample classification' : amount === undefined ? 'Open-ended sample estimate' :
+    `${formatMoney(amount, cost.currency)} · ${cost.basis.replaceAll('_', ' ')}`;
+  return {label: 'Sample cost', value: `${value} · unverified`};
+}
+
+function detailFacts(activity, place, region) {
+  const cost = detailCost(activity);
+  const location = place?.address?.split(/,|—/)[0]?.trim() || region?.name;
+  const reservation = activity.reservationInfo?.reservationLevel;
+  return [
+    activity.recommendedDurationMinutes ? {icon: 'clock', label: 'Duration',
+      value: detailDuration(activity.recommendedDurationMinutes)} : null,
+    location ? {icon: 'Explore', label: 'Area', value: location} : null,
+    activity.walkingLevel ? {icon: 'walk', label: 'Walking', value: activity.walkingLevel} : null,
+    activity.indoorOutdoor ? {icon: 'compass', label: 'Setting', value: activity.indoorOutdoor} : null,
+    cost ? {icon: 'Budget', ...cost} : null,
+    reservation && reservation !== 'none' ? {icon: 'documents', label: 'Reservation',
+      value: `${reservation === 'required' ? 'Required' : 'Book ahead'} · sample guidance`} : null
+  ].filter(Boolean);
+}
+
+function detailAlternative(group, activity) {
+  const chosen = selectedOptions(bundle, state, group).map(option => option.optionId);
+  const candidateOption = group.optionIds.map(id => bundle.options.find(option => option.optionId === id))
+    .find(option => option && !option.activityIds.includes(activity.activityId));
+  const candidate = bundle.activities.find(item => candidateOption?.activityIds.includes(item.activityId));
+  if (!candidateOption || !candidate) return null;
+  const pressed = chosen.includes(candidateOption.optionId);
+  const metadata = [detailDuration(candidate.recommendedDurationMinutes), candidate.indoorOutdoor].filter(Boolean);
+  return el('section', {class: 'detail-alternative', 'aria-labelledby': `alternative-${group.optionGroupId}`},
+    el('div', {class: 'alternative-heading'},
+      el('p', {class: 'section-kicker'}, 'Curated alternative'),
+      el('h2', {id: `alternative-${group.optionGroupId}`}, candidate.name)),
+    el('div', {class: 'alternative-card'},
+      mediaImage(bundle, candidate.heroMediaId, 'alternative-image', true),
+      el('div', {class: 'alternative-copy'},
+        el('p', {}, 'An MCS-authored option for the same itinerary slot.'),
+        metadata.length ? el('p', {class: 'alternative-meta'}, metadata.join(' · ')) : null,
+        badges(candidate),
+        button(pressed ? 'Selected for my trip' : 'Use this option →', () => {
+          commit(current => chooseOption(bundle, current, group.optionGroupId, [candidateOption.optionId]))
+            .catch(() => {});
+        }, {class: 'secondary-action alternative-action', 'aria-pressed': String(pressed),
+          'aria-label': `${pressed ? 'Selected' : 'Choose'} ${candidate.name}`, disabled: pressed || !!storageIssue}))));
+}
+
 function detail(activity) {
   if (view !== 'Itinerary') itineraryScrollTop = 0;
   view = 'Itinerary'; renderNav();
   const place = bundle.places.find(candidate => candidate.placeId === activity.placeId);
-  main.dataset.screen = activity.indoorOutdoor === 'indoor' ? 'detail-immersive' : 'detail';
+  const tone = activity.indoorOutdoor === 'indoor' ? 'immersive' :
+    activity.indoorOutdoor === 'mixed' ? 'venue' : 'calm';
+  main.dataset.screen = `detail-${tone}`;
   document.documentElement.dataset.screen = main.dataset.screen;
   const media = bundle.media.find(asset => asset.mediaId === activity.heroMediaId);
   const region = bundle.regions.find(candidate => candidate.regionId === activity.regionId);
   const groups = bundle.optionGroups.filter(group => group.optionIds.some(id =>
     bundle.options.find(option => option.optionId === id)?.activityIds.includes(activity.activityId)));
-  const nodes = [el('section', {class: 'detail-hero'}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
+  const facts = detailFacts(activity, place, region);
+  const area = place?.address?.split(/,|—/)[0]?.trim();
+  const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
     button('‹ Back to day', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;}, {class: 'detail-back'}),
     el('div', {class: 'hero-content'}, el('p', {class: 'section-kicker'},
-      `${activity.category} · ${region?.name ?? bundle.trip.title}`), el('h1', {}, activity.name), badges(activity)),
+      [activity.category, area, region?.name ?? bundle.trip.title].filter((item, index, all) =>
+        item && all.indexOf(item) === index).join(' · ')), el('h1', {}, activity.name), badges(activity)),
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
-    el('p', {class: 'detail-summary'}, activity.summary),
-    el('div', {class: 'detail-facts'},
-      el('span', {}, icon('clock'), activity.recommendedDurationMinutes ? `${activity.recommendedDurationMinutes} minutes` : 'Flexible duration'),
-      el('span', {}, icon('walk'), activity.walkingLevel ? `${activity.walkingLevel} walking` : 'Walking level not verified'),
-      el('span', {}, icon('Explore'), place?.address ?? 'Location pending verification'),
-      el('span', {}, activity.indoorOutdoor ?? 'Environment not verified')),
-    el('section', {class: 'compact-section mcs-note'},
+    el('section', {class: 'detail-intro'}, el('p', {class: 'detail-summary'}, activity.summary),
+      facts.length ? el('div', {class: 'detail-facts', 'aria-label': 'Activity quick facts'}, facts.map(fact =>
+        el('div', {class: 'detail-fact'}, icon(fact.icon), el('span', {},
+          el('small', {}, fact.label), el('strong', {}, fact.value))))) : null),
+    activity.mcsNote ? el('section', {class: 'compact-section mcs-note'},
       el('h2', {}, icon('compass'), 'MCS note'),
-      el('p', {}, activity.mcsNote ?? 'Detailed guidance pending content research.')),
+      el('p', {}, activity.mcsNote)) : null,
     el('div', {class: 'detail-actions'},
-      place ? button('See in Explore', () => go('Explore'), {class: 'secondary-action'}) : null,
+      place ? button('Open in Explore', () => go('Explore'), {class: 'primary gold-action'}) : null,
       place && navigator.onLine ? el('a', {class: 'text-action',
         href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
         target: '_blank', rel: 'noopener noreferrer'}, icon('Explore'), 'Open external map') : null,
       place?.officialWebsite && navigator.onLine ? el('a', {class: 'secondary-action', href: place.officialWebsite,
         target: '_blank', rel: 'noopener noreferrer'}, icon('external'), 'Official site') :
         el('span', {class: 'unavailable-action'}, navigator.onLine ? 'Official site · Pending verification' : 'External maps & sites need internet')),
-    ...groups.map(group => disclosure('Curated alternative / Swap this', optionGroup(group),
-      {id: `option-${group.optionGroupId}`, open: true, className: 'alternative-disclosure'})),
+    ...groups.map(group => detailAlternative(group, activity)),
     place ? disclosure('Location', el('p', {}, place.address ?? 'Address pending verification'), {id: 'location'}) : null,
     activity.reservationInfo ? disclosure('Booking', el('p', {}, activity.reservationInfo.bookAheadGuidance), {id: 'booking'}) : null,
     activity.whatToBring?.length ? disclosure('What to bring',

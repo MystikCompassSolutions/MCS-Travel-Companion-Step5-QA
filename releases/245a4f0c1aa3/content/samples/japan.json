@@ -245,11 +245,11 @@
         "bookAheadGuidance": "Sample reservation guidance; verify official booking before use."
       },
       "mcsNote": "A strong late-afternoon anchor. Sample guidance from the prototype.",
-      "heroMediaId": "media_immersive"
+      "heroMediaId": "media_teamlab-borderless-mcs"
     },
     {
       "activityId": "act_planets",
-      "name": "teamLab Planets — authored alternative",
+      "name": "teamLab Planets",
       "category": "attraction",
       "regionId": "region_tokyo",
       "summary": "Representative sample from approved design materials.",
@@ -399,7 +399,7 @@
     },
     {
       "costId": "cost_act_planets",
-      "label": "teamLab Planets — authored alternative",
+      "label": "teamLab Planets",
       "category": "activity",
       "pricingModel": "fixed",
       "currency": "JPY",
@@ -589,6 +589,40 @@
       "modificationAllowed": true,
       "altText": "A high-angle city view of Shibuya Crossing.",
       "webAssetReference": "media/shibuya.webp"
+    },
+    {
+      "mediaId": "media_teamlab-borderless-mcs",
+      "type": "photo",
+      "creator": "Mystik Compass Solutions",
+      "sourceOwnership": "mcs_owned",
+      "sourceAssetName": "IMG_9578.HEIC",
+      "license": "MCS-owned first-party photograph",
+      "requiredCreditText": "teamLab Borderless visit — Mystik Compass Solutions",
+      "dateVerified": "2026-10-09",
+      "allowedUses": [
+        "qa",
+        "display",
+        "crop",
+        "resize"
+      ],
+      "modificationAllowed": true,
+      "altText": "A visitor stands before an immersive projection of glowing orange flowers at teamLab Borderless.",
+      "webAssetReference": "media/teamlab-borderless-mcs.webp",
+      "intendedUses": [
+        "Activity Detail hero",
+        "itinerary thumbnail"
+      ],
+      "regionIds": [
+        "region_tokyo"
+      ],
+      "dayIds": [
+        "day_jp_01"
+      ],
+      "activityIds": [
+        "act_borderless"
+      ],
+      "rightsReviewStatus": "required_before_production",
+      "rightsReviewNotes": "The depicted teamLab installation and recognizable visitor require artwork/exhibition and privacy/publicity review before production commercial use."
     },
     {
       "mediaId": "media_immersive",
