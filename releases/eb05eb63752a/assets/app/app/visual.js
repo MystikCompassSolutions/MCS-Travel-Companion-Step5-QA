@@ -34,13 +34,32 @@ export function icon(name, className = 'ui-icon') {
   return svg;
 }
 
-export function mediaImage(bundle, mediaId, className = '', decorative = false) {
+function localMedia(bundle, mediaId) {
   const asset = bundle.media.find(media => media.mediaId === mediaId);
-  if (!asset) return null;
   // Only bundled relative media. No external image request or arbitrary imported URL.
-  if (!/^media\/[a-z0-9_-]+\.(webp|svg)$/.test(asset.webAssetReference)) return null;
-  return el('img', {src: new URL(`../${asset.webAssetReference}`, import.meta.url).href,
+  return asset && /^media\/[a-z0-9_-]+\.(webp|svg)$/.test(asset.webAssetReference) ? asset : null;
+}
+
+export function mediaImage(bundle, mediaId, className = '', decorative = false, fallbackMediaId = null) {
+  const fallback = localMedia(bundle, fallbackMediaId);
+  const asset = localMedia(bundle, mediaId) ?? fallback;
+  if (!asset) return null;
+  const image = el('img', {src: new URL(`../${asset.webAssetReference}`, import.meta.url).href,
     alt: decorative ? '' : asset.altText, class: className, decoding: 'async'});
+  if (fallback && fallback.mediaId !== asset.mediaId) image.addEventListener('error', () => {
+    if (image.dataset.fallbackApplied) return;
+    image.dataset.fallbackApplied = 'true';
+    image.src = new URL(`../${fallback.webAssetReference}`, import.meta.url).href;
+    image.alt = decorative ? '' : fallback.altText;
+  });
+  return image;
+}
+
+export function homeHeroMediaId(bundle, currentDay) {
+  const fallback = bundle.media[0]?.mediaId;
+  if (!currentDay || !['active', 'past'].includes(currentDay.phase)) return fallback;
+  const candidate = bundle.days[currentDay.index]?.heroMediaId;
+  return candidate && bundle.media.some(media => media.mediaId === candidate) ? candidate : fallback;
 }
 
 export function mediaCredits(bundle) {

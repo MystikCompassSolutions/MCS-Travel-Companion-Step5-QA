@@ -11,7 +11,7 @@ import {newTravelerState, createTravelerStore, reconcileContent, serializeTravel
 import {createTabCoordinator} from '../storage/tab-coordination.js';
 import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
-import {icon, mediaImage, mediaCredits, budgetProgress, budgetRing, spendingCategories,
+import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
 
 const main = document.querySelector('#main');
@@ -163,6 +163,8 @@ function home() {
     today.phase === 'past' ? bundle.days.length : today.index + 1;
   const activities = resolveDay(bundle, state, day).map(item =>
     bundle.activities.find(activity => activity.activityId === item.referencedEntityId)).filter(Boolean);
+  const defaultHeroMediaId = bundle.media[0]?.mediaId;
+  const heroMediaId = homeHeroMediaId(bundle, today);
   const budgetSnapshot = showHomeBudget ? el('section',
     {class: `compact-section home-snapshot home-budget-card${hasPersonalBudget ? '' : ' home-budget-empty'}`},
     el('a', {class: 'home-budget-link', href: '#budget', 'aria-label': hasPersonalBudget ?
@@ -184,7 +186,7 @@ function home() {
       homeBudgetVisible: false}})).catch(() => {}), {class: 'home-budget-hide',
       'aria-label': 'Hide budget card from Home', disabled: !!storageIssue})) : null;
   return [el('section', {class: 'home-hero', 'aria-labelledby': 'home-destination-title'},
-    mediaImage(bundle, bundle.media[0]?.mediaId, 'hero-image'),
+    mediaImage(bundle, heroMediaId, 'hero-image', false, defaultHeroMediaId),
     el('div', {class: 'hero-content'},
       el('h1', {id: 'home-destination-title'}, bundle.trip.title), el('p', {class: 'hero-subtitle'},
         `${bundle.days.length} days · ${bundle.regions.map(region => region.name).join(' + ')}`),
@@ -208,7 +210,6 @@ function home() {
         el('div', {}, el('p', {class: 'section-kicker'}, 'A little room to breathe'),
           el('p', {}, 'No reservation attention item in this sample day.'))),
     el('div', {class: 'row home-help'}, button('Emergency Help', () => info(true), {class: 'text-action'})),
-    disclosure('Photography & visual credits', mediaCredits(bundle), {id: 'media-credits'}),
     disclosure('Sample content packs', field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
       ['japan', 'iceland'].map(name => el('option', {value: name, selected: name === packName},
         name === 'japan' ? 'Japan sample' : 'Iceland sample')))), {id: 'sample-packs'}))];
@@ -736,7 +737,8 @@ function info(emergencyOnly = false) {
       disclosure('Traveler requirements', el('p', {}, bundle.trip.internationalBuyerNotice), {id: 'traveler-requirements'}),
       ...bundle.travelInfo.map(article => disclosure(article.title,
         referenceArticle(article),
-        {id: article.articleId}))] : [])];
+        {id: article.articleId})),
+      disclosure('Photography & Visual Credits', mediaCredits(bundle), {id: 'media-credits'})] : [])];
   if (emergencyOnly) {main.replaceChildren(...nodes); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
   return nodes;
 }
