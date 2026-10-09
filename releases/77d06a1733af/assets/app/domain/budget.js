@@ -8,6 +8,14 @@ export function formatMoney(minor, currency) {
   return new Intl.NumberFormat('en-US', {style: 'currency', currency}).format(minor / (10 ** currencyDigits(currency)));
 }
 
+export function formatHomeMoney(minor, currency) {
+  const digits = currencyDigits(currency);
+  const divisor = 10 ** digits;
+  const wholeAmount = minor % divisor === 0;
+  return new Intl.NumberFormat('en-US', {style: 'currency', currency,
+    minimumFractionDigits: wholeAmount ? 0 : digits, maximumFractionDigits: digits}).format(minor / divisor);
+}
+
 export function parseMoney(input, currency) {
   const digits = currencyDigits(currency);
   const pattern = new RegExp(`^\\d{1,12}(?:\\.\\d{1,${Math.max(digits, 1)}})?$`);

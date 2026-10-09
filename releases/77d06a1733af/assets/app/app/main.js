@@ -4,7 +4,7 @@ import {chooseOption, resolveDay, selectedOptions, effectiveOptions, optionSched
   calendarDay, currentTripDay} from '../domain/itinerary.js';
 import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
 import {exploreFilterChoices} from './explore-navigation.js';
-import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, parseMoney, currencyDigits,
+import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, formatHomeMoney, parseMoney, currencyDigits,
   convertPlanningEstimate} from '../domain/budget.js';
 import {newTravelerState, createTravelerStore, reconcileContent, serializeTravelerState,
   parseTravelerExport, EXPORT_LIMIT_BYTES, STATE_VERSION, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
@@ -151,6 +151,7 @@ function home() {
   const personalBudget = actualBudget(state);
   const personalProgress = budgetProgress(personalBudget.spentMinor, state.budgetPlan.totalMinor);
   const hasPersonalBudget = state.budgetPlan.totalMinor > 0;
+  const showHomeBudget = state.preferences?.homeBudgetVisible !== false;
   const upcoming = resolveDay(bundle, state, day)
     .map(item => bundle.activities.find(activity => activity.activityId === item.referencedEntityId))
     .find(activity => activity?.reservationInfo?.reservationLevel !== undefined &&
@@ -162,21 +163,26 @@ function home() {
     today.phase === 'past' ? bundle.days.length : today.index + 1;
   const activities = resolveDay(bundle, state, day).map(item =>
     bundle.activities.find(activity => activity.activityId === item.referencedEntityId)).filter(Boolean);
-  const budgetSnapshot = el('section', {class: `compact-section home-snapshot home-budget-card${hasPersonalBudget ? '' : ' home-budget-empty'}`},
+  const budgetSnapshot = showHomeBudget ? el('section',
+    {class: `compact-section home-snapshot home-budget-card${hasPersonalBudget ? '' : ' home-budget-empty'}`},
+    el('a', {class: 'home-budget-link', href: '#budget', 'aria-label': hasPersonalBudget ?
+      'Open my trip budget' : 'Set my trip budget', onClick: event => {event.preventDefault(); go('Budget');}},
     icon('Budget', 'snapshot-icon'),
     el('div', {class: 'home-budget-copy'}, el('p', {class: 'section-kicker'}, `My Trip Budget · ${state.homeCurrency}`),
       el('h2', {}, hasPersonalBudget ?
-        `${formatMoney(personalBudget.spentMinor, state.homeCurrency)} spent / ${formatMoney(state.budgetPlan.totalMinor, state.homeCurrency)} budget` :
+        `${formatHomeMoney(personalBudget.spentMinor, state.homeCurrency)} spent / ${formatHomeMoney(state.budgetPlan.totalMinor, state.homeCurrency)} budget` :
         'Set my budget'),
       hasPersonalBudget ? el('progress', {class: 'home-budget-progress', max: 100, value: personalProgress.arc,
         'aria-label': personalProgress.label}) : null,
       hasPersonalBudget ? el('p', {class: 'home-budget-meta'},
         el('span', {}, `${personalProgress.percent}% spent`),
         el('span', {}, personalBudget.remainingMinor >= 0 ?
-          `${formatMoney(personalBudget.remainingMinor, state.homeCurrency)} remaining` :
-          `${formatMoney(Math.abs(personalBudget.remainingMinor), state.homeCurrency)} over budget`)) :
-        el('p', {class: 'day-meta'}, 'Set a personal budget to see spending progress.')),
-    button(hasPersonalBudget ? 'View budget →' : 'Set my budget →', () => go('Budget'), {class: 'text-action'}));
+          `${formatHomeMoney(personalBudget.remainingMinor, state.homeCurrency)} remaining` :
+          `${formatHomeMoney(Math.abs(personalBudget.remainingMinor), state.homeCurrency)} over budget`)) :
+        el('p', {class: 'day-meta'}, 'Set a personal budget to see spending progress.'))),
+    button('Hide', () => commit(current => ({...current, preferences: {...current.preferences,
+      homeBudgetVisible: false}})).catch(() => {}), {class: 'home-budget-hide',
+      'aria-label': 'Hide budget card from Home', disabled: !!storageIssue})) : null;
   return [el('section', {class: 'home-hero', 'aria-labelledby': 'home-destination-title'},
     mediaImage(bundle, bundle.media[0]?.mediaId, 'hero-image'),
     el('div', {class: 'hero-content'},
@@ -190,7 +196,7 @@ function home() {
     el('section', {class: 'compact-section home-day'},
       el('div', {class: 'home-day-copy'}, el('p', {class: 'section-kicker'}, today.phase === 'active' ? 'Today' : 'Your plan'),
         el('h2', {}, day.title), el('p', {class: 'day-meta'}, phase)),
-      activities[0] ? mediaImage(bundle, activities[0].heroMediaId, 'day-thumbnail', true) : null,
+      activities[0] ? mediaImage(bundle, activities[0].heroMediaId, 'day-feature-image') : null,
       button('Continue Today’s Plan →', () => {dayIndex = today.index; go('Itinerary');}, {class: 'primary gold-action'})),
     budgetSnapshot,
     upcoming ? el('section', {class: 'compact-section home-upcoming'},
@@ -592,6 +598,7 @@ function budgetEstimate(total, currency, activeRate) {
 
 function budget() {
   const actual = actualBudget(state);
+  const homeBudgetHidden = state.preferences?.homeBudgetVisible === false;
   const total = el('input', {type: 'text', inputmode: 'decimal', required: true,
     value: String(state.budgetPlan.totalMinor / (10 ** currencyDigits(state.homeCurrency)))});
   const form = el('form', {class: 'inline-form', onSubmit: event => {
@@ -650,6 +657,12 @@ function budget() {
   const progress = budgetProgress(actual.spentMinor, state.budgetPlan.totalMinor);
   const categories = spendingCategories(state);
   return [el('h1', {}, 'Budget'),
+    homeBudgetHidden ? el('section', {class: 'budget-home-preference'},
+      el('div', {}, el('p', {class: 'section-kicker'}, 'Home preference'),
+        el('p', {}, 'Your personal budget card is hidden from Home.')),
+      button('Show budget card on Home', () => commit(current => ({...current,
+        preferences: {...current.preferences, homeBudgetVisible: true}})).catch(() => {}),
+      {disabled: !!storageIssue})) : null,
     el('section', {class: 'budget-overview'},
       el('div', {class: 'budget-estimates'}, estimateRows),
       activeRate ? el('p', {class: 'day-meta'}, `Using planning rate 1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}. Approximate; not a current bank or card rate.`) : null,
