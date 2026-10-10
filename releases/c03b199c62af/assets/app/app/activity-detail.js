@@ -52,6 +52,25 @@ export function nearbyInspirationItems(activity, bundle, online = true) {
     });
 }
 
+// Only authored collections opt into the shared anatomy. Categories never select
+// a destination-specific template; unverified URLs cannot become card actions.
+export function curatedCollection(activity, bundle, online = true) {
+  const value = activity.collection;
+  if (!value?.heading?.trim() || !['shopping','food','other'].includes(value.kind)) return null;
+  const items = (value.items ?? []).flatMap(item => {
+    const place = bundle.places.find(place => place.placeId === item.placeId);
+    if (!place || place.status !== 'active' || !item.description?.trim()) return [];
+    const target = bundle.activities.find(a => a.activityId === item.activityId &&
+      a.activityId !== activity.activityId && a.placeId === place.placeId);
+    const verified = (place.verificationRecordIds ?? []).some(id => bundle.verification.some(record =>
+      record.verificationId === id && record.targetId === place.placeId &&
+      record.fieldPath === 'officialWebsite' && record.status === 'verified'));
+    const url = verified && /^https?:\/\//.test(place.officialWebsite ?? '') ? place.officialWebsite : null;
+    return [{...item,place,target,url:online ? url : null,needsInternet:!target && !!url && !online}];
+  });
+  return items.length ? {...value,items} : null;
+}
+
 function basisLabel(basis) {
   return basis?.replaceAll('_', ' ') ?? '';
 }

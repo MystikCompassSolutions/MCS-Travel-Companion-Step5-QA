@@ -14,7 +14,7 @@ import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
 import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant, activityPresentationFamily,
-  activityEditorialContent, nearbyInspirationItems} from './activity-detail.js';
+  activityEditorialContent, nearbyInspirationItems, curatedCollection} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
 
 const main = document.querySelector('#main');
@@ -30,6 +30,7 @@ let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', stora
 let itineraryScrollTop = 0;
 let homePreviewIndex = null;
 let exploreFilter = 'all', personalPageScrollTop = 0;
+let collectionMapContext = null;
 
 function fitDetailOverlays() {
   if (!main.dataset.screen?.startsWith('detail-')) return;
@@ -163,21 +164,10 @@ function badges(activity, className = '') {
 function experienceTags(activity, light) {
   const tagIcons = {Historic: 'culture', Peaceful: 'leaf', Photogenic: 'camera', Outdoor: 'tree',
     Attraction: 'compass', Playful: 'leaf', Mixed: 'map'};
-  const strip = light ? {
-    role: 'group', tabindex: 0,
-    'aria-label': 'Experience characteristics. Scroll with Left and Right arrow keys, Home or End.',
-    onkeydown: event => {
-      const row = event.currentTarget;
-      if (event.target !== row || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      const step = Math.max(80, row.clientWidth * .7);
-      row.scrollLeft = event.key === 'Home' ? 0 : event.key === 'End' ? row.scrollWidth :
-        row.scrollLeft + (event.key === 'ArrowLeft' ? -step : step);
-    }
-  } : {};
-  return activity.experienceTags?.length ? el('div', {class: 'experience-tags',
-    'aria-label': 'Experience characteristics', ...strip}, activity.experienceTags.map(tag =>
-    el('span', {class: 'experience-tag'}, light && tagIcons[tag] ? icon(tagIcons[tag]) : null, tag))) : null;
+  return activity.experienceTags?.length ? el('div', {class: 'experience-tags', role: 'group',
+    'aria-label': 'Experience characteristics'}, activity.experienceTags.map(tag =>
+    el('span', {class: 'experience-tag'}, light && tagIcons[tag] ? icon(tagIcons[tag]) : null,
+      el('span', {class: 'experience-tag-label'}, tag)))) : null;
 }
 function dayLabel(day) {
   const date = calendarDay(state.tripStartDate, day.dayNumber);
@@ -275,7 +265,7 @@ function timelineTime(item) {
 }
 
 function timelineRow(item, choice = null) {
-  const activity = item.itemType === 'activity' ?
+  const activity = ['activity', 'meal'].includes(item.itemType) ?
     bundle.activities.find(candidate => candidate.activityId === item.referencedEntityId) : null;
   const transport = item.itemType === 'transport' ?
     bundle.transport.find(candidate => candidate.transportId === item.referencedEntityId) : null;
@@ -485,7 +475,12 @@ function addressControl(activity, address) {
 
 function detailActions(activity, place, className = 'detail-actions', editorial = false) {
   const officialWebsite = activity.officialWebsite ?? place?.officialWebsite;
-  const actions = [place ? button(editorial ? [icon('map'), 'Open Map'] : 'Open Map', () => go('Explore'),
+  const collection = curatedCollection(activity, bundle);
+  const actions = [place || collection ? button(editorial ? [icon('map'), 'Open Map'] : 'Open Map', () => {
+    collectionMapContext = collection ? {title:activity.name,placeIds:collection.items.map(item=>item.place.placeId)} : null;
+    if (collection) exploreFilter = 'all';
+    go('Explore');
+  },
     {class: 'primary gold-action', 'aria-label': `Open ${editorialText(activity.name)} in Explore map`}) : null,
   officialWebsite && navigator.onLine ? el('a', {class: 'secondary-action', href: officialWebsite,
     target: '_blank', rel: 'noopener noreferrer',
@@ -493,6 +488,39 @@ function detailActions(activity, place, className = 'detail-actions', editorial 
     officialWebsite ? el('span', {class: 'unavailable-action'}, 'Official Site · Internet required') : null]
     .filter(Boolean);
   return actions.length ? el('div', {class: className}, actions) : null;
+}
+
+function collectionCards(activity, collection) {
+  if (!collection) return null;
+  const list = el('ol', {class:'collection-list'});
+  const cards = collection.items.map(item => {
+    const image = mediaImage(bundle, item.heroMediaId, 'collection-image', true);
+    if (image) image.addEventListener('error', () => image.remove(), {once:true});
+    const visual = el('span', {class:'collection-visual', 'aria-hidden':'true'},
+      icon(collection.kind === 'food' ? 'food' : collection.kind === 'shopping' ? 'shopping' : 'Explore'),image);
+    const children = [visual,el('span',{class:'collection-copy'},el('strong',{},item.place.name),
+      item.place.neighborhood ? el('span',{class:'collection-location'},item.place.neighborhood) : null,
+      el('span',{class:'collection-rationale'},item.description),
+      item.needsInternet ? el('span',{class:'unavailable-action'},'Official listing · Internet required') : null),
+      item.target || item.url ? icon(item.target ? 'arrow' : 'external','ui-icon collection-arrow') : null];
+    const props = {class:'collection-card'};
+    const card = item.target ? button(children,()=>detail(item.target),{...props,'aria-label':`Explore ${item.place.name}`}) :
+      item.url ? el('a',{...props,href:item.url,target:'_blank',rel:'noopener noreferrer',
+        'aria-label':`Open ${item.place.name} official listing in a new tab`},children) : el('div',props,children);
+    return el('li',{},card);
+  });
+  list.append(...cards);
+  // Never show a decorative See All control with no additional authored entries.
+  const toggle = cards.length > 4 ? button(`Show all ${cards.length} places`,()=>{
+    const expanded=toggle.getAttribute('aria-expanded')!=='true';
+    cards.slice(4).forEach(card=>{card.hidden=!expanded;});
+    toggle.setAttribute('aria-expanded',String(expanded));
+    toggle.textContent=expanded ? 'Show fewer places' : `Show all ${cards.length} places`;
+  },{class:'text-action collection-more','aria-expanded':'false','aria-controls':`collection-list-${activity.activityId}`}) : null;
+  list.id=`collection-list-${activity.activityId}`;
+  cards.slice(4).forEach(card=>{card.hidden=true;});
+  return el('section',{class:'curated-collection','aria-labelledby':`collection-${activity.activityId}`},
+    el('h2',{id:`collection-${activity.activityId}`},collection.heading),list,toggle);
 }
 
 function detailNearby(activity) {
@@ -558,8 +586,9 @@ function detail(activity) {
   if (view !== 'Itinerary') itineraryScrollTop = 0;
   view = 'Itinerary'; renderNav();
   const place = bundle.places.find(candidate => candidate.placeId === activity.placeId);
-  const tone = activityPresentationVariant(activity);
-  const light = activityPresentationFamily(activity) === 'light';
+  const collection = curatedCollection(activity, bundle, navigator.onLine);
+  const tone = collection ? 'editorial' : activityPresentationVariant(activity);
+  const light = collection || activityPresentationFamily(activity) === 'light';
   const editorial = activityEditorialContent(activity);
   main.dataset.screen = `detail-${tone}`;
   document.documentElement.dataset.screen = main.dataset.screen;
@@ -567,19 +596,23 @@ function detail(activity) {
   const region = bundle.regions.find(candidate => candidate.regionId === activity.regionId);
   const groups = bundle.optionGroups.filter(group => group.optionIds.some(id =>
     bundle.options.find(option => option.optionId === id)?.activityIds.includes(activity.activityId)));
-  const facts = detailFacts(activity);
+  const facts = collection ? [] : detailFacts(activity);
   const address = verifiedAddress(place);
   const location = [place?.neighborhood, region?.name].filter((item, index, all) =>
     item && all.indexOf(item) === index).join(' · ');
   const primaryActions = detailActions(activity, place,
     light ? 'detail-actions editorial-actions' : editorial.note ? 'mcs-note-actions' : 'detail-actions',
     light);
-  const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
+  const heroImage = mediaImage(bundle, activity.heroMediaId, 'hero-image');
+  if (collection && heroImage) heroImage.addEventListener('error',()=>heroImage.remove(),{once:true});
+  const nodes = [el('section', {class: `detail-hero detail-hero-${tone}${collection ? ' collection-hero' : ''}`}, heroImage,
+    collection && !heroImage ? el('span',{class:'collection-cover-symbol','aria-hidden':'true'},icon(collection.kind==='food'?'food':'shopping')) : null,
     button('‹', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;},
       {class: 'detail-back', 'aria-label': 'Back to itinerary day', title: 'Back to itinerary day'}),
     el('div', {class: 'hero-content'}, el('h1', {}, editorialText(activity.name)),
       location ? el('p', {class: 'detail-location'}, location) : null,
-      addressControl(activity, address), activity.badgeIds.length ? badges(activity, 'operational-badges') : null),
+      addressControl(activity, address), collection ? el('span',{class:'badge collection-category'},collection.categoryLabel) :
+        activity.badgeIds.length ? badges(activity, 'operational-badges') : null),
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
     editorial.description || activity.experienceTags?.length || facts.length ?
@@ -590,6 +623,7 @@ function detail(activity) {
           el('small', {}, fact.label), el('strong', {}, fact.value),
           fact.secondary ? el('span', {class: 'detail-fact-secondary'}, fact.secondary) : null,
           fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null) : null,
+    collectionCards(activity, collection),
     editorial.note ? el('section', {class: 'compact-section mcs-note'},
       el('h2', {}, icon('compass'), light ? 'MCS Note' : 'MCS note'),
       el('p', {}, editorial.note), light ? null : primaryActions) : light ? null : primaryActions,
@@ -676,6 +710,7 @@ function explore() {
     if (focus) preview.querySelector('h2').focus({preventScroll: true});
   }
   function matches(place) {
+    if (collectionMapContext) return collectionMapContext.placeIds.includes(place.placeId);
     const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
     if (exploreFilter === 'all') return true;
     if (exploreFilter.startsWith('day:') || exploreFilter === 'today') {
@@ -694,6 +729,11 @@ function explore() {
     activeDay.hidden = !exploreFilter.startsWith('day:');
     if (!activeDay.hidden) activeDay.replaceChildren(`Showing Day ${bundle.days[selectedDay].dayNumber}: ${bundle.days[selectedDay].title} · `,
       button('Clear filter', () => select('all', true), {class: 'text-action'}));
+    if (collectionMapContext) {
+      activeDay.hidden=false;
+      activeDay.replaceChildren(`Places in ${collectionMapContext.title} · `,
+        button('Show all places',()=>select('all',true),{class:'text-action'}));
+    }
     const places = bundle.places.filter(matches);
     pins.replaceChildren(...schematicPositions(places.length).map((position, index) => {
       const pin = button(String(index + 1), () => previewPlace(places[index], index + 1, true),
@@ -723,6 +763,7 @@ function explore() {
         filters.find(filter => filter.id === exploreFilter).label}.`;
   }
   function select(id, focus = false) {
+    collectionMapContext = null;
     if (!id.startsWith('day:')) selectedDay = null;
     exploreFilter = id; update(true);
     const index = filters.findIndex(filter => filter.id === (id.startsWith('day:') ? 'days' : id));
@@ -1137,6 +1178,7 @@ async function switchPack(name) {
     try {loaded = await store.load(next.trip.tripId);} catch (error) {storageIssue = error;}
     const result = reconcileContent(loaded ?? newTravelerState(next), next);
     bundle = next; state = result.state; packName = name; view = 'Home'; exploreFilter = 'all';
+    collectionMapContext = null;
     try {localStorage.setItem('mcs-active-sample', name);} catch {}
     resetDay(); clearSync(); render();
     coordinator = createTabCoordinator(bundle.trip.tripId, revision => {

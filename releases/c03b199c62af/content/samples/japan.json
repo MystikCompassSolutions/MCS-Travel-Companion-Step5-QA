@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.6",
+    "contentVersion": "0.1.7",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.6",
+    "contentVersion": "0.1.7",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -90,8 +90,140 @@
       "name": "Universal Studios Japan",
       "category": "attraction",
       "regionId": "region_osaka",
-      "sourceIds": ["source_universal_official"],
-      "verificationRecordIds": ["verify_universal_identity"],
+      "sourceIds": [
+        "source_universal_official"
+      ],
+      "verificationRecordIds": [
+        "verify_universal_identity"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_shibuya109",
+      "name": "SHIBUYA109",
+      "category": "shopping",
+      "placeType": "store",
+      "regionId": "region_tokyo",
+      "neighborhood": "Shibuya",
+      "officialWebsite": "https://shibuya109.jp/",
+      "sourceIds": [
+        "source_collection_shibuya109"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_shibuya109"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_nintendo_tokyo",
+      "name": "Nintendo TOKYO",
+      "category": "shopping",
+      "placeType": "store",
+      "regionId": "region_tokyo",
+      "neighborhood": "Shibuya",
+      "officialWebsite": "https://www.nintendo.com/jp/officialstore/index.html",
+      "sourceIds": [
+        "source_collection_nintendo_tokyo"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_nintendo_tokyo"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_donki_shibuya",
+      "name": "MEGA Don Quijote Shibuya",
+      "category": "shopping",
+      "placeType": "store",
+      "regionId": "region_tokyo",
+      "neighborhood": "Shibuya",
+      "officialWebsite": "https://www.donki.com/en/store/shop_detail.php?shop_id=442",
+      "sourceIds": [
+        "source_collection_donki_shibuya"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_donki_shibuya"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_hands_shibuya",
+      "name": "Hands Shibuya",
+      "category": "shopping",
+      "placeType": "store",
+      "regionId": "region_tokyo",
+      "neighborhood": "Shibuya",
+      "officialWebsite": "https://store.hands.net/shibuya/",
+      "sourceIds": [
+        "source_collection_hands_shibuya"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_hands_shibuya"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_afuri_harajuku",
+      "name": "AFURI Harajuku",
+      "category": "food",
+      "placeType": "restaurant",
+      "regionId": "region_tokyo",
+      "neighborhood": "Harajuku",
+      "officialWebsite": "https://afuri.com/findus/",
+      "sourceIds": [
+        "source_collection_afuri_harajuku"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_afuri_harajuku"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_marion_harajuku",
+      "name": "Marion Crepes",
+      "category": "food",
+      "placeType": "food_venue",
+      "regionId": "region_tokyo",
+      "neighborhood": "Harajuku · Takeshita Street",
+      "officialWebsite": "https://www.marion.co.jp/store/tokyo/",
+      "sourceIds": [
+        "source_collection_marion_harajuku"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_marion_harajuku"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_roastery",
+      "name": "The Roastery",
+      "category": "food",
+      "placeType": "cafe",
+      "regionId": "region_tokyo",
+      "neighborhood": "Cat Street · Jingumae",
+      "officialWebsite": "https://www.tysons.jp/roastery/en/",
+      "sourceIds": [
+        "source_collection_roastery"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_roastery"
+      ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_motomura_harajuku",
+      "name": "Gyukatsu Motomura",
+      "category": "food",
+      "placeType": "restaurant",
+      "regionId": "region_tokyo",
+      "neighborhood": "WITH HARAJUKU",
+      "officialWebsite": "https://www.gyukatsu-motomura.com/store/Withharajuku",
+      "sourceIds": [
+        "source_collection_motomura_harajuku"
+      ],
+      "verificationRecordIds": [
+        "verify_collection_motomura_harajuku"
+      ],
       "status": "active"
     }
   ],
@@ -139,7 +271,8 @@
           "sequence": 4,
           "itemType": "meal",
           "suggestedTimeMode": "flexible",
-          "displayLabelOverride": "Flexible lunch buffer"
+          "displayLabelOverride": "Flexible lunch buffer",
+          "referencedEntityId": "act_harajuku_food"
         },
         {
           "scheduleItemId": "day_jp_01_item_5",
@@ -249,7 +382,7 @@
     },
     {
       "activityId": "act_shibuya",
-      "name": "Shibuya shopping cluster",
+      "name": "Shibuya Shopping Cluster",
       "category": "shopping",
       "regionId": "region_tokyo",
       "summary": "Representative sample from approved design materials.",
@@ -262,11 +395,38 @@
       "sourceIds": [
         "source_prototype"
       ],
-      "verificationRecordIds": [],
+      "verificationRecordIds": [
+        "verify_shopping_collection_editorial"
+      ],
       "status": "draft",
       "placeId": "place_shibuya",
       "recommendedDurationMinutes": 180,
-      "heroMediaId": "media_shibuya-mcs"
+      "heroMediaId": "media_shibuya-mcs",
+      "presentationVariant": "editorial",
+      "collection": {
+        "kind": "shopping",
+        "heading": "Curated Stores",
+        "categoryLabel": "Shopping & Markets",
+        "items": [
+          {
+            "placeId": "place_shibuya109",
+            "description": "A fashion-focused starting point for a browse around Shibuya."
+          },
+          {
+            "placeId": "place_nintendo_tokyo",
+            "description": "A playful detour for fans of Nintendo’s game worlds."
+          },
+          {
+            "placeId": "place_donki_shibuya",
+            "description": "Leave room for an unhurried browse and unexpected finds."
+          },
+          {
+            "placeId": "place_hands_shibuya",
+            "description": "An editorial pick for a slower, detail-minded shopping stop."
+          }
+        ]
+      },
+      "mcsNote": "Choose a few stores you especially want to visit, then leave room to browse. Sometimes the best finds are the unexpected ones."
     },
     {
       "activityId": "act_borderless",
@@ -369,28 +529,85 @@
       "regionId": "region_osaka",
       "summary": "Owner-supplied sample activity. Admission, access, operating details and scheduling remain unverified.",
       "description": "Step into a colorful world of larger-than-life game scenery and playful details. Super Nintendo World brings a lively, imaginative contrast to the quieter chapters of an Osaka trip.",
-      "experienceTags": ["Attraction", "Playful", "Photogenic", "Mixed"],
+      "experienceTags": [
+        "Attraction",
+        "Playful",
+        "Photogenic",
+        "Mixed"
+      ],
       "bestFor": "Playful exploration",
       "mcsNote": "Choose the experiences that matter most to you, and leave room to enjoy the details. Check the official site for current admission and area-access requirements before making plans.",
       "officialWebsite": "https://www.usj.co.jp/web/en/us/areas/super-nintendo-world",
-      "nearbyInspiration": [{
-        "title": "Dotonbori",
-        "locationLabel": "Elsewhere in Osaka",
-        "description": "A separate city outing for bold signs, dining inspiration and canal-side atmosphere—not inside the park.",
-        "url": "https://www.osaka-info.jp/en/spot/dotonbori/",
-        "sourceIds": ["source_dotonbori_osaka"],
-        "verificationRecordIds": ["verify_universal_nearby_identity"]
-      }],
+      "nearbyInspiration": [
+        {
+          "title": "Dotonbori",
+          "locationLabel": "Elsewhere in Osaka",
+          "description": "A separate city outing for bold signs, dining inspiration and canal-side atmosphere—not inside the park.",
+          "url": "https://www.osaka-info.jp/en/spot/dotonbori/",
+          "sourceIds": [
+            "source_dotonbori_osaka"
+          ],
+          "verificationRecordIds": [
+            "verify_universal_nearby_identity"
+          ]
+        }
+      ],
       "costIds": [],
       "badgeIds": [
         "badge_pick"
       ],
-      "sourceIds": ["source_universal_official", "source_dotonbori_osaka"],
-      "verificationRecordIds": ["verify_universal_website", "verify_universal_editorial", "verify_universal_nearby_identity"],
+      "sourceIds": [
+        "source_universal_official",
+        "source_dotonbori_osaka"
+      ],
+      "verificationRecordIds": [
+        "verify_universal_website",
+        "verify_universal_editorial",
+        "verify_universal_nearby_identity"
+      ],
       "status": "draft",
       "indoorOutdoor": "mixed",
       "presentationVariant": "standard",
       "heroMediaId": "media_universal-osaka-panorama-mcs"
+    },
+    {
+      "activityId": "act_harajuku_food",
+      "name": "Harajuku Food Picks",
+      "category": "food",
+      "regionId": "region_tokyo",
+      "presentationVariant": "editorial",
+      "costIds": [],
+      "badgeIds": [],
+      "status": "draft",
+      "description": "A savory stop, something sweet, and a coffee pause: choose the bites that fit your day.",
+      "mcsNote": "Mix one savory stop with something sweet and leave time for a relaxed café break.",
+      "collection": {
+        "kind": "food",
+        "heading": "Curated Bites",
+        "categoryLabel": "Food & Drink",
+        "items": [
+          {
+            "placeId": "place_afuri_harajuku",
+            "description": "A savory ramen stop to anchor your food wander."
+          },
+          {
+            "placeId": "place_marion_harajuku",
+            "description": "A sweet counterpoint to a savory stop."
+          },
+          {
+            "placeId": "place_roastery",
+            "description": "Make space for a coffee pause between neighborhood discoveries."
+          },
+          {
+            "placeId": "place_motomura_harajuku",
+            "description": "A beef-cutlet option for the savory part of your day."
+          }
+        ]
+      },
+      "sourceIds": [],
+      "verificationRecordIds": [
+        "verify_food_collection_editorial"
+      ]
     }
   ],
   "options": [
@@ -655,6 +872,86 @@
       "language": "en",
       "active": true,
       "notes": "Exact Yanaka Ginza shopping-street listing, also linked from the Yanaka & Nezu area guide. No distance, hours, transit time or pricing adopted."
+    },
+    {
+      "sourceId": "source_collection_shibuya109",
+      "sourceType": "operator",
+      "publisher": "SHIBUYA109",
+      "title": "SHIBUYA109 official venue listing",
+      "url": "https://shibuya109.jp/",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_nintendo_tokyo",
+      "sourceType": "operator",
+      "publisher": "Nintendo",
+      "title": "Nintendo TOKYO official venue listing",
+      "url": "https://www.nintendo.com/jp/officialstore/index.html",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_donki_shibuya",
+      "sourceType": "operator",
+      "publisher": "Don Quijote",
+      "title": "MEGA Don Quijote Shibuya official venue listing",
+      "url": "https://www.donki.com/en/store/shop_detail.php?shop_id=442",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_hands_shibuya",
+      "sourceType": "operator",
+      "publisher": "Hands",
+      "title": "Hands Shibuya official venue listing",
+      "url": "https://store.hands.net/shibuya/",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_afuri_harajuku",
+      "sourceType": "operator",
+      "publisher": "AFURI",
+      "title": "AFURI Harajuku official venue listing",
+      "url": "https://afuri.com/findus/",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_marion_harajuku",
+      "sourceType": "operator",
+      "publisher": "Marion Crepes",
+      "title": "Marion Crepes official venue listing",
+      "url": "https://www.marion.co.jp/store/tokyo/",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_roastery",
+      "sourceType": "operator",
+      "publisher": "TYSONS & COMPANY",
+      "title": "The Roastery official venue listing",
+      "url": "https://www.tysons.jp/roastery/en/",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_motomura_harajuku",
+      "sourceType": "operator",
+      "publisher": "Gyukatsu Motomura",
+      "title": "Gyukatsu Motomura official venue listing",
+      "url": "https://www.gyukatsu-motomura.com/store/Withharajuku",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
     }
   ],
   "verification": [
@@ -668,7 +965,9 @@
       "status": "verified",
       "verifiedAt": "2026-10-10",
       "verifiedBy": "OpenAI Codex for MCS owner review",
-      "sourceIds": ["source_universal_official"],
+      "sourceIds": [
+        "source_universal_official"
+      ],
       "nextReviewDue": "2027-04-10"
     },
     {
@@ -681,7 +980,9 @@
       "status": "verified",
       "verifiedAt": "2026-10-10",
       "verifiedBy": "OpenAI Codex for MCS owner review",
-      "sourceIds": ["source_universal_official"],
+      "sourceIds": [
+        "source_universal_official"
+      ],
       "nextReviewDue": "2027-04-10"
     },
     {
@@ -705,7 +1006,9 @@
       "status": "verified",
       "verifiedAt": "2026-10-10",
       "verifiedBy": "OpenAI Codex for MCS owner review",
-      "sourceIds": ["source_dotonbori_osaka"],
+      "sourceIds": [
+        "source_dotonbori_osaka"
+      ],
       "nextReviewDue": "2027-04-10",
       "notes": "Editorial rationale remains draft. No confirmed curated Dotonbori photo: use a neutral fallback. No distance, route, hours or price claims."
     },
@@ -801,6 +1104,156 @@
       ],
       "nextReviewDue": "2027-04-10",
       "notes": "QA editorial recommendation, not a scheduled itinerary stop. No confirmed curated Yanaka photograph; render the neutral editorial fallback."
+    },
+    {
+      "verificationId": "verify_collection_shibuya109",
+      "targetType": "place",
+      "targetId": "place_shibuya109",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_shibuya109"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_nintendo_tokyo",
+      "targetType": "place",
+      "targetId": "place_nintendo_tokyo",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_nintendo_tokyo"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_donki_shibuya",
+      "targetType": "place",
+      "targetId": "place_donki_shibuya",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_donki_shibuya"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_hands_shibuya",
+      "targetType": "place",
+      "targetId": "place_hands_shibuya",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_hands_shibuya"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_afuri_harajuku",
+      "targetType": "place",
+      "targetId": "place_afuri_harajuku",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_afuri_harajuku"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_marion_harajuku",
+      "targetType": "place",
+      "targetId": "place_marion_harajuku",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_marion_harajuku"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_roastery",
+      "targetType": "place",
+      "targetId": "place_roastery",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_roastery"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_collection_motomura_harajuku",
+      "targetType": "place",
+      "targetId": "place_motomura_harajuku",
+      "fieldPath": "officialWebsite",
+      "scope": "Place identity, area and official destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_motomura_harajuku"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Representative QA selection and rationale remain draft; owner commercial curation and production verification required."
+    },
+    {
+      "verificationId": "verify_shopping_collection_editorial",
+      "targetType": "activity",
+      "targetId": "act_shibuya",
+      "fieldPath": "collection",
+      "scope": "collection ordering, editorial rationale, description and MCS Note",
+      "riskLevel": "moderate",
+      "status": "needs_review",
+      "sourceIds": [],
+      "notes": "Owner-directed structural QA demonstration, not finalized MCS commercial recommendations or operational guidance."
+    },
+    {
+      "verificationId": "verify_food_collection_editorial",
+      "targetType": "activity",
+      "targetId": "act_harajuku_food",
+      "fieldPath": "collection",
+      "scope": "collection ordering, editorial rationale, description and MCS Note",
+      "riskLevel": "moderate",
+      "status": "needs_review",
+      "sourceIds": [],
+      "notes": "Owner-directed structural QA demonstration, not finalized MCS commercial recommendations or operational guidance."
     }
   ],
   "badges": [

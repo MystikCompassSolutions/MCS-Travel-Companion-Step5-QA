@@ -7,6 +7,16 @@ export function validateBundle(bundle,schema,{publish=false,now=new Date()}={}) 
  const checkRef=(kind,id)=>{if(!maps[kind].has(id))errors.push(`Missing ${kind} reference ${id}`);};
  function walk(value) {if(Array.isArray(value))return value.forEach(walk);if(!value||typeof value!=='object')return;for(const [key,v] of Object.entries(value)) {if(refFields[key]) for(const id of Array.isArray(v)?v:[v])checkRef(refFields[key],id);else if(key==='tripId'&&v!==bundle.trip.tripId)errors.push('Trip ID mismatch');walk(v);} }
  walk(bundle);
+ for(const activity of bundle.activities) if(activity.collection) {
+  const collection=activity.collection;
+  if(!collection.items.length)errors.push('Collection needs at least one place');
+  if(new Set(collection.items.map(item=>item.placeId)).size!==collection.items.length)errors.push('Duplicate collection place');
+  for(const item of collection.items) {
+   if(item.activityId===activity.activityId)errors.push('Collection cannot link to itself');
+   const target=maps.activities.get(item.activityId);
+   if(target && target.placeId!==item.placeId)errors.push('Collection activity/place mismatch');
+  }
+ }
  if(bundle.manifest.contentVersion!==bundle.trip.contentVersion)errors.push('Manifest content version mismatch');
  if(bundle.days.length!==bundle.trip.durationDays||bundle.trip.dayIds.length!==bundle.days.length)errors.push('Trip duration/day IDs mismatch');
  if(new Set(bundle.trip.dayIds).size!==bundle.days.length)errors.push('Duplicate trip day references');
