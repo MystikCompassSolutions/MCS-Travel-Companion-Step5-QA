@@ -13,6 +13,7 @@ import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
+import {activityCostPresentation, copyAddressText} from './activity-detail.js';
 
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
@@ -137,10 +138,15 @@ function disclosure(title, body, {id, open = false, className = ''} = {}) {
   return el('details', {class: `compact-disclosure ${className}`, 'data-section': id, open},
     el('summary', {}, el('span', {class: 'disclosure-title'}, title)), el('div', {class: 'disclosure-body'}, body));
 }
-function badges(activity) {
-  return el('div', {}, activity.badgeIds.slice(0, 3).map(id =>
+function badges(activity, className = '') {
+  return el('div', {class: `badge-list ${className}`.trim()}, activity.badgeIds.slice(0, 3).map(id =>
     {const badge = bundle.badges.find(badge => badge.badgeId === id);
       return el('span', {class: `badge badge-${badge.semanticType}`}, badge.label);}));
+}
+function experienceTags(activity) {
+  return activity.experienceTags?.length ? el('div', {class: 'experience-tags',
+    'aria-label': 'Experience characteristics'}, activity.experienceTags.map(tag =>
+    el('span', {class: 'experience-tag'}, tag))) : null;
 }
 function dayLabel(day) {
   const date = calendarDay(state.tripStartDate, day.dayNumber);
@@ -400,26 +406,71 @@ function detailDuration(minutes) {
 function detailCost(activity) {
   const cost = activity.costIds.map(id => bundle.costs.find(candidate => candidate.costId === id)).find(Boolean);
   if (!cost) return null;
-  const amount = cost.fixedMinor ?? cost.minimumMinor;
-  const value = amount === 0 ? 'Free · sample classification' : amount === undefined ? 'Open-ended sample estimate' :
-    `${formatMoney(amount, cost.currency)} · ${cost.basis.replaceAll('_', ' ')}`;
-  return {label: 'Sample cost', value: `${value} · unverified`};
+  const presentation = activityCostPresentation(cost, state);
+  return {icon: 'Budget', label: 'Sample cost', value: presentation.primary,
+    secondary: presentation.approximate ?? (presentation.conversionUnavailable ?
+      `Home-currency estimate unavailable · set a planning rate in Budget` : null),
+    note: 'Unverified sample value', className: 'detail-fact-cost'};
 }
 
-function detailFacts(activity, place, region) {
+function detailFacts(activity) {
   const cost = detailCost(activity);
-  const location = place?.address?.split(/,|—/)[0]?.trim() || region?.name;
   const reservation = activity.reservationInfo?.reservationLevel;
   return [
     activity.recommendedDurationMinutes ? {icon: 'clock', label: 'Duration',
       value: detailDuration(activity.recommendedDurationMinutes)} : null,
-    location ? {icon: 'Explore', label: 'Area', value: location} : null,
     activity.walkingLevel ? {icon: 'walk', label: 'Walking', value: activity.walkingLevel} : null,
     activity.indoorOutdoor ? {icon: 'compass', label: 'Setting', value: activity.indoorOutdoor} : null,
-    cost ? {icon: 'Budget', ...cost} : null,
+    cost,
     reservation && reservation !== 'none' ? {icon: 'documents', label: 'Reservation',
       value: `${reservation === 'required' ? 'Required' : 'Book ahead'} · sample guidance`} : null
   ].filter(Boolean);
+}
+
+function verifiedAddress(place) {
+  if (!place?.address) return null;
+  const verified = (place.verificationRecordIds ?? []).some(id => {
+    const record = bundle.verification.find(candidate => candidate.verificationId === id);
+    return record?.status === 'verified' && record.fieldPath === 'address';
+  });
+  return verified ? place.address : null;
+}
+
+function addressControl(activity, address) {
+  if (!address) return null;
+  const statusId = `address-copy-${activity.activityId}`;
+  const feedback = el('span', {id: statusId, class: 'address-copy-status', role: 'status',
+    'aria-live': 'polite'});
+  const control = el('button', {type: 'button', class: 'detail-address-copy',
+    'aria-label': `Copy address: ${address}`, 'aria-describedby': statusId,
+    title: 'Copy address', onClick: async () => {
+      const copied = await copyAddressText(address, navigator.clipboard);
+      feedback.textContent = copied ? 'Address copied' : 'Copy unavailable. Select the address and copy it.';
+    }}, icon('copy'));
+  return el('div', {class: 'detail-address'},
+    el('div', {class: 'detail-address-row'}, el('p', {class: 'detail-address-text'}, address), control), feedback);
+}
+
+function detailActions(activity, place, className = 'detail-actions') {
+  const officialWebsite = activity.officialWebsite ?? place?.officialWebsite;
+  const actions = [place ? button('Open Map', () => go('Explore'),
+    {class: 'primary gold-action', 'aria-label': `Open ${activity.name} in Explore map`}) : null,
+  officialWebsite && navigator.onLine ? el('a', {class: 'secondary-action', href: officialWebsite,
+    target: '_blank', rel: 'noopener noreferrer',
+    'aria-label': `Open the official ${activity.name} website in a new tab`}, icon('external'), 'Official Site') :
+    officialWebsite ? el('span', {class: 'unavailable-action'}, 'Official Site · Internet required') : null]
+    .filter(Boolean);
+  return actions.length ? el('div', {class: className}, actions) : null;
+}
+
+function detailDiscovery(activity) {
+  if (!activity.externalLinks?.length) return null;
+  return el('section', {class: 'detail-discovery', 'aria-labelledby': `discovery-${activity.activityId}`},
+    el('h2', {id: `discovery-${activity.activityId}`}, 'Discover more'),
+    navigator.onLine ? el('div', {class: 'detail-discovery-links'}, activity.externalLinks.map(link =>
+      el('a', {class: 'text-action', href: link.url, target: '_blank', rel: 'noopener noreferrer',
+        'aria-label': `${link.label} for ${activity.name} in a new tab`}, link.label, icon('external')))) :
+      el('p', {class: 'unavailable-action'}, 'External discovery links require internet.'));
 }
 
 function detailAlternative(group, activity) {
@@ -431,20 +482,21 @@ function detailAlternative(group, activity) {
   const pressed = chosen.includes(candidateOption.optionId);
   const metadata = [detailDuration(candidate.recommendedDurationMinutes), candidate.indoorOutdoor].filter(Boolean);
   return el('section', {class: 'detail-alternative', 'aria-labelledby': `alternative-${group.optionGroupId}`},
-    el('div', {class: 'alternative-heading'},
-      el('p', {class: 'section-kicker'}, 'Curated alternative'),
-      el('h2', {id: `alternative-${group.optionGroupId}`}, candidate.name)),
-    el('div', {class: 'alternative-card'},
+    el('p', {class: 'section-kicker'}, 'Looking for an alternative?'),
+    el('button', {type: 'button', onClick: () => {
+      commit(current => chooseOption(bundle, current, group.optionGroupId, [candidateOption.optionId]))
+        .catch(() => {});
+    }, class: 'alternative-card', 'aria-pressed': String(pressed),
+      'aria-label': `${pressed ? 'Selected' : 'Choose'} ${candidate.name}`,
+      disabled: pressed || !!storageIssue},
       mediaImage(bundle, candidate.heroMediaId, 'alternative-image', true),
       el('div', {class: 'alternative-copy'},
-        el('p', {}, 'An MCS-authored option for the same itinerary slot.'),
+        el('strong', {id: `alternative-${group.optionGroupId}`}, candidate.name),
+        el('p', {}, candidateOption.subtitle ?? candidate.description ??
+          'An MCS-authored option for the same itinerary slot.'),
         metadata.length ? el('p', {class: 'alternative-meta'}, metadata.join(' · ')) : null,
-        badges(candidate),
-        button(pressed ? 'Selected for my trip' : 'Use this option →', () => {
-          commit(current => chooseOption(bundle, current, group.optionGroupId, [candidateOption.optionId]))
-            .catch(() => {});
-        }, {class: 'secondary-action alternative-action', 'aria-pressed': String(pressed),
-          'aria-label': `${pressed ? 'Selected' : 'Choose'} ${candidate.name}`, disabled: pressed || !!storageIssue}))));
+        pressed ? el('span', {class: 'alternative-selected'}, 'Selected for my trip') : null),
+      el('span', {class: 'alternative-chevron', 'aria-hidden': 'true'}, '›')));
 }
 
 function detail(activity) {
@@ -459,32 +511,34 @@ function detail(activity) {
   const region = bundle.regions.find(candidate => candidate.regionId === activity.regionId);
   const groups = bundle.optionGroups.filter(group => group.optionIds.some(id =>
     bundle.options.find(option => option.optionId === id)?.activityIds.includes(activity.activityId)));
-  const facts = detailFacts(activity, place, region);
-  const area = place?.address?.split(/,|—/)[0]?.trim();
+  const facts = detailFacts(activity);
+  const address = verifiedAddress(place);
+  const location = [place?.neighborhood, region?.name].filter((item, index, all) =>
+    item && all.indexOf(item) === index).join(' · ');
+  const primaryActions = detailActions(activity, place,
+    activity.mcsNote ? 'mcs-note-actions' : 'detail-actions');
   const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
-    button('‹ Back to day', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;}, {class: 'detail-back'}),
-    el('div', {class: 'hero-content'}, el('p', {class: 'section-kicker'},
-      [activity.category, area, region?.name ?? bundle.trip.title].filter((item, index, all) =>
-        item && all.indexOf(item) === index).join(' · ')), el('h1', {}, activity.name), badges(activity)),
+    button('‹', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;},
+      {class: 'detail-back', 'aria-label': 'Back to itinerary day', title: 'Back to itinerary day'}),
+    el('div', {class: 'hero-content'}, el('h1', {}, activity.name),
+      location ? el('p', {class: 'detail-location'}, location) : null,
+      addressControl(activity, address), badges(activity, 'operational-badges')),
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
-    el('section', {class: 'detail-intro'}, el('p', {class: 'detail-summary'}, activity.summary),
+    el('section', {class: 'detail-intro'}, experienceTags(activity),
+      el('p', {class: 'detail-summary'}, activity.description ?? activity.summary),
       facts.length ? el('div', {class: 'detail-facts', 'aria-label': 'Activity quick facts'}, facts.map(fact =>
-        el('div', {class: 'detail-fact'}, icon(fact.icon), el('span', {},
-          el('small', {}, fact.label), el('strong', {}, fact.value))))) : null),
+        el('div', {class: `detail-fact ${fact.className ?? ''}`.trim()}, icon(fact.icon), el('span', {},
+          el('small', {}, fact.label), el('strong', {}, fact.value),
+          fact.secondary ? el('span', {class: 'detail-fact-secondary'}, fact.secondary) : null,
+          fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null),
     activity.mcsNote ? el('section', {class: 'compact-section mcs-note'},
       el('h2', {}, icon('compass'), 'MCS note'),
-      el('p', {}, activity.mcsNote)) : null,
-    el('div', {class: 'detail-actions'},
-      place ? button('Open in Explore', () => go('Explore'), {class: 'primary gold-action'}) : null,
-      place && navigator.onLine ? el('a', {class: 'text-action',
-        href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
-        target: '_blank', rel: 'noopener noreferrer'}, icon('Explore'), 'Open external map') : null,
-      place?.officialWebsite && navigator.onLine ? el('a', {class: 'secondary-action', href: place.officialWebsite,
-        target: '_blank', rel: 'noopener noreferrer'}, icon('external'), 'Official site') :
-        el('span', {class: 'unavailable-action'}, navigator.onLine ? 'Official site · Pending verification' : 'External maps & sites need internet')),
+      el('p', {}, activity.mcsNote), primaryActions) : primaryActions,
     ...groups.map(group => detailAlternative(group, activity)),
-    place ? disclosure('Location', el('p', {}, place.address ?? 'Address pending verification'), {id: 'location'}) : null,
+    detailDiscovery(activity),
+    place && !address ? disclosure('Location', el('p', {}, place.address ?? 'Address pending verification'),
+      {id: 'location'}) : null,
     activity.reservationInfo ? disclosure('Booking', el('p', {}, activity.reservationInfo.bookAheadGuidance), {id: 'booking'}) : null,
     activity.whatToBring?.length ? disclosure('What to bring',
       el('ul', {}, activity.whatToBring.map(item => el('li', {}, item))), {id: 'bring'}) : null,
@@ -497,8 +551,8 @@ function detail(activity) {
     activity.optionalUpgradeIds?.length ? disclosure('Optional sample upgrades',
       [el('p', {}, 'Fictional planning values; confirm current availability and prices.'), ...upgradeChoices(activity)],
       {id: 'upgrades'}) : null,
-    media ? disclosure('Image credit', mediaCredits({...bundle, media: [media]}).length ?
-      mediaCredits({...bundle, media: [media]}) : el('p', {}, 'Original MCS illustrative placeholder.'), {id: 'image-credit'}) : null];
+    media?.sourceOwnership === 'external' ? disclosure('Image credit',
+      mediaCredits({...bundle, media: [media]}), {id: 'image-credit'}) : null];
   main.replaceChildren(...nodes.filter(Boolean)); appScroll.scrollTop = 0; main.focus({preventScroll: true});
 }
 

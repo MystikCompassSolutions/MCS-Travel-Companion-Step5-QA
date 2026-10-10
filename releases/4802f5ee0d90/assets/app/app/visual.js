@@ -19,6 +19,7 @@ export function icon(name, className = 'ui-icon') {
     lock: 'M5 10h14v12H5z M8 10V6a4 4 0 0 1 8 0v4 M12 15v3',
     arrow: 'M4 12h16 M14 6l6 6-6 6',
     external: 'M14 3h7v7 M21 3l-9 9 M10 3H3v18h18v-7',
+    copy: 'M9 8h11v13H9z M5 16H3V3h12v2',
     close: 'M6 6l12 12 M6 18 18 6',
     done: 'M12 22a10 10 0 1 0 0-20a10 10 0 1 0 0 20z M7 12l3 3 7-7',
     incomplete: 'M12 22a10 10 0 1 0 0-20a10 10 0 1 0 0 20z',

@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.3",
+    "contentVersion": "0.1.4",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.3",
+    "contentVersion": "0.1.4",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -73,7 +73,16 @@
       "name": "teamLab Borderless",
       "category": "attraction",
       "regionId": "region_tokyo",
-      "address": "Azabudai, Tokyo — exact address pending verification",
+      "address": "Azabudai Hills Garden Plaza B B1, 5-9 Toranomon, Minato-ku, Tokyo, Japan",
+      "neighborhood": "Azabudai Hills",
+      "officialWebsite": "https://www.teamlab.art/e/tokyo/",
+      "sourceIds": [
+        "source_teamlab_borderless_official",
+        "source_azabudai_borderless_official"
+      ],
+      "verificationRecordIds": [
+        "verify_borderless_address"
+      ],
       "status": "active"
     }
   ],
@@ -233,18 +242,43 @@
         "badge_book"
       ],
       "sourceIds": [
-        "source_prototype"
+        "source_prototype",
+        "source_teamlab_borderless_official",
+        "source_teamlab_borderless_google",
+        "source_teamlab_borderless_tripadvisor"
       ],
-      "verificationRecordIds": [],
+      "verificationRecordIds": [
+        "verify_borderless_website",
+        "verify_borderless_external_links"
+      ],
       "status": "draft",
       "placeId": "place_borderless",
+      "experienceTags": [
+        "Immersive",
+        "Photogenic",
+        "Indoor"
+      ],
+      "description": "Wander through a continuous world of light and color as digital artworks move beyond individual rooms and blend into one another.",
       "recommendedDurationMinutes": 150,
       "indoorOutdoor": "indoor",
       "reservationInfo": {
         "reservationLevel": "recommended",
-        "bookAheadGuidance": "Sample reservation guidance; verify official booking before use."
+        "bookAheadGuidance": "Illustrative sample guidance; confirm current admission and booking requirements on the official venue site."
       },
-      "mcsNote": "A strong late-afternoon anchor. Sample guidance from the prototype.",
+      "mcsNote": "The experience is intentionally map-free. Leave room to wander, and use the visit as the late-afternoon anchor for this sample day.",
+      "officialWebsite": "https://www.teamlab.art/e/tokyo/",
+      "externalLinks": [
+        {
+          "label": "View on Google",
+          "url": "https://maps.app.goo.gl/c97XS2Sc5oDPtjvy6",
+          "service": "google"
+        },
+        {
+          "label": "View on Tripadvisor",
+          "url": "https://www.tripadvisor.com/Attraction_Review-g1066451-d27133868-Reviews-Teamlab_Borderless_Tokyo-Minato_Tokyo_Tokyo_Prefecture_Kanto.html",
+          "service": "tripadvisor"
+        }
+      ],
       "heroMediaId": "media_teamlab-borderless-mcs"
     },
     {
@@ -315,6 +349,7 @@
     {
       "optionId": "option_planets",
       "title": "Swap to teamLab Planets",
+      "subtitle": "A different immersive experience",
       "activityIds": [
         "act_planets"
       ],
@@ -475,9 +510,103 @@
       "accessedAt": "2026-10-05",
       "active": true,
       "notes": "Not an authoritative source for destination facts."
+    },
+    {
+      "sourceId": "source_teamlab_borderless_official",
+      "sourceType": "operator",
+      "publisher": "teamLab",
+      "title": "teamLab Borderless: MORI Building DIGITAL ART MUSEUM",
+      "url": "https://www.teamlab.art/e/tokyo/",
+      "accessedAt": "2026-10-09",
+      "language": "en",
+      "active": true,
+      "notes": "Official venue page used for identity, address and official-site verification."
+    },
+    {
+      "sourceId": "source_azabudai_borderless_official",
+      "sourceType": "official",
+      "publisher": "Azabudai Hills",
+      "title": "MORI Building DIGITAL ART MUSEUM: teamLab Borderless",
+      "url": "https://www.azabudai-hills.com/teamlabborderless/index.html",
+      "accessedAt": "2026-10-09",
+      "language": "ja",
+      "active": true,
+      "notes": "Official development venue page independently supports the Garden Plaza B location."
+    },
+    {
+      "sourceId": "source_teamlab_borderless_google",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "teamLab Borderless: MORI Building DIGITAL ART MUSEUM",
+      "url": "https://maps.app.goo.gl/c97XS2Sc5oDPtjvy6",
+      "accessedAt": "2026-10-09",
+      "language": "en",
+      "active": true,
+      "notes": "Exact Google destination linked from the official teamLab venue page."
+    },
+    {
+      "sourceId": "source_teamlab_borderless_tripadvisor",
+      "sourceType": "secondary",
+      "publisher": "Tripadvisor",
+      "title": "teamLab Borderless: MORI Building DIGITAL ART MUSEUM",
+      "url": "https://www.tripadvisor.com/Attraction_Review-g1066451-d27133868-Reviews-Teamlab_Borderless_Tokyo-Minato_Tokyo_Tokyo_Prefecture_Kanto.html",
+      "accessedAt": "2026-10-09",
+      "language": "en",
+      "active": true,
+      "notes": "Exact venue listing only; no rating or review count is copied into the sample."
     }
   ],
-  "verification": [],
+  "verification": [
+    {
+      "verificationId": "verify_borderless_address",
+      "targetType": "place",
+      "targetId": "place_borderless",
+      "fieldPath": "address",
+      "scope": "Activity Detail identity block",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-09",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_teamlab_borderless_official",
+        "source_azabudai_borderless_official"
+      ],
+      "nextReviewDue": "2027-04-09",
+      "notes": "English rendering follows the official teamLab venue page; Japanese official page independently confirms Garden Plaza B B1F."
+    },
+    {
+      "verificationId": "verify_borderless_website",
+      "targetType": "activity",
+      "targetId": "act_borderless",
+      "fieldPath": "officialWebsite",
+      "scope": "Activity Detail primary action",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-09",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_teamlab_borderless_official"
+      ],
+      "nextReviewDue": "2027-04-09"
+    },
+    {
+      "verificationId": "verify_borderless_external_links",
+      "targetType": "activity",
+      "targetId": "act_borderless",
+      "fieldPath": "externalLinks",
+      "scope": "Activity Detail discovery links",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-09",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_teamlab_borderless_google",
+        "source_teamlab_borderless_tripadvisor"
+      ],
+      "nextReviewDue": "2027-04-09",
+      "notes": "Links resolve to the exact Azabudai Hills venue; rating data is intentionally omitted."
+    }
+  ],
   "badges": [
     {
       "badgeId": "badge_pick",
