@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.5",
+    "contentVersion": "0.1.6",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.5",
+    "contentVersion": "0.1.6",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -83,6 +83,15 @@
       "verificationRecordIds": [
         "verify_borderless_address"
       ],
+      "status": "active"
+    },
+    {
+      "placeId": "place_universal_osaka",
+      "name": "Universal Studios Japan",
+      "category": "attraction",
+      "regionId": "region_osaka",
+      "sourceIds": ["source_universal_official"],
+      "verificationRecordIds": ["verify_universal_identity"],
       "status": "active"
     }
   ],
@@ -354,16 +363,30 @@
     },
     {
       "activityId": "act_universal_osaka",
+      "placeId": "place_universal_osaka",
       "name": "Universal Studios Japan — Super Nintendo World sample visit",
       "category": "attraction",
       "regionId": "region_osaka",
       "summary": "Owner-supplied sample activity. Admission, access, operating details and scheduling remain unverified.",
+      "description": "Step into a colorful world of larger-than-life game scenery and playful details. Super Nintendo World brings a lively, imaginative contrast to the quieter chapters of an Osaka trip.",
+      "experienceTags": ["Attraction", "Playful", "Photogenic", "Mixed"],
+      "bestFor": "Playful exploration",
+      "mcsNote": "Choose the experiences that matter most to you, and leave room to enjoy the details. Check the official site for current admission and area-access requirements before making plans.",
+      "officialWebsite": "https://www.usj.co.jp/web/en/us/areas/super-nintendo-world",
+      "nearbyInspiration": [{
+        "title": "Dotonbori",
+        "locationLabel": "Elsewhere in Osaka",
+        "description": "A separate city outing for bold signs, dining inspiration and canal-side atmosphere—not inside the park.",
+        "url": "https://www.osaka-info.jp/en/spot/dotonbori/",
+        "sourceIds": ["source_dotonbori_osaka"],
+        "verificationRecordIds": ["verify_universal_nearby_identity"]
+      }],
       "costIds": [],
       "badgeIds": [
         "badge_pick"
       ],
-      "sourceIds": [],
-      "verificationRecordIds": [],
+      "sourceIds": ["source_universal_official", "source_dotonbori_osaka"],
+      "verificationRecordIds": ["verify_universal_website", "verify_universal_editorial", "verify_universal_nearby_identity"],
       "status": "draft",
       "indoorOutdoor": "mixed",
       "presentationVariant": "standard",
@@ -536,6 +559,28 @@
   ],
   "sources": [
     {
+      "sourceId": "source_universal_official",
+      "sourceType": "operator",
+      "publisher": "Universal Studios Japan",
+      "title": "SUPER NINTENDO WORLD — official Universal Studios Japan page",
+      "url": "https://www.usj.co.jp/web/en/us/areas/super-nintendo-world",
+      "accessedAt": "2026-10-10",
+      "language": "en",
+      "active": true,
+      "notes": "Verified venue identity and official destination link only. No pricing, duration, entry procedure, opening hours or Express Pass rules adopted."
+    },
+    {
+      "sourceId": "source_dotonbori_osaka",
+      "sourceType": "tourism_board",
+      "publisher": "Osaka Convention & Tourism Bureau",
+      "title": "Dotonbori — official Osaka tourism listing",
+      "url": "https://www.osaka-info.jp/en/spot/dotonbori/",
+      "accessedAt": "2026-10-10",
+      "language": "en",
+      "active": true,
+      "notes": "Identity and linked tourism destination only. A separate Osaka outing, not a park attraction or walking-distance claim. No photo copied."
+    },
+    {
       "sourceId": "source_prototype",
       "sourceType": "secondary",
       "publisher": "Mystik Compass Solutions",
@@ -613,6 +658,57 @@
     }
   ],
   "verification": [
+    {
+      "verificationId": "verify_universal_identity",
+      "targetType": "place",
+      "targetId": "place_universal_osaka",
+      "fieldPath": "name",
+      "scope": "Venue identity only; no address or geographic coordinates",
+      "riskLevel": "stable",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": ["source_universal_official"],
+      "nextReviewDue": "2027-04-10"
+    },
+    {
+      "verificationId": "verify_universal_website",
+      "targetType": "activity",
+      "targetId": "act_universal_osaka",
+      "fieldPath": "officialWebsite",
+      "scope": "Exact official area page, not operational guidance",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": ["source_universal_official"],
+      "nextReviewDue": "2027-04-10"
+    },
+    {
+      "verificationId": "verify_universal_editorial",
+      "targetType": "activity",
+      "targetId": "act_universal_osaka",
+      "fieldPath": "description",
+      "scope": "description, experienceTags, bestFor and mcsNote",
+      "riskLevel": "moderate",
+      "status": "needs_review",
+      "sourceIds": [],
+      "notes": "Owner-directed illustrative editorial copy based on the approved Universal design reference and existing MCS photography. Not researched production guidance. Mockup duration, cost and visitor-volume claims were not adopted."
+    },
+    {
+      "verificationId": "verify_universal_nearby_identity",
+      "targetType": "activity",
+      "targetId": "act_universal_osaka",
+      "fieldPath": "nearbyInspiration",
+      "scope": "Dotonbori identity and tourism-board destination only",
+      "riskLevel": "stable",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": ["source_dotonbori_osaka"],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Editorial rationale remains draft. No confirmed curated Dotonbori photo: use a neutral fallback. No distance, route, hours or price claims."
+    },
     {
       "verificationId": "verify_borderless_address",
       "targetType": "place",

@@ -27,6 +27,11 @@ export function activityPresentationVariant(activity) {
     activity.presentationVariant : 'standard';
 }
 
+// Keep published variant tokens compatible while sharing just two visual families.
+export function activityPresentationFamily(activity) {
+  return activityPresentationVariant(activity) === 'immersive' ? 'immersive' : 'light';
+}
+
 export function activityEditorialContent(activity) {
   return {
     description: editorialText(activity.description ?? activity.summary)?.trim() || null,

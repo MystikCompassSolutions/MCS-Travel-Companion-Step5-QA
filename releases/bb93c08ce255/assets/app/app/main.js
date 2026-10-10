@@ -13,7 +13,7 @@ import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
-import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant,
+import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant, activityPresentationFamily,
   activityEditorialContent, nearbyInspirationItems} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
 
@@ -160,9 +160,10 @@ function badges(activity, className = '') {
     {const badge = bundle.badges.find(badge => badge.badgeId === id);
       return el('span', {class: `badge badge-${badge.semanticType}`}, badge.label);}));
 }
-function experienceTags(activity, tone) {
-  const tagIcons = {Historic: 'culture', Peaceful: 'leaf', Photogenic: 'camera', Outdoor: 'tree'};
-  const strip = tone === 'editorial' ? {
+function experienceTags(activity, light) {
+  const tagIcons = {Historic: 'culture', Peaceful: 'leaf', Photogenic: 'camera', Outdoor: 'tree',
+    Attraction: 'compass', Playful: 'leaf', Mixed: 'map'};
+  const strip = light ? {
     role: 'group', tabindex: 0,
     'aria-label': 'Experience characteristics. Scroll with Left and Right arrow keys, Home or End.',
     onkeydown: event => {
@@ -176,7 +177,7 @@ function experienceTags(activity, tone) {
   } : {};
   return activity.experienceTags?.length ? el('div', {class: 'experience-tags',
     'aria-label': 'Experience characteristics', ...strip}, activity.experienceTags.map(tag =>
-    el('span', {class: 'experience-tag'}, tone === 'editorial' && tagIcons[tag] ? icon(tagIcons[tag]) : null, tag))) : null;
+    el('span', {class: 'experience-tag'}, light && tagIcons[tag] ? icon(tagIcons[tag]) : null, tag))) : null;
 }
 function dayLabel(day) {
   const date = calendarDay(state.tripStartDate, day.dayNumber);
@@ -558,6 +559,7 @@ function detail(activity) {
   view = 'Itinerary'; renderNav();
   const place = bundle.places.find(candidate => candidate.placeId === activity.placeId);
   const tone = activityPresentationVariant(activity);
+  const light = activityPresentationFamily(activity) === 'light';
   const editorial = activityEditorialContent(activity);
   main.dataset.screen = `detail-${tone}`;
   document.documentElement.dataset.screen = main.dataset.screen;
@@ -570,8 +572,8 @@ function detail(activity) {
   const location = [place?.neighborhood, region?.name].filter((item, index, all) =>
     item && all.indexOf(item) === index).join(' · ');
   const primaryActions = detailActions(activity, place,
-    tone === 'editorial' ? 'detail-actions editorial-actions' : editorial.note ? 'mcs-note-actions' : 'detail-actions',
-    tone === 'editorial');
+    light ? 'detail-actions editorial-actions' : editorial.note ? 'mcs-note-actions' : 'detail-actions',
+    light);
   const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
     button('‹', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;},
       {class: 'detail-back', 'aria-label': 'Back to itinerary day', title: 'Back to itinerary day'}),
@@ -581,7 +583,7 @@ function detail(activity) {
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
     editorial.description || activity.experienceTags?.length || facts.length ?
-      el('section', {class: 'detail-intro'}, experienceTags(activity, tone),
+      el('section', {class: 'detail-intro'}, experienceTags(activity, light),
       editorial.description ? el('p', {class: 'detail-summary'}, editorial.description) : null,
       facts.length ? el('div', {class: 'detail-facts', 'aria-label': 'Activity quick facts'}, facts.map(fact =>
         el('div', {class: `detail-fact ${fact.className ?? ''}`.trim()}, icon(fact.icon), el('span', {},
@@ -589,9 +591,9 @@ function detail(activity) {
           fact.secondary ? el('span', {class: 'detail-fact-secondary'}, fact.secondary) : null,
           fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null) : null,
     editorial.note ? el('section', {class: 'compact-section mcs-note'},
-      el('h2', {}, icon('compass'), tone === 'editorial' ? 'MCS Note' : 'MCS note'),
-      el('p', {}, editorial.note), tone === 'editorial' ? null : primaryActions) : tone === 'editorial' ? null : primaryActions,
-    tone === 'editorial' ? primaryActions : null,
+      el('h2', {}, icon('compass'), light ? 'MCS Note' : 'MCS note'),
+      el('p', {}, editorial.note), light ? null : primaryActions) : light ? null : primaryActions,
+    light ? primaryActions : null,
     ...groups.map(group => detailAlternative(group, activity)),
     detailNearby(activity),
     detailDiscovery(activity),
