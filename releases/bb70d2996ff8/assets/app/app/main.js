@@ -14,7 +14,7 @@ import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
 import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant,
-  activityEditorialContent} from './activity-detail.js';
+  activityEditorialContent, nearbyInspirationItems} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
 
 const main = document.querySelector('#main');
@@ -160,10 +160,11 @@ function badges(activity, className = '') {
     {const badge = bundle.badges.find(badge => badge.badgeId === id);
       return el('span', {class: `badge badge-${badge.semanticType}`}, badge.label);}));
 }
-function experienceTags(activity) {
+function experienceTags(activity, tone) {
+  const tagIcons = {Historic: 'culture', Peaceful: 'leaf', Photogenic: 'camera', Outdoor: 'tree'};
   return activity.experienceTags?.length ? el('div', {class: 'experience-tags',
     'aria-label': 'Experience characteristics'}, activity.experienceTags.map(tag =>
-    el('span', {class: 'experience-tag'}, tag))) : null;
+    el('span', {class: 'experience-tag'}, tone === 'editorial' && tagIcons[tag] ? icon(tagIcons[tag]) : null, tag))) : null;
 }
 function dayLabel(day) {
   const date = calendarDay(state.tripStartDate, day.dayNumber);
@@ -440,6 +441,7 @@ function detailFacts(activity) {
     cost,
     reservation && reservation !== 'none' ? {icon: 'documents', label: 'Reservation',
       value: reservation === 'required' ? 'Required' : 'Book ahead'} : null,
+    activity.bestFor?.trim() ? {icon: 'walk', label: 'Best For', value: activity.bestFor} : null,
     activity.walkingLevel ? {icon: 'walk', label: 'Walking', value: activity.walkingLevel} : null
   ].filter(Boolean);
 }
@@ -468,9 +470,9 @@ function addressControl(activity, address) {
     el('div', {class: 'detail-address-row'}, el('p', {class: 'detail-address-text'}, address), control), feedback);
 }
 
-function detailActions(activity, place, className = 'detail-actions') {
+function detailActions(activity, place, className = 'detail-actions', editorial = false) {
   const officialWebsite = activity.officialWebsite ?? place?.officialWebsite;
-  const actions = [place ? button('Open Map', () => go('Explore'),
+  const actions = [place ? button(editorial ? [icon('map'), 'Open Map'] : 'Open Map', () => go('Explore'),
     {class: 'primary gold-action', 'aria-label': `Open ${editorialText(activity.name)} in Explore map`}) : null,
   officialWebsite && navigator.onLine ? el('a', {class: 'secondary-action', href: officialWebsite,
     target: '_blank', rel: 'noopener noreferrer',
@@ -478,6 +480,29 @@ function detailActions(activity, place, className = 'detail-actions') {
     officialWebsite ? el('span', {class: 'unavailable-action'}, 'Official Site · Internet required') : null]
     .filter(Boolean);
   return actions.length ? el('div', {class: className}, actions) : null;
+}
+
+function detailNearby(activity) {
+  const items = nearbyInspirationItems(activity, bundle, navigator.onLine);
+  if (!items.length) return null;
+  return el('section', {class: 'detail-nearby', 'aria-labelledby': `nearby-${activity.activityId}`},
+    el('h2', {id: `nearby-${activity.activityId}`}, 'Nearby Inspiration'), items.map(item => {
+      const image = mediaImage(bundle, item.heroMediaId, 'nearby-image', true);
+      const visual = el('span', {class: 'nearby-visual', 'aria-hidden': 'true'}, icon('Explore'), image);
+      // A missing/broken derivative reveals a neutral location icon, not a
+      // substitute photograph claiming to depict the recommended place.
+      if (image) image.addEventListener('error', () => image.remove(), {once: true});
+      const children = [visual, el('span', {class: 'nearby-copy'},
+        el('strong', {}, item.title), item.locationLabel ? el('span', {class: 'nearby-location'}, item.locationLabel) : null,
+        el('span', {class: 'nearby-rationale'}, item.description),
+        item.needsInternet ? el('span', {class: 'unavailable-action'}, 'More about this place · Internet required') : null),
+        item.target || item.url ? icon(item.target ? 'arrow' : 'external', 'ui-icon nearby-arrow') : null];
+      if (item.target) return button(children, () => detail(item.target),
+        {class: 'nearby-card', 'aria-label': `Explore ${item.title}`});
+      if (item.url) return el('a', {class: 'nearby-card', href: item.url, target: '_blank',
+        rel: 'noopener noreferrer', 'aria-label': `Explore ${item.title} in a new tab`}, children);
+      return el('div', {class: 'nearby-card'}, children);
+    }));
 }
 
 function detailDiscovery(activity) {
@@ -533,7 +558,8 @@ function detail(activity) {
   const location = [place?.neighborhood, region?.name].filter((item, index, all) =>
     item && all.indexOf(item) === index).join(' · ');
   const primaryActions = detailActions(activity, place,
-    editorial.note ? 'mcs-note-actions' : 'detail-actions');
+    tone === 'editorial' ? 'detail-actions editorial-actions' : editorial.note ? 'mcs-note-actions' : 'detail-actions',
+    tone === 'editorial');
   const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
     button('‹', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;},
       {class: 'detail-back', 'aria-label': 'Back to itinerary day', title: 'Back to itinerary day'}),
@@ -543,7 +569,7 @@ function detail(activity) {
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
     editorial.description || activity.experienceTags?.length || facts.length ?
-      el('section', {class: 'detail-intro'}, experienceTags(activity),
+      el('section', {class: 'detail-intro'}, experienceTags(activity, tone),
       editorial.description ? el('p', {class: 'detail-summary'}, editorial.description) : null,
       facts.length ? el('div', {class: 'detail-facts', 'aria-label': 'Activity quick facts'}, facts.map(fact =>
         el('div', {class: `detail-fact ${fact.className ?? ''}`.trim()}, icon(fact.icon), el('span', {},
@@ -551,9 +577,11 @@ function detail(activity) {
           fact.secondary ? el('span', {class: 'detail-fact-secondary'}, fact.secondary) : null,
           fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null) : null,
     editorial.note ? el('section', {class: 'compact-section mcs-note'},
-      el('h2', {}, icon('compass'), 'MCS note'),
-      el('p', {}, editorial.note), primaryActions) : primaryActions,
+      el('h2', {}, icon('compass'), tone === 'editorial' ? 'MCS Note' : 'MCS note'),
+      el('p', {}, editorial.note), tone === 'editorial' ? null : primaryActions) : tone === 'editorial' ? null : primaryActions,
+    tone === 'editorial' ? primaryActions : null,
     ...groups.map(group => detailAlternative(group, activity)),
+    detailNearby(activity),
     detailDiscovery(activity),
     place?.address && !address ? disclosure('Location', el('p', {}, place.address),
       {id: 'location'}) : null,

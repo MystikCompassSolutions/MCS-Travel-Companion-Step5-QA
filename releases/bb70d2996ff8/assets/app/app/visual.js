@@ -24,7 +24,11 @@ export function icon(name, className = 'ui-icon') {
     done: 'M12 22a10 10 0 1 0 0-20a10 10 0 1 0 0 20z M7 12l3 3 7-7',
     incomplete: 'M12 22a10 10 0 1 0 0-20a10 10 0 1 0 0 20z',
     food: 'M4 2v7a3 3 0 0 0 6 0V2 M7 2v20 M20 22V2c-5 2-5 10 0 10',
-    shopping: 'M4 7h16l1 15H3z M8 7V5a4 4 0 0 1 8 0v2'
+    shopping: 'M4 7h16l1 15H3z M8 7V5a4 4 0 0 1 8 0v2',
+    leaf: 'M4 20 18 6 M4 16C2 7 10 3 21 3c0 11-4 19-13 16',
+    camera: 'M3 7h4l2-3h6l2 3h4v14H3z M12 10a4 4 0 1 0 0 8a4 4 0 1 0 0-8',
+    tree: 'M12 2 5 11h4l-6 7h18l-6-7h4z M12 18v4',
+    map: 'm3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2z M9 3v16 M15 5v16'
   };
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   for (const [key, value] of Object.entries({class: className, viewBox: '0 0 24 24',

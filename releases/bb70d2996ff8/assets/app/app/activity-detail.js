@@ -35,6 +35,18 @@ export function activityEditorialContent(activity) {
   };
 }
 
+// A missing target leaves readable editorial content, never a dead link. Local
+// media is optional, and external discovery never needs to load to render a card.
+export function nearbyInspirationItems(activity, bundle, online = true) {
+  return (activity.nearbyInspiration ?? []).filter(item => item.title?.trim() && item.description?.trim())
+    .map(item => {
+      const target = bundle.activities.find(candidate => candidate.activityId === item.activityId);
+      let url = null;
+      try {if (['https:', 'http:'].includes(new URL(item.url).protocol)) url = item.url;} catch { /* No external action. */ }
+      return {...item, target, url: online ? url : null, needsInternet: !target && !!url && !online};
+    });
+}
+
 function basisLabel(basis) {
   return basis?.replaceAll('_', ' ') ?? '';
 }

@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.4",
+    "contentVersion": "0.1.5",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.4",
+    "contentVersion": "0.1.5",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -187,7 +187,6 @@
   "activities": [
     {
       "activityId": "act_nezu",
-      "presentationVariant": "editorial",
       "name": "Nezu Shrine",
       "category": "attraction",
       "regionId": "region_tokyo",
@@ -199,13 +198,44 @@
         "badge_free"
       ],
       "sourceIds": [
-        "source_prototype"
+        "source_prototype",
+        "source_nezu_official",
+        "source_yanaka_nezu_tokyo"
       ],
-      "verificationRecordIds": [],
+      "verificationRecordIds": [
+        "verify_nezu_website",
+        "verify_nezu_editorial",
+        "verify_nezu_nearby_identity"
+      ],
       "status": "draft",
       "placeId": "place_nezu",
       "recommendedDurationMinutes": 75,
       "indoorOutdoor": "outdoor",
+      "experienceTags": [
+        "Historic",
+        "Peaceful",
+        "Photogenic",
+        "Outdoor"
+      ],
+      "bestFor": "Slow stroll",
+      "description": "Vermilion torii and leafy paths give this shrine a serene character. Take a slower moment here and enjoy a quieter side of Tokyo.",
+      "mcsNote": "Consider a morning visit as a gentle start to the day, with room to linger. Pair this stop with exploring the surrounding Yanesen neighborhoods.",
+      "officialWebsite": "https://nedujinja.or.jp/",
+      "nearbyInspiration": [
+        {
+          "title": "Yanaka Ginza",
+          "locationLabel": "Tokyo",
+          "description": "An old-town shopping street for an unhurried browse.",
+          "url": "https://www.gotokyo.org/en/spot/170/index.html",
+          "sourceIds": [
+            "source_yanaka_nezu_tokyo"
+          ],
+          "verificationRecordIds": [
+            "verify_nezu_nearby_identity"
+          ]
+        }
+      ],
+      "presentationVariant": "editorial",
       "heroMediaId": "media_nezu"
     },
     {
@@ -231,7 +261,6 @@
     },
     {
       "activityId": "act_borderless",
-      "presentationVariant": "immersive",
       "name": "teamLab Borderless",
       "category": "attraction",
       "regionId": "region_tokyo",
@@ -281,11 +310,11 @@
           "service": "tripadvisor"
         }
       ],
+      "presentationVariant": "immersive",
       "heroMediaId": "media_teamlab-borderless-mcs"
     },
     {
       "activityId": "act_planets",
-      "presentationVariant": "immersive",
       "name": "teamLab Planets",
       "category": "attraction",
       "regionId": "region_tokyo",
@@ -302,6 +331,7 @@
       "verificationRecordIds": [],
       "status": "draft",
       "indoorOutdoor": "indoor",
+      "presentationVariant": "immersive",
       "heroMediaId": "media_immersive"
     },
     {
@@ -324,7 +354,6 @@
     },
     {
       "activityId": "act_universal_osaka",
-      "presentationVariant": "standard",
       "name": "Universal Studios Japan — Super Nintendo World sample visit",
       "category": "attraction",
       "regionId": "region_osaka",
@@ -337,6 +366,7 @@
       "verificationRecordIds": [],
       "status": "draft",
       "indoorOutdoor": "mixed",
+      "presentationVariant": "standard",
       "heroMediaId": "media_universal-osaka-panorama-mcs"
     }
   ],
@@ -558,6 +588,28 @@
       "language": "en",
       "active": true,
       "notes": "Exact venue listing only; no rating or review count is copied into the sample."
+    },
+    {
+      "sourceId": "source_nezu_official",
+      "sourceType": "official",
+      "publisher": "Nezu Shrine",
+      "title": "Nezu Shrine official website",
+      "url": "https://nedujinja.or.jp/",
+      "accessedAt": "2026-10-10",
+      "language": "ja",
+      "active": true,
+      "notes": "Verified official-site identity only; also linked by GO TOKYO /en/spot/70/. Does not verify sample duration, free-cost fixture or editorial visit advice."
+    },
+    {
+      "sourceId": "source_yanaka_nezu_tokyo",
+      "sourceType": "tourism_board",
+      "publisher": "Tokyo Convention & Visitors Bureau",
+      "title": "YanakaGinza — official Tokyo travel guide",
+      "url": "https://www.gotokyo.org/en/spot/170/index.html",
+      "accessedAt": "2026-10-10",
+      "language": "en",
+      "active": true,
+      "notes": "Exact Yanaka Ginza shopping-street listing, also linked from the Yanaka & Nezu area guide. No distance, hours, transit time or pricing adopted."
     }
   ],
   "verification": [
@@ -609,6 +661,50 @@
       ],
       "nextReviewDue": "2027-04-09",
       "notes": "Links resolve to the exact Azabudai Hills venue; rating data is intentionally omitted."
+    },
+    {
+      "verificationId": "verify_nezu_website",
+      "targetType": "activity",
+      "targetId": "act_nezu",
+      "fieldPath": "officialWebsite",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_nezu_official"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Exact official home page, corroborated by GO TOKYO. Activity remains draft."
+    },
+    {
+      "verificationId": "verify_nezu_editorial",
+      "targetType": "activity",
+      "targetId": "act_nezu",
+      "fieldPath": "description",
+      "scope": "description, experienceTags, bestFor and mcsNote",
+      "riskLevel": "moderate",
+      "status": "needs_review",
+      "sourceIds": [
+        "source_prototype"
+      ],
+      "notes": "Owner-directed illustrative QA editorial content; not researched production guidance or a guarantee of quiet conditions. Duration and cost retain their existing sample classification."
+    },
+    {
+      "verificationId": "verify_nezu_nearby_identity",
+      "targetType": "activity",
+      "targetId": "act_nezu",
+      "fieldPath": "nearbyInspiration",
+      "scope": "Yanaka Ginza identity and linked tourism-board destination only",
+      "riskLevel": "stable",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_yanaka_nezu_tokyo"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "QA editorial recommendation, not a scheduled itinerary stop. No confirmed curated Yanaka photograph; render the neutral editorial fallback."
     }
   ],
   "badges": [
