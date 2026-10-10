@@ -323,7 +323,8 @@ html[data-screen^="detail-"] #connection[data-state="offline"] { position: absol
 .detail-intro { margin-bottom: 16px; }
 .experience-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
 .experience-tag { padding: 4px 9px; border: 1px solid #9E8B68; border-radius: 999px; color: inherit; font-size: .6875rem; font-weight: 650; letter-spacing: .02em; }
-.detail-summary { max-width: 68ch; margin: 0 0 14px; font: 500 clamp(1rem, 3.5vw, 1.12rem)/1.5 var(--body-font); }
+.detail-summary { max-width: 68ch; margin: 0 0 14px; font: 400 clamp(1rem, 3.5vw, 1.12rem)/1.5 var(--body-font); }
+.home-status-part { display: inline-block; max-width: 100%; text-wrap: balance; }
 .detail-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 10px 0; border-block: 1px solid var(--line); }
 .detail-fact { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 7px; flex: 1 1 135px; min-width: 0; padding: 4px 6px 4px 0; }
 .detail-fact-cost { flex-basis: min(100%, 280px); }

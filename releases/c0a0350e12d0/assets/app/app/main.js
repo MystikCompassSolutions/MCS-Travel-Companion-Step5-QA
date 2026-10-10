@@ -13,7 +13,7 @@ import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
-import {activityCostPresentation, copyAddressText} from './activity-detail.js';
+import {activityCostPresentation, copyAddressText, editorialText} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
 
 const main = document.querySelector('#main');
@@ -58,8 +58,8 @@ window.visualViewport?.addEventListener('scroll', () => requestAnimationFrame(ke
 
 function status() {
   connection.dataset.state = navigator.onLine ? 'online' : 'offline';
-  connection.textContent = navigator.onLine ? (offlineStatus || 'Preparing offline sample…') :
-    'Offline · Saved sample content and local trip data are available. Outside links and maps need internet.';
+  connection.textContent = navigator.onLine ? (offlineStatus.replace(/^Sample content/, 'Content') || 'Preparing offline content…') :
+    'Offline · Saved content and local trip data are available. Outside links and maps need internet.';
 }
 addEventListener('online', status);
 addEventListener('offline', status);
@@ -152,7 +152,7 @@ function experienceTags(activity) {
 }
 function dayLabel(day) {
   const date = calendarDay(state.tripStartDate, day.dayNumber);
-  return `Day ${day.dayNumber}${date ? ' · ' + date : ''} — ${day.title}`;
+  return `Day ${day.dayNumber}${date ? ' · ' + date : ''} — ${editorialText(day.title)}`;
 }
 function home() {
   const presentation = homeTripPresentation(state.tripStartDate, bundle.days.length,
@@ -202,22 +202,24 @@ function home() {
   el('div', {class: 'home-content'},
     el('section', {class: 'compact-section home-day'},
       el('div', {class: 'home-day-copy'}, el('p', {class: 'section-kicker'}, presentation.kicker),
-        el('h2', {}, day.title), el('p', {class: 'day-meta'}, presentation.status)),
+        el('h2', {}, editorialText(day.title)), el('p', {class: 'day-meta home-plan-status'},
+          presentation.statusParts ? presentation.statusParts.map((part, index) =>
+            [index ? ' ' : '', el('span', {class: 'home-status-part'}, `${index ? '· ' : ''}${part}`)]) : presentation.status)),
       activities[0] ? mediaImage(bundle, activities[0].heroMediaId, 'day-feature-image') : null,
       button(presentation.cta, () => {dayIndex = presentation.index; go('Itinerary');}, {class: 'primary gold-action'})),
     budgetSnapshot,
     upcoming ? el('section', {class: 'compact-section home-upcoming'},
       mediaImage(bundle, upcoming.heroMediaId, 'reservation-thumbnail', true),
       el('div', {}, el('p', {class: 'section-kicker'}, today.phase === 'past' ? 'Saved booking guidance' : 'Reservation to review'),
-        button(upcoming.name, () => detail(upcoming), {class: 'text-action'}),
+        button(editorialText(upcoming.name), () => detail(upcoming), {class: 'text-action'}),
         el('p', {class: 'day-meta'}, 'Review authored booking guidance')))
       : el('section', {class: 'compact-section home-upcoming home-upcoming-empty'}, icon('compass'),
         el('div', {}, el('p', {class: 'section-kicker'}, 'A little room to breathe'),
-          el('p', {}, 'No reservation attention item in this sample day.'))),
+          el('p', {}, 'No reservation attention item for this day.'))),
     el('div', {class: 'row home-help'}, button('Emergency Help', () => info(true), {class: 'text-action'})),
-    disclosure('Sample content packs', field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
+    disclosure('Itinerary packs', field('Choose a content pack', el('select', {onChange: event => {void switchPack(event.target.value);}},
       ['japan', 'iceland'].map(name => el('option', {value: name, selected: name === packName},
-        name === 'japan' ? 'Japan sample' : 'Iceland sample')))), {id: 'sample-packs'}))];
+        name === 'japan' ? 'Japan' : 'Iceland')))), {id: 'sample-packs'}))];
 }
 
 function optionGroup(group, headingTag = 'h2') {
@@ -235,7 +237,7 @@ function optionGroup(group, headingTag = 'h2') {
         commit(current => chooseOption(bundle, current, group.optionGroupId, ids))
           .then(() => {if (dialog.open) myTrip();}).catch(() => {});
       }, {'aria-pressed': String(pressed), disabled: !!storageIssue});
-    })), el('small', {}, 'Selections stay on this device and update the schedule and sample estimate.'));
+    })), el('small', {}, 'Selections stay on this device and update the schedule and estimate.'));
 }
 
 function timelineTime(item) {
@@ -253,7 +255,7 @@ function timelineRow(item, choice = null) {
     content = choice;
   } else if (activity) {
     const completed = state.activityCompletion[activity.activityId] ?? false;
-    const title = button(activity.name, () => {itineraryScrollTop = appScroll.scrollTop; detail(activity);},
+    const title = button(editorialText(activity.name), () => {itineraryScrollTop = appScroll.scrollTop; detail(activity);},
       {class: 'timeline-title'});
     const complete = button(completed ? '✓ Completed' : '○ Complete', () => {
       const scroll = appScroll.scrollTop;
@@ -263,7 +265,7 @@ function timelineRow(item, choice = null) {
         [...main.querySelectorAll('[data-completion-id]')]
           .find(control => control.getAttribute('data-completion-id') === activity.activityId)?.focus({preventScroll: true});
       }).catch(() => {});
-    }, {class: 'timeline-complete', 'aria-label': `Complete ${activity.name}`,
+    }, {class: 'timeline-complete', 'aria-label': `Complete ${editorialText(activity.name)}`,
       'aria-pressed': String(completed), 'data-completion-id': activity.activityId, disabled: !!storageIssue});
     complete.replaceChildren(icon(completed ? 'done' : 'incomplete'));
     complete.title = completed ? 'Completed · Tap to undo' : 'Mark complete';
@@ -339,7 +341,7 @@ function itinerary() {
         [day.pace, day.expectedWalkingLevel ? `${day.expectedWalkingLevel} walking` : null].filter(Boolean).join(' · ')) : null,
       day.weatherNotes || day.summary ? el('p', {class: 'day-summary'}, day.weatherNotes ?? day.summary) : null,
       dayTimeline(day)].filter(Boolean));
-    if (announce) status.textContent = `Showing Day ${day.dayNumber} of ${total}: ${day.title}`;
+    if (announce) status.textContent = `Showing Day ${day.dayNumber} of ${total}: ${editorialText(day.title)}`;
     requestAnimationFrame(() => {
       const chip = chips[dayIndex];
       strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;
@@ -386,7 +388,7 @@ function upgradeChoices(activity) {
   return (activity.optionalUpgradeIds ?? []).map(id => {
     const cost = bundle.costs.find(candidate => candidate.costId === id);
     const selected = state.selectedUpgradeIds.includes(id);
-    return field(`${cost.label} · ${formatMoney(cost.fixedMinor ?? cost.minimumMinor ?? 0, cost.currency)} ${cost.basis.replaceAll('_', ' ')}`,
+    return field(`${editorialText(cost.label)} · ${formatMoney(cost.fixedMinor ?? cost.minimumMinor ?? 0, cost.currency)} ${cost.basis.replaceAll('_', ' ')}`,
       el('input', {type: 'checkbox', checked: selected, disabled: !!storageIssue,
         onChange: event => {
           const checked = event.target.checked;
@@ -407,10 +409,10 @@ function detailCost(activity) {
   const cost = activity.costIds.map(id => bundle.costs.find(candidate => candidate.costId === id)).find(Boolean);
   if (!cost) return null;
   const presentation = activityCostPresentation(cost, state);
-  return {icon: 'Budget', label: 'Sample cost', value: presentation.primary,
+  return {icon: 'Budget', label: 'Cost', value: presentation.primary,
     secondary: presentation.approximate ?? (presentation.conversionUnavailable ?
       `Home-currency estimate unavailable · set a planning rate in Budget` : null),
-    note: 'Unverified sample value', className: 'detail-fact-cost'};
+    className: 'detail-fact-cost'};
 }
 
 function detailFacts(activity) {
@@ -423,7 +425,7 @@ function detailFacts(activity) {
     activity.indoorOutdoor ? {icon: 'compass', label: 'Setting', value: activity.indoorOutdoor} : null,
     cost,
     reservation && reservation !== 'none' ? {icon: 'documents', label: 'Reservation',
-      value: `${reservation === 'required' ? 'Required' : 'Book ahead'} · sample guidance`} : null
+      value: reservation === 'required' ? 'Required' : 'Book ahead'} : null
   ].filter(Boolean);
 }
 
@@ -454,10 +456,10 @@ function addressControl(activity, address) {
 function detailActions(activity, place, className = 'detail-actions') {
   const officialWebsite = activity.officialWebsite ?? place?.officialWebsite;
   const actions = [place ? button('Open Map', () => go('Explore'),
-    {class: 'primary gold-action', 'aria-label': `Open ${activity.name} in Explore map`}) : null,
+    {class: 'primary gold-action', 'aria-label': `Open ${editorialText(activity.name)} in Explore map`}) : null,
   officialWebsite && navigator.onLine ? el('a', {class: 'secondary-action', href: officialWebsite,
     target: '_blank', rel: 'noopener noreferrer',
-    'aria-label': `Open the official ${activity.name} website in a new tab`}, icon('external'), 'Official Site') :
+    'aria-label': `Open the official ${editorialText(activity.name)} website in a new tab`}, icon('external'), 'Official Site') :
     officialWebsite ? el('span', {class: 'unavailable-action'}, 'Official Site · Internet required') : null]
     .filter(Boolean);
   return actions.length ? el('div', {class: className}, actions) : null;
@@ -469,7 +471,7 @@ function detailDiscovery(activity) {
     el('h2', {id: `discovery-${activity.activityId}`}, 'Discover more'),
     navigator.onLine ? el('div', {class: 'detail-discovery-links'}, activity.externalLinks.map(link =>
       el('a', {class: 'text-action', href: link.url, target: '_blank', rel: 'noopener noreferrer',
-        'aria-label': `${link.label} for ${activity.name} in a new tab`}, link.label, icon('external')))) :
+        'aria-label': `${link.label} for ${editorialText(activity.name)} in a new tab`}, link.label, icon('external')))) :
       el('p', {class: 'unavailable-action'}, 'External discovery links require internet.'));
 }
 
@@ -487,11 +489,11 @@ function detailAlternative(group, activity) {
       commit(current => chooseOption(bundle, current, group.optionGroupId, [candidateOption.optionId]))
         .catch(() => {});
     }, class: 'alternative-card', 'aria-pressed': String(pressed),
-      'aria-label': `${pressed ? 'Selected' : 'Choose'} ${candidate.name}`,
+      'aria-label': `${pressed ? 'Selected' : 'Choose'} ${editorialText(candidate.name)}`,
       disabled: pressed || !!storageIssue},
       mediaImage(bundle, candidate.heroMediaId, 'alternative-image', true),
       el('div', {class: 'alternative-copy'},
-        el('strong', {id: `alternative-${group.optionGroupId}`}, candidate.name),
+        el('strong', {id: `alternative-${group.optionGroupId}`}, editorialText(candidate.name)),
         el('p', {}, candidateOption.subtitle ?? candidate.description ??
           'An MCS-authored option for the same itinerary slot.'),
         metadata.length ? el('p', {class: 'alternative-meta'}, metadata.join(' · ')) : null,
@@ -520,13 +522,14 @@ function detail(activity) {
   const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
     button('‹', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;},
       {class: 'detail-back', 'aria-label': 'Back to itinerary day', title: 'Back to itinerary day'}),
-    el('div', {class: 'hero-content'}, el('h1', {}, activity.name),
+    el('div', {class: 'hero-content'}, el('h1', {}, editorialText(activity.name)),
       location ? el('p', {class: 'detail-location'}, location) : null,
       addressControl(activity, address), badges(activity, 'operational-badges')),
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
     el('section', {class: 'detail-intro'}, experienceTags(activity),
-      el('p', {class: 'detail-summary'}, activity.description ?? activity.summary),
+      editorialText(activity.description ?? activity.summary) ?
+        el('p', {class: 'detail-summary'}, editorialText(activity.description ?? activity.summary)) : null,
       facts.length ? el('div', {class: 'detail-facts', 'aria-label': 'Activity quick facts'}, facts.map(fact =>
         el('div', {class: `detail-fact ${fact.className ?? ''}`.trim()}, icon(fact.icon), el('span', {},
           el('small', {}, fact.label), el('strong', {}, fact.value),
@@ -534,12 +537,12 @@ function detail(activity) {
           fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null),
     activity.mcsNote ? el('section', {class: 'compact-section mcs-note'},
       el('h2', {}, icon('compass'), 'MCS note'),
-      el('p', {}, activity.mcsNote), primaryActions) : primaryActions,
+      el('p', {}, editorialText(activity.mcsNote)), primaryActions) : primaryActions,
     ...groups.map(group => detailAlternative(group, activity)),
     detailDiscovery(activity),
     place && !address ? disclosure('Location', el('p', {}, place.address ?? 'Address pending verification'),
       {id: 'location'}) : null,
-    activity.reservationInfo ? disclosure('Booking', el('p', {}, activity.reservationInfo.bookAheadGuidance), {id: 'booking'}) : null,
+    activity.reservationInfo ? disclosure('Booking', el('p', {}, editorialText(activity.reservationInfo.bookAheadGuidance)), {id: 'booking'}) : null,
     activity.whatToBring?.length ? disclosure('What to bring',
       el('ul', {}, activity.whatToBring.map(item => el('li', {}, item))), {id: 'bring'}) : null,
     activity.inclusions?.length ? disclosure('Included',
@@ -548,8 +551,8 @@ function detail(activity) {
       el('ul', {}, activity.exclusions.map(item => el('li', {}, item))), {id: 'exclusions'}) : null,
     activity.accessibilityNotes ? disclosure('Accessibility',
       el('p', {}, activity.accessibilityNotes), {id: 'accessibility'}) : null,
-    activity.optionalUpgradeIds?.length ? disclosure('Optional sample upgrades',
-      [el('p', {}, 'Fictional planning values; confirm current availability and prices.'), ...upgradeChoices(activity)],
+    activity.optionalUpgradeIds?.length ? disclosure('Optional upgrades',
+      [el('p', {}, 'Confirm current availability and prices.'), ...upgradeChoices(activity)],
       {id: 'upgrades'}) : null,
     media?.sourceOwnership === 'external' ? disclosure('Image credit',
       mediaCredits({...bundle, media: [media]}), {id: 'image-credit'}) : null];
@@ -583,9 +586,9 @@ function explore() {
     el('div', {class: 'explore-day-picker-head'}, el('strong', {}, 'Itinerary days'),
       button('Clear day filter', () => {select('all', true);closePicker();}, {class: 'text-action'})),
     el('div', {class: 'explore-day-list'}, bundle.days.map((day, index) =>
-      button(`Day ${day.dayNumber} · ${day.title}`, () => {
+      button(`Day ${day.dayNumber} · ${editorialText(day.title)}`, () => {
         selectedDay = index; select(`day:${index}`, true); closePicker();
-      }, {'aria-label': `Show places for Day ${day.dayNumber}: ${day.title}`}))));
+      }, {'aria-label': `Show places for Day ${day.dayNumber}: ${editorialText(day.title)}`}))));
   const activeDay = el('p', {class: 'explore-active-day', hidden: true});
   function closePicker() {picker.hidden = true;daysChip.setAttribute('aria-expanded', 'false');daysChip.focus({preventScroll: true});}
   function togglePicker() {
@@ -595,8 +598,8 @@ function explore() {
   }
   picker.addEventListener('keydown', event => {if (event.key === 'Escape') {event.preventDefault();closePicker();}});
   const list = el('ul', {class: 'place-list'});
-  const diagram = el('section', {class: 'explore-map', 'aria-label': 'Sample place diagram'},
-    el('p', {class: 'map-caption'}, 'Sample place diagram · Not geographic or a route'));
+  const diagram = el('section', {class: 'explore-map', 'aria-label': 'Place diagram'},
+    el('p', {class: 'map-caption'}, 'Place diagram · Not geographic or a route'));
   const pins = el('div', {class: 'map-pins'});
   const preview = el('section', {class: 'map-preview', 'aria-label': 'Selected place preview'});
   diagram.append(pins, preview);
@@ -605,7 +608,7 @@ function explore() {
     const activity = bundle.activities.find(activity => activity.placeId === place.placeId);
     preview.replaceChildren(activity ? mediaImage(bundle, activity.heroMediaId, 'preview-thumbnail', true) : null,
       el('div', {}, el('h2', {tabindex: '-1'}, `${number}. ${place.name}`),
-        el('p', {}, bundle.regions.find(region => region.regionId === place.regionId)?.name ?? 'Sample place'),
+        el('p', {}, bundle.regions.find(region => region.regionId === place.regionId)?.name ?? 'Place'),
         activity ? badges(activity) : null,
         button('View place in list ↓', () => {
           const heading = document.getElementById(`place-${place.placeId}`);
@@ -649,14 +652,14 @@ function explore() {
         el('div', {class: 'place-copy'}, el('h2', {id: `place-${place.placeId}`, tabindex: '-1'}, place.name),
         el('p', {}, place.address ?? 'Address pending verification'),
         el('div', {class: 'place-actions'},
-          ...activities.map(activity => button(activities.length === 1 ? 'Details' : activity.name, () => detail(activity),
-            {class: 'text-action', 'aria-label': `Activity detail: ${activity.name}`})),
+          ...activities.map(activity => button(activities.length === 1 ? 'Details' : editorialText(activity.name), () => detail(activity),
+            {class: 'text-action', 'aria-label': `Activity detail: ${editorialText(activity.name)}`})),
           navigator.onLine ? el('a', {class: 'text-action',
             href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
             target: '_blank', rel: 'noopener noreferrer', 'aria-label': `Open external map for ${place.name}`}, 'Map ↗') :
             el('small', {}, 'Map needs internet'))));
     }));
-    if (!places.length) list.append(el('li', {class: 'place-row'}, 'No mapped places in this sample filter.'));
+    if (!places.length) list.append(el('li', {class: 'place-row'}, 'No mapped places in this filter.'));
     if (announce) results.textContent = `${places.length} ${places.length === 1 ? 'place' : 'places'} for ${
       exploreFilter.startsWith('day:') ? `Day ${bundle.days[selectedDay].dayNumber}` :
         filters.find(filter => filter.id === exploreFilter).label}.`;
@@ -804,7 +807,7 @@ function budget() {
       rateForm ? el('p', {}, 'Use a rate you recorded for planning. Converted amounts are approximate and can differ from bank or card charges.') :
         el('p', {}, 'Your home and destination currency match; no conversion is needed.'),
       rateForm, rateError], {id: 'planning-rate'}),
-    disclosure('How estimates work', [el('p', {}, 'Sample costs are fictional. This is a solo-traveler planning estimate. Authored group, one-way and round-trip costs are shown at their full value; no shared cost is automatically split.'),
+    disclosure('How estimates work', [el('p', {}, 'This is a solo-traveler planning estimate. Authored group, one-way and round-trip costs are shown at their full value; no shared cost is automatically split.'),
       el('p', {}, 'My budget, spent and remaining are individual amounts in Home Currency. For shared lodging, transport or meals, record only your personal share as an actual expense. Unpriced and open-ended costs are flagged.')], {id: 'estimate-rules'}),
     upgrades.length ? disclosure('Optional upgrades', [el('p', {}, 'Only upgrades for selected activities appear here.'),
       ...upgrades.flatMap(entry => upgradeChoices(entry.activity))], {id: 'upgrades'}) : null,
@@ -877,7 +880,7 @@ function bookingForm(key, label, existing = null) {
     const input = type === 'textarea' ? el('textarea', {maxLength: 10000, value: existing?.[name] ?? ''}) :
       type === 'activity' ? el('select', {}, el('option', {value: ''}, 'None'),
         bundle.activities.map(activity => el('option', {value: activity.activityId,
-          selected: existing?.[name] === activity.activityId}, activity.name))) :
+          selected: existing?.[name] === activity.activityId}, editorialText(activity.name)))) :
         el('input', {type, value: existing?.[name] ?? '', maxLength: 1000, required: name === 'name'});
     return [name, {caption, input}];
   }));
@@ -893,7 +896,7 @@ function bookingForm(key, label, existing = null) {
         entry.checkOutDate < entry.checkInDate) {alert('Check-out must be after check-in.', personal); return;}
     if (key === 'personalReservations' && entry.activityId &&
         !bundle.activities.some(activity => activity.activityId === entry.activityId)) {
-      alert('Choose an activity from this sample or leave it blank.', personal); return;
+      alert('Choose an activity from this itinerary or leave it blank.', personal); return;
     }
     commit(current => ({...current, [key]: existing ? current[key].map(item => item.id === existing.id ? entry : item) :
       [...current[key], entry]})).then(myTrip).catch(() => {});

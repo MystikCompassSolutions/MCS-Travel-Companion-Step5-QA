@@ -29,4 +29,4 @@ self.addEventListener('message',event=>{
  if(event.data?.type==='ACTIVATE_UPDATE')event.waitUntil(self.skipWaiting());
 });
 
-// Release 41e96e4762f2
+// Release c0a0350e12d0
