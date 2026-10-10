@@ -162,8 +162,20 @@ function badges(activity, className = '') {
 }
 function experienceTags(activity, tone) {
   const tagIcons = {Historic: 'culture', Peaceful: 'leaf', Photogenic: 'camera', Outdoor: 'tree'};
+  const strip = tone === 'editorial' ? {
+    role: 'group', tabindex: 0,
+    'aria-label': 'Experience characteristics. Scroll with Left and Right arrow keys, Home or End.',
+    onkeydown: event => {
+      const row = event.currentTarget;
+      if (event.target !== row || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const step = Math.max(80, row.clientWidth * .7);
+      row.scrollLeft = event.key === 'Home' ? 0 : event.key === 'End' ? row.scrollWidth :
+        row.scrollLeft + (event.key === 'ArrowLeft' ? -step : step);
+    }
+  } : {};
   return activity.experienceTags?.length ? el('div', {class: 'experience-tags',
-    'aria-label': 'Experience characteristics'}, activity.experienceTags.map(tag =>
+    'aria-label': 'Experience characteristics', ...strip}, activity.experienceTags.map(tag =>
     el('span', {class: 'experience-tag'}, tone === 'editorial' && tagIcons[tag] ? icon(tagIcons[tag]) : null, tag))) : null;
 }
 function dayLabel(day) {
