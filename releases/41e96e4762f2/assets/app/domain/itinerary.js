@@ -73,12 +73,19 @@ export function dateInTimeZone(now, timeZone) {
   return `${value.year}-${value.month}-${value.day}`;
 }
 
-export function currentTripDay(startDate, durationDays, timeZone, now = new Date()) {
-  if (!startDate) return {index: 0, phase: 'unscheduled'};
+export function tripLifecycle(startDate, durationDays, timeZone, now = new Date()) {
+  if (!startDate) return {index: 0, phase: 'unscheduled', daysUntil: null};
+  // These UTC values are calendar-date ordinals, not instants of departure.
+  // Taking today's date in the destination first avoids device-zone and DST drift.
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const today = Date.parse(`${dateInTimeZone(now, timeZone)}T00:00:00Z`);
   const offset = Math.round((today - start) / DAY_MS);
-  if (offset < 0) return {index: 0, phase: 'upcoming'};
-  if (offset >= durationDays) return {index: durationDays - 1, phase: 'past'};
-  return {index: offset, phase: 'active'};
+  if (offset < 0) return {index: 0, phase: 'upcoming', daysUntil: -offset};
+  if (offset >= durationDays) return {index: durationDays - 1, phase: 'past', daysUntil: 0};
+  return {index: offset, phase: 'active', daysUntil: 0};
+}
+
+export function currentTripDay(startDate, durationDays, timeZone, now = new Date()) {
+  const {index, phase} = tripLifecycle(startDate, durationDays, timeZone, now);
+  return {index, phase};
 }

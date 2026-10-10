@@ -5,7 +5,7 @@ import {chooseOption, resolveDay, selectedOptions, effectiveOptions, optionSched
 import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
 import {exploreFilterChoices} from './explore-navigation.js';
 import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, formatHomeMoney, parseMoney, currencyDigits,
-  convertPlanningEstimate} from '../domain/budget.js';
+  convertPlanningEstimate, normalizePlanningRate} from '../domain/budget.js';
 import {newTravelerState, createTravelerStore, reconcileContent, serializeTravelerState,
   parseTravelerExport, EXPORT_LIMIT_BYTES, STATE_VERSION, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
 import {createTabCoordinator} from '../storage/tab-coordination.js';
@@ -14,6 +14,7 @@ import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
 import {activityCostPresentation, copyAddressText} from './activity-detail.js';
+import {homeTripPresentation} from './home-trip.js';
 
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
@@ -26,6 +27,7 @@ const myTripButton = document.querySelector('#my-trip');
 let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0;
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
+let homePreviewIndex = null;
 let exploreFilter = 'all', personalPageScrollTop = 0;
 
 function keepFocusedFieldVisible() {
@@ -94,7 +96,7 @@ function clearSync() {sync.replaceChildren();}
 function currentDay() {
   return currentTripDay(state.tripStartDate, bundle.days.length, bundle.trip.defaultTimezone);
 }
-function resetDay() {dayIndex = currentDay().index;}
+function resetDay() {dayIndex = currentDay().index; homePreviewIndex = null;}
 
 async function reloadLatest() {
   await saveQueue.catch(() => {});
@@ -133,7 +135,7 @@ function commit(transform) {
   return operation;
 }
 
-function go(name) {view = name; if (name === 'Home') resetDay(); render(); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
+function go(name) {view = name; render(); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
 function disclosure(title, body, {id, open = false, className = ''} = {}) {
   return el('details', {class: `compact-disclosure ${className}`, 'data-section': id, open},
     el('summary', {}, el('span', {class: 'disclosure-title'}, title)), el('div', {class: 'disclosure-body'}, body));
@@ -153,7 +155,9 @@ function dayLabel(day) {
   return `Day ${day.dayNumber}${date ? ' · ' + date : ''} — ${day.title}`;
 }
 function home() {
-  const today = currentDay(); const day = bundle.days[today.index];
+  const presentation = homeTripPresentation(state.tripStartDate, bundle.days.length,
+    bundle.trip.defaultTimezone, homePreviewIndex);
+  const today = presentation.lifecycle; const day = bundle.days[presentation.index];
   const personalBudget = actualBudget(state);
   const personalProgress = budgetProgress(personalBudget.spentMinor, state.budgetPlan.totalMinor);
   const hasPersonalBudget = state.budgetPlan.totalMinor > 0;
@@ -162,11 +166,6 @@ function home() {
     .map(item => bundle.activities.find(activity => activity.activityId === item.referencedEntityId))
     .find(activity => activity?.reservationInfo?.reservationLevel !== undefined &&
       activity.reservationInfo.reservationLevel !== 'none');
-  const phase = {unscheduled: 'Set a start date in My Trip to show your current day.',
-    upcoming: 'Your trip has not started yet.', active: 'Current day in the destination time zone.',
-    past: 'Your trip dates have passed; showing the final day.'}[today.phase];
-  const progress = today.phase === 'unscheduled' || today.phase === 'upcoming' ? 0 :
-    today.phase === 'past' ? bundle.days.length : today.index + 1;
   const activities = resolveDay(bundle, state, day).map(item =>
     bundle.activities.find(activity => activity.activityId === item.referencedEntityId)).filter(Boolean);
   const defaultHeroMediaId = bundle.media[0]?.mediaId;
@@ -196,20 +195,20 @@ function home() {
     el('div', {class: 'hero-content'},
       el('h1', {id: 'home-destination-title'}, bundle.trip.title), el('p', {class: 'hero-subtitle'},
         `${bundle.days.length} days · ${bundle.regions.map(region => region.name).join(' + ')}`),
-      el('progress', {class: 'trip-progress', max: bundle.days.length, value: progress,
-        'aria-label': 'Trip day progress'}),
-      el('p', {class: 'progress-caption'}, `Day ${day.dayNumber} of ${bundle.days.length}`,
-        today.phase === 'unscheduled' ? ' · Start date not set' : today.phase === 'upcoming' ? ' · Upcoming' : ''))),
+      presentation.progress !== null ? el('progress', {class: 'trip-progress', max: bundle.days.length,
+        value: presentation.progress, 'aria-label': 'Trip day progress'}) :
+        el('div', {class: 'trip-lifecycle-rule', 'aria-hidden': 'true'}),
+      el('p', {class: 'progress-caption'}, presentation.caption))),
   el('div', {class: 'home-content'},
     el('section', {class: 'compact-section home-day'},
-      el('div', {class: 'home-day-copy'}, el('p', {class: 'section-kicker'}, today.phase === 'active' ? 'Today' : 'Your plan'),
-        el('h2', {}, day.title), el('p', {class: 'day-meta'}, phase)),
+      el('div', {class: 'home-day-copy'}, el('p', {class: 'section-kicker'}, presentation.kicker),
+        el('h2', {}, day.title), el('p', {class: 'day-meta'}, presentation.status)),
       activities[0] ? mediaImage(bundle, activities[0].heroMediaId, 'day-feature-image') : null,
-      button('Continue Today’s Plan →', () => {dayIndex = today.index; go('Itinerary');}, {class: 'primary gold-action'})),
+      button(presentation.cta, () => {dayIndex = presentation.index; go('Itinerary');}, {class: 'primary gold-action'})),
     budgetSnapshot,
     upcoming ? el('section', {class: 'compact-section home-upcoming'},
       mediaImage(bundle, upcoming.heroMediaId, 'reservation-thumbnail', true),
-      el('div', {}, el('p', {class: 'section-kicker'}, 'Next reservation to review'),
+      el('div', {}, el('p', {class: 'section-kicker'}, today.phase === 'past' ? 'Saved booking guidance' : 'Reservation to review'),
         button(upcoming.name, () => detail(upcoming), {class: 'text-action'}),
         el('p', {class: 'day-meta'}, 'Review authored booking guidance')))
       : el('section', {class: 'compact-section home-upcoming home-upcoming-empty'}, icon('compass'),
@@ -347,6 +346,7 @@ function itinerary() {
     });
   }
   function selectDay(index, focusChip = false) {
+    homePreviewIndex = index;
     if (index === dayIndex) return;
     dayIndex = index;
     paint(true);
@@ -752,17 +752,21 @@ function budget() {
   const destinationCurrency = Object.keys(estimate)[0] ?? bundle.costs[0]?.currency;
   const activeRate = state.planningRate?.fromCurrency === destinationCurrency &&
     state.planningRate.toCurrency === state.homeCurrency ? state.planningRate : null;
-  const rateInput = el('input', {type: 'text', inputmode: 'decimal', pattern: '(?:0|[1-9][0-9]{0,5})(?:\\.[0-9]{1,8})?',
-    placeholder: 'e.g. 0.0067', required: true, value: activeRate?.homePerDestination ?? ''});
+  const rateError = el('p', {id: 'planning-rate-error', class: 'error', role: 'alert'});
+  const rateInput = el('input', {type: 'text', inputmode: 'decimal',
+    'aria-describedby': 'planning-rate-error', 'aria-required': 'true',
+    placeholder: 'e.g. 0.0063', value: activeRate?.homePerDestination ?? '',
+    onInput: () => {rateInput.removeAttribute('aria-invalid'); rateError.textContent = '';}});
   const rateForm = destinationCurrency && destinationCurrency !== state.homeCurrency ?
-    el('form', {class: 'inline-form', onSubmit: event => {
+    el('form', {class: 'inline-form', novalidate: true, onSubmit: event => {
       event.preventDefault();
       try {
-        convertPlanningEstimate(1, destinationCurrency, state.homeCurrency, rateInput.value.trim());
+        const normalizedRate = normalizePlanningRate(rateInput.value);
+        convertPlanningEstimate(1, destinationCurrency, state.homeCurrency, normalizedRate);
         commit(current => ({...current, planningRate: {fromCurrency: destinationCurrency,
-          toCurrency: current.homeCurrency, homePerDestination: rateInput.value.trim(),
+          toCurrency: current.homeCurrency, homePerDestination: normalizedRate,
           recordedAt: new Date().toISOString()}})).catch(() => {});
-      } catch (error) {alert(error.message);}
+      } catch (error) {rateError.textContent = error.message; rateInput.setAttribute('aria-invalid', 'true'); rateInput.focus();}
     }}, field(`Planning rate: 1 ${destinationCurrency} equals how many ${state.homeCurrency}?`, rateInput),
     el('button', {type: 'submit', disabled: !!storageIssue}, activeRate ? 'Update rate' : 'Save rate')) : null;
   const estimateRows = Object.entries(estimate).map(([currency, total]) =>
@@ -799,7 +803,7 @@ function budget() {
       el('p', {}, 'Home currency is set in My Trip. Destination estimates stay in their authored currency.'),
       rateForm ? el('p', {}, 'Use a rate you recorded for planning. Converted amounts are approximate and can differ from bank or card charges.') :
         el('p', {}, 'Your home and destination currency match; no conversion is needed.'),
-      rateForm], {id: 'planning-rate'}),
+      rateForm, rateError], {id: 'planning-rate'}),
     disclosure('How estimates work', [el('p', {}, 'Sample costs are fictional. This is a solo-traveler planning estimate. Authored group, one-way and round-trip costs are shown at their full value; no shared cost is automatically split.'),
       el('p', {}, 'My budget, spent and remaining are individual amounts in Home Currency. For shared lodging, transport or meals, record only your personal share as an actual expense. Unpriced and open-ended costs are flagged.')], {id: 'estimate-rules'}),
     upgrades.length ? disclosure('Optional upgrades', [el('p', {}, 'Only upgrades for selected activities appear here.'),

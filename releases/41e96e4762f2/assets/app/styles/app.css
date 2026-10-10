@@ -233,6 +233,7 @@ html[data-screen="Home"] #connection[data-state="offline"] { position: absolute;
 .trip-progress::-webkit-progress-value { background: var(--gold-light); border-radius: 999px; }
 .trip-progress::-moz-progress-bar { background: var(--gold-light); border-radius: 999px; }
 .progress-caption { margin: 7px 0 0; font-size: .75rem; }
+.trip-lifecycle-rule { width: min(100%, 520px); height: 5px; border-top: 1px solid var(--gold-light); opacity: .8; }
 .home-content { position: relative; z-index: 2; width: 100%; max-width: 860px; margin: -20px auto 0; padding: 0 18px 28px; }
 main[data-screen="Home"] .compact-section { background: var(--paper); color: var(--indigo-900); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow-card); }
 .home-day { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 8px; min-height: 196px; padding: 18px !important; overflow: hidden; }

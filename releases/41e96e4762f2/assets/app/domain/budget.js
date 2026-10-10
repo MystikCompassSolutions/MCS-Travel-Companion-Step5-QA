@@ -28,12 +28,17 @@ export function parseMoney(input, currency) {
   return result;
 }
 
-export function convertPlanningEstimate(minor, fromCurrency, toCurrency, rate) {
-  if (!Number.isSafeInteger(minor) || minor < 0 ||
-      typeof rate !== 'string' || !/^(?:0|[1-9]\d{0,5})(?:\.\d{1,8})?$/.test(rate) || Number(rate) <= 0) {
-    throw new Error('Enter a positive planning rate with up to eight decimal places.');
+export function normalizePlanningRate(input) {
+  const rate = typeof input === 'string' ? input.trim().replace(/^\./, '0.') : '';
+  if (!/^(?:0|[1-9]\d{0,5})(?:\.\d{1,8})?$/.test(rate) || Number(rate) <= 0) {
+    throw new Error('Enter a rate greater than zero, such as 0.0063 or .0063, with up to 8 decimal places and 6 digits before the decimal.');
   }
-  const [whole, fraction = ''] = rate.split('.');
+  return rate;
+}
+
+export function convertPlanningEstimate(minor, fromCurrency, toCurrency, rate) {
+  if (!Number.isSafeInteger(minor) || minor < 0) throw new Error('Invalid amount to convert.');
+  const [whole, fraction = ''] = normalizePlanningRate(rate).split('.');
   const numerator = BigInt(whole + fraction);
   const denominator = 10n ** BigInt(fraction.length);
   const scaled = BigInt(minor) * numerator * (10n ** BigInt(currencyDigits(toCurrency)));
