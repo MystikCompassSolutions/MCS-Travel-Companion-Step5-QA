@@ -13,7 +13,8 @@ import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
 import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
   schematicPositions} from './visual.js';
-import {activityCostPresentation, copyAddressText, editorialText} from './activity-detail.js';
+import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant,
+  activityEditorialContent} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
 
 const main = document.querySelector('#main');
@@ -29,6 +30,20 @@ let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', stora
 let itineraryScrollTop = 0;
 let homePreviewIndex = null;
 let exploreFilter = 'all', personalPageScrollTop = 0;
+
+function fitDetailOverlays() {
+  if (!main.dataset.screen?.startsWith('detail-')) return;
+  const header = document.querySelector('header'), notice = document.querySelector('.notice');
+  const root = document.documentElement;
+  root.style.setProperty('--detail-notice-top', `${header.offsetHeight + 8}px`);
+  root.style.setProperty('--detail-connection-top', `${notice.offsetTop + notice.offsetHeight + 8}px`);
+  const last = navigator.onLine ? notice : connection;
+  root.style.setProperty('--detail-overlay-clearance', `${last.offsetTop + last.offsetHeight + 12}px`);
+}
+// Observe rendered text rather than guessing banner height at large text sizes.
+const detailOverlayObserver = new ResizeObserver(fitDetailOverlays);
+for (const overlay of [document.querySelector('header'), document.querySelector('.notice'), connection])
+  detailOverlayObserver.observe(overlay);
 
 function keepFocusedFieldVisible() {
   const field = document.activeElement;
@@ -421,11 +436,11 @@ function detailFacts(activity) {
   return [
     activity.recommendedDurationMinutes ? {icon: 'clock', label: 'Duration',
       value: detailDuration(activity.recommendedDurationMinutes)} : null,
-    activity.walkingLevel ? {icon: 'walk', label: 'Walking', value: activity.walkingLevel} : null,
     activity.indoorOutdoor ? {icon: 'compass', label: 'Setting', value: activity.indoorOutdoor} : null,
     cost,
     reservation && reservation !== 'none' ? {icon: 'documents', label: 'Reservation',
-      value: reservation === 'required' ? 'Required' : 'Book ahead'} : null
+      value: reservation === 'required' ? 'Required' : 'Book ahead'} : null,
+    activity.walkingLevel ? {icon: 'walk', label: 'Walking', value: activity.walkingLevel} : null
   ].filter(Boolean);
 }
 
@@ -505,8 +520,8 @@ function detail(activity) {
   if (view !== 'Itinerary') itineraryScrollTop = 0;
   view = 'Itinerary'; renderNav();
   const place = bundle.places.find(candidate => candidate.placeId === activity.placeId);
-  const tone = activity.indoorOutdoor === 'indoor' ? 'immersive' :
-    activity.indoorOutdoor === 'mixed' ? 'venue' : 'calm';
+  const tone = activityPresentationVariant(activity);
+  const editorial = activityEditorialContent(activity);
   main.dataset.screen = `detail-${tone}`;
   document.documentElement.dataset.screen = main.dataset.screen;
   const media = bundle.media.find(asset => asset.mediaId === activity.heroMediaId);
@@ -518,31 +533,31 @@ function detail(activity) {
   const location = [place?.neighborhood, region?.name].filter((item, index, all) =>
     item && all.indexOf(item) === index).join(' · ');
   const primaryActions = detailActions(activity, place,
-    activity.mcsNote ? 'mcs-note-actions' : 'detail-actions');
+    editorial.note ? 'mcs-note-actions' : 'detail-actions');
   const nodes = [el('section', {class: `detail-hero detail-hero-${tone}`}, mediaImage(bundle, activity.heroMediaId, 'hero-image'),
     button('‹', () => {go('Itinerary'); appScroll.scrollTop = itineraryScrollTop;},
       {class: 'detail-back', 'aria-label': 'Back to itinerary day', title: 'Back to itinerary day'}),
     el('div', {class: 'hero-content'}, el('h1', {}, editorialText(activity.name)),
       location ? el('p', {class: 'detail-location'}, location) : null,
-      addressControl(activity, address), badges(activity, 'operational-badges')),
+      addressControl(activity, address), activity.badgeIds.length ? badges(activity, 'operational-badges') : null),
     media?.type === 'illustration' ? el('p', {class: 'image-placeholder-label'},
       'Illustrative placeholder · Not a photograph of this experience') : null),
-    el('section', {class: 'detail-intro'}, experienceTags(activity),
-      editorialText(activity.description ?? activity.summary) ?
-        el('p', {class: 'detail-summary'}, editorialText(activity.description ?? activity.summary)) : null,
+    editorial.description || activity.experienceTags?.length || facts.length ?
+      el('section', {class: 'detail-intro'}, experienceTags(activity),
+      editorial.description ? el('p', {class: 'detail-summary'}, editorial.description) : null,
       facts.length ? el('div', {class: 'detail-facts', 'aria-label': 'Activity quick facts'}, facts.map(fact =>
         el('div', {class: `detail-fact ${fact.className ?? ''}`.trim()}, icon(fact.icon), el('span', {},
           el('small', {}, fact.label), el('strong', {}, fact.value),
           fact.secondary ? el('span', {class: 'detail-fact-secondary'}, fact.secondary) : null,
-          fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null),
-    activity.mcsNote ? el('section', {class: 'compact-section mcs-note'},
+          fact.note ? el('span', {class: 'detail-fact-note'}, fact.note) : null)))) : null) : null,
+    editorial.note ? el('section', {class: 'compact-section mcs-note'},
       el('h2', {}, icon('compass'), 'MCS note'),
-      el('p', {}, editorialText(activity.mcsNote)), primaryActions) : primaryActions,
+      el('p', {}, editorial.note), primaryActions) : primaryActions,
     ...groups.map(group => detailAlternative(group, activity)),
     detailDiscovery(activity),
-    place && !address ? disclosure('Location', el('p', {}, place.address ?? 'Address pending verification'),
+    place?.address && !address ? disclosure('Location', el('p', {}, place.address),
       {id: 'location'}) : null,
-    activity.reservationInfo ? disclosure('Booking', el('p', {}, editorialText(activity.reservationInfo.bookAheadGuidance)), {id: 'booking'}) : null,
+    editorial.booking ? disclosure('Booking', el('p', {}, editorial.booking), {id: 'booking'}) : null,
     activity.whatToBring?.length ? disclosure('What to bring',
       el('ul', {}, activity.whatToBring.map(item => el('li', {}, item))), {id: 'bring'}) : null,
     activity.inclusions?.length ? disclosure('Included',
@@ -556,7 +571,8 @@ function detail(activity) {
       {id: 'upgrades'}) : null,
     media?.sourceOwnership === 'external' ? disclosure('Image credit',
       mediaCredits({...bundle, media: [media]}), {id: 'image-credit'}) : null];
-  main.replaceChildren(...nodes.filter(Boolean)); appScroll.scrollTop = 0; main.focus({preventScroll: true});
+  main.replaceChildren(...nodes.filter(Boolean)); fitDetailOverlays();
+  appScroll.scrollTop = 0; main.focus({preventScroll: true});
 }
 
 function explore() {

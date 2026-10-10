@@ -187,6 +187,7 @@
   "activities": [
     {
       "activityId": "act_nezu",
+      "presentationVariant": "editorial",
       "name": "Nezu Shrine",
       "category": "attraction",
       "regionId": "region_tokyo",
@@ -230,6 +231,7 @@
     },
     {
       "activityId": "act_borderless",
+      "presentationVariant": "immersive",
       "name": "teamLab Borderless",
       "category": "attraction",
       "regionId": "region_tokyo",
@@ -283,6 +285,7 @@
     },
     {
       "activityId": "act_planets",
+      "presentationVariant": "immersive",
       "name": "teamLab Planets",
       "category": "attraction",
       "regionId": "region_tokyo",
@@ -321,6 +324,7 @@
     },
     {
       "activityId": "act_universal_osaka",
+      "presentationVariant": "standard",
       "name": "Universal Studios Japan — Super Nintendo World sample visit",
       "category": "attraction",
       "regionId": "region_osaka",

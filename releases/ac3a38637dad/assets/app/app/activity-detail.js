@@ -22,6 +22,19 @@ const editorialLabels = new Map([
 ]);
 export function editorialText(text) { return editorialLabels.get(text) ?? text; }
 
+export function activityPresentationVariant(activity) {
+  return ['immersive', 'editorial', 'standard'].includes(activity?.presentationVariant) ?
+    activity.presentationVariant : 'standard';
+}
+
+export function activityEditorialContent(activity) {
+  return {
+    description: editorialText(activity.description ?? activity.summary)?.trim() || null,
+    note: editorialText(activity.mcsNote)?.trim() || null,
+    booking: editorialText(activity.reservationInfo?.bookAheadGuidance)?.trim() || null
+  };
+}
+
 function basisLabel(basis) {
   return basis?.replaceAll('_', ' ') ?? '';
 }
