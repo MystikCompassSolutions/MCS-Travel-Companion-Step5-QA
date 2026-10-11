@@ -62,13 +62,29 @@ export function curatedCollection(activity, bundle, online = true) {
     if (!place || place.status !== 'active' || !item.description?.trim()) return [];
     const target = bundle.activities.find(a => a.activityId === item.activityId &&
       a.activityId !== activity.activityId && a.placeId === place.placeId);
-    const verified = (place.verificationRecordIds ?? []).some(id => bundle.verification.some(record =>
-      record.verificationId === id && record.targetId === place.placeId &&
-      record.fieldPath === 'officialWebsite' && record.status === 'verified'));
-    const url = verified && /^https?:\/\//.test(place.officialWebsite ?? '') ? place.officialWebsite : null;
+    const link = (place.externalLinks ?? []).find(link => link.service === 'google' &&
+      isGooglePlaceListing(link.url) && (place.verificationRecordIds ?? []).some(id =>
+        bundle.verification.some(record => record.verificationId === id && record.targetType === 'place' &&
+          record.targetId === place.placeId && record.fieldPath === 'externalLinks.google' &&
+          record.status === 'verified' && (record.sourceIds ?? []).some(sourceId =>
+            bundle.sources.some(source => source.sourceId === sourceId && source.active && source.url === link.url)))));
+    const url = link?.url ?? null;
     return [{...item,place,target,url:online ? url : null,needsInternet:!target && !!url && !online}];
   });
   return items.length ? {...value,items} : null;
+}
+
+// Exact listing links only, not search results, directions or coordinate-only pins.
+// Verification must additionally identify the correct business/branch and URL.
+export function isGooglePlaceListing(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && (
+      (url.hostname === 'maps.app.goo.gl' && /^\/[A-Za-z0-9]+$/.test(url.pathname)) ||
+      (url.hostname === 'goo.gl' && /^\/maps\/[A-Za-z0-9]+$/.test(url.pathname)) ||
+      (url.hostname === 'www.google.com' && url.pathname.startsWith('/maps/place/') &&
+        /!1s0x[0-9a-f]+:0x[0-9a-f]+/i.test(decodeURIComponent(url.pathname))));
+  } catch { return false; }
 }
 
 function basisLabel(basis) {

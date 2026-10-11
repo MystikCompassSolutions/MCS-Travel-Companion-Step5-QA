@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.7",
+    "contentVersion": "0.1.8",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.7",
+    "contentVersion": "0.1.8",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -106,11 +106,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Shibuya",
       "officialWebsite": "https://shibuya109.jp/",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/SHIBUYA109/@35.6595884,139.6986223,18z/data=!4m5!3m4!1s0x0:0x55a2a75ba417e072!8m2!3d35.6595709!4d139.6987507?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://shibuya109.jp/"
+        }
+      ],
       "sourceIds": [
-        "source_collection_shibuya109"
+        "source_collection_shibuya109",
+        "source_collection_map_shibuya109"
       ],
       "verificationRecordIds": [
-        "verify_collection_shibuya109"
+        "verify_collection_shibuya109",
+        "verify_collection_map_shibuya109"
       ],
       "status": "active"
     },
@@ -122,11 +136,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Shibuya",
       "officialWebsite": "https://www.nintendo.com/jp/officialstore/index.html",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/Nintendo+TOKYO/data=!4m2!3m1!1s0x60188dae14b52bed:0xca9863932bd4be02?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://www.nintendo.com/jp/officialstore/index.html"
+        }
+      ],
       "sourceIds": [
-        "source_collection_nintendo_tokyo"
+        "source_collection_nintendo_tokyo",
+        "source_collection_map_nintendo_tokyo"
       ],
       "verificationRecordIds": [
-        "verify_collection_nintendo_tokyo"
+        "verify_collection_nintendo_tokyo",
+        "verify_collection_map_nintendo_tokyo"
       ],
       "status": "active"
     },
@@ -138,11 +166,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Shibuya",
       "officialWebsite": "https://www.donki.com/en/store/shop_detail.php?shop_id=442",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/MEGA+Don+Quijote/data=!4m2!3m1!1s0x60188ca9a47a82af:0x7ea0d3bc82ce0275?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://www.donki.com/en/store/shop_detail.php?shop_id=442"
+        }
+      ],
       "sourceIds": [
-        "source_collection_donki_shibuya"
+        "source_collection_donki_shibuya",
+        "source_collection_map_donki_shibuya"
       ],
       "verificationRecordIds": [
-        "verify_collection_donki_shibuya"
+        "verify_collection_donki_shibuya",
+        "verify_collection_map_donki_shibuya"
       ],
       "status": "active"
     },
@@ -154,11 +196,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Shibuya",
       "officialWebsite": "https://store.hands.net/shibuya/",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/Tokyu+Hands+Shibuya/data=!4m2!3m1!1s0x60188ca916447249:0x13ff108bf95bcbf1?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://store.hands.net/shibuya/"
+        }
+      ],
       "sourceIds": [
-        "source_collection_hands_shibuya"
+        "source_collection_hands_shibuya",
+        "source_collection_map_hands_shibuya"
       ],
       "verificationRecordIds": [
-        "verify_collection_hands_shibuya"
+        "verify_collection_hands_shibuya",
+        "verify_collection_map_hands_shibuya"
       ],
       "status": "active"
     },
@@ -170,11 +226,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Harajuku",
       "officialWebsite": "https://afuri.com/findus/",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/AFURI+Harajuku/data=!4m2!3m1!1s0x60188cba4d7bad6d:0xcb6d1919ead5d016?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://afuri.com/findus/"
+        }
+      ],
       "sourceIds": [
-        "source_collection_afuri_harajuku"
+        "source_collection_afuri_harajuku",
+        "source_collection_map_afuri_harajuku"
       ],
       "verificationRecordIds": [
-        "verify_collection_afuri_harajuku"
+        "verify_collection_afuri_harajuku",
+        "verify_collection_map_afuri_harajuku"
       ],
       "status": "active"
     },
@@ -186,11 +256,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Harajuku · Takeshita Street",
       "officialWebsite": "https://www.marion.co.jp/store/tokyo/",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/Marion+Crepes+Takeshita+Street/data=!4m2!3m1!1s0x60188cbb3777fb3d:0x6d22890a2f23e178?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://www.marion.co.jp/store/tokyo/"
+        }
+      ],
       "sourceIds": [
-        "source_collection_marion_harajuku"
+        "source_collection_marion_harajuku",
+        "source_collection_map_marion_harajuku"
       ],
       "verificationRecordIds": [
-        "verify_collection_marion_harajuku"
+        "verify_collection_marion_harajuku",
+        "verify_collection_map_marion_harajuku"
       ],
       "status": "active"
     },
@@ -202,11 +286,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "Cat Street · Jingumae",
       "officialWebsite": "https://www.tysons.jp/roastery/en/",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/THE+ROASTERY/data=!4m2!3m1!1s0x60188ca69a302d09:0x653be010a6b4ea7f?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://www.tysons.jp/roastery/en/"
+        }
+      ],
       "sourceIds": [
-        "source_collection_roastery"
+        "source_collection_roastery",
+        "source_collection_map_roastery"
       ],
       "verificationRecordIds": [
-        "verify_collection_roastery"
+        "verify_collection_roastery",
+        "verify_collection_map_roastery"
       ],
       "status": "active"
     },
@@ -218,11 +316,25 @@
       "regionId": "region_tokyo",
       "neighborhood": "WITH HARAJUKU",
       "officialWebsite": "https://www.gyukatsu-motomura.com/store/Withharajuku",
+      "externalLinks": [
+        {
+          "service": "google",
+          "label": "View on Google Maps",
+          "url": "https://www.google.com/maps/place/Gyukatsu+Motomura/data=!4m2!3m1!1s0x60188df47dcc348b:0x97eebf0c1723b7d4?hl=en"
+        },
+        {
+          "service": "other",
+          "label": "Official website",
+          "url": "https://www.gyukatsu-motomura.com/store/Withharajuku"
+        }
+      ],
       "sourceIds": [
-        "source_collection_motomura_harajuku"
+        "source_collection_motomura_harajuku",
+        "source_collection_map_motomura_harajuku"
       ],
       "verificationRecordIds": [
-        "verify_collection_motomura_harajuku"
+        "verify_collection_motomura_harajuku",
+        "verify_collection_map_motomura_harajuku"
       ],
       "status": "active"
     }
@@ -952,6 +1064,86 @@
       "accessedAt": "2026-10-10",
       "active": true,
       "notes": "QA identity and destination-link check only. No hours, prices, menus, availability, dietary or booking claims adopted."
+    },
+    {
+      "sourceId": "source_collection_map_shibuya109",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "SHIBUYA109 exact business listing",
+      "url": "https://www.google.com/maps/place/SHIBUYA109/@35.6595884,139.6986223,18z/data=!4m5!3m4!1s0x0:0x55a2a75ba417e072!8m2!3d35.6595709!4d139.6987507?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: Shibuya 109; 2-29-1 Dogenzaka, Shibuya. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_nintendo_tokyo",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "Nintendo TOKYO exact business listing",
+      "url": "https://www.google.com/maps/place/Nintendo+TOKYO/data=!4m2!3m1!1s0x60188dae14b52bed:0xca9863932bd4be02?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: Nintendo Tokyo Shibuya Japan; 15-1 Udagawacho, Shibuya PARCO 6F. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_donki_shibuya",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "MEGA Don Quijote Shibuya exact business listing",
+      "url": "https://www.google.com/maps/place/MEGA+Don+Quijote/data=!4m2!3m1!1s0x60188ca9a47a82af:0x7ea0d3bc82ce0275?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: MEGA Don Quijote; 28-6 Udagawacho, Shibuya Honten. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_hands_shibuya",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "Hands Shibuya exact business listing",
+      "url": "https://www.google.com/maps/place/Tokyu+Hands+Shibuya/data=!4m2!3m1!1s0x60188ca916447249:0x13ff108bf95bcbf1?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: Tokyu Hands Shibuya; 12-18 Udagawacho, Shibuya. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_afuri_harajuku",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "AFURI Harajuku exact business listing",
+      "url": "https://www.google.com/maps/place/AFURI+Harajuku/data=!4m2!3m1!1s0x60188cba4d7bad6d:0xcb6d1919ead5d016?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: AFURI Harajuku; 3-63-1 Sendagaya, Grandeforesta Harajuku 1F. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_marion_harajuku",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "Marion Crepes exact business listing",
+      "url": "https://www.google.com/maps/place/Marion+Crepes+Takeshita+Street/data=!4m2!3m1!1s0x60188cbb3777fb3d:0x6d22890a2f23e178?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: Marion Crêpes Takeshita Street; 1-6-15 Jingumae, Juness building 1F. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_roastery",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "The Roastery exact business listing",
+      "url": "https://www.google.com/maps/place/THE+ROASTERY/data=!4m2!3m1!1s0x60188ca69a302d09:0x653be010a6b4ea7f?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: THE ROASTERY BY NOZY COFFEE; 5-17-13 Jingumae, Reveur Jingumae. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "source_collection_map_motomura_harajuku",
+      "sourceType": "map",
+      "publisher": "Google Maps",
+      "title": "Gyukatsu Motomura exact business listing",
+      "url": "https://www.google.com/maps/place/Gyukatsu+Motomura/data=!4m2!3m1!1s0x60188df47dcc348b:0x97eebf0c1723b7d4?hl=en",
+      "accessedAt": "2026-10-10",
+      "active": true,
+      "notes": "Business/branch identity cross-check only: Gyukatsu Motomura WITH Harajuku Branch; 1-14-30 Jingumae, WITH HARAJUKU B1F B106. No Google ratings, hours, reviews or photos imported."
     }
   ],
   "verification": [
@@ -1254,6 +1446,142 @@
       "status": "needs_review",
       "sourceIds": [],
       "notes": "Owner-directed structural QA demonstration, not finalized MCS commercial recommendations or operational guidance."
+    },
+    {
+      "verificationId": "verify_collection_map_shibuya109",
+      "targetType": "place",
+      "targetId": "place_shibuya109",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_shibuya109",
+        "source_collection_map_shibuya109"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0x55a2a75ba417e072. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_nintendo_tokyo",
+      "targetType": "place",
+      "targetId": "place_nintendo_tokyo",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_nintendo_tokyo",
+        "source_collection_map_nintendo_tokyo"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0xca9863932bd4be02. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_donki_shibuya",
+      "targetType": "place",
+      "targetId": "place_donki_shibuya",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_donki_shibuya",
+        "source_collection_map_donki_shibuya"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0x7ea0d3bc82ce0275. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_hands_shibuya",
+      "targetType": "place",
+      "targetId": "place_hands_shibuya",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_hands_shibuya",
+        "source_collection_map_hands_shibuya"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0x13ff108bf95bcbf1. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_afuri_harajuku",
+      "targetType": "place",
+      "targetId": "place_afuri_harajuku",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_afuri_harajuku",
+        "source_collection_map_afuri_harajuku"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0xcb6d1919ead5d016. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_marion_harajuku",
+      "targetType": "place",
+      "targetId": "place_marion_harajuku",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_marion_harajuku",
+        "source_collection_map_marion_harajuku"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0x6d22890a2f23e178. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_roastery",
+      "targetType": "place",
+      "targetId": "place_roastery",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_roastery",
+        "source_collection_map_roastery"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0x653be010a6b4ea7f. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "verify_collection_map_motomura_harajuku",
+      "targetType": "place",
+      "targetId": "place_motomura_harajuku",
+      "fieldPath": "externalLinks.google",
+      "scope": "Exact Google Maps business/branch identity and final navigation destination only",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-10",
+      "verifiedBy": "OpenAI Codex for MCS owner review",
+      "sourceIds": [
+        "source_collection_motomura_harajuku",
+        "source_collection_map_motomura_harajuku"
+      ],
+      "nextReviewDue": "2027-04-10",
+      "notes": "Cross-checked against operator branch identity. Listing 0x97eebf0c1723b7d4. Final destination tested in Edge. No operational facts or commercial curation approval implied."
     }
   ],
   "badges": [

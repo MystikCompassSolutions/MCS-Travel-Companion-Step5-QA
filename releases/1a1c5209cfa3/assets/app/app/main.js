@@ -501,12 +501,12 @@ function collectionCards(activity, collection) {
     const children = [visual,el('span',{class:'collection-copy'},el('strong',{},item.place.name),
       item.place.neighborhood ? el('span',{class:'collection-location'},item.place.neighborhood) : null,
       el('span',{class:'collection-rationale'},item.description),
-      item.needsInternet ? el('span',{class:'unavailable-action'},'Official listing · Internet required') : null),
+      item.needsInternet ? el('span',{class:'unavailable-action'},'Google Maps · Internet required') : null),
       item.target || item.url ? icon(item.target ? 'arrow' : 'external','ui-icon collection-arrow') : null];
     const props = {class:'collection-card'};
     const card = item.target ? button(children,()=>detail(item.target),{...props,'aria-label':`Explore ${item.place.name}`}) :
       item.url ? el('a',{...props,href:item.url,target:'_blank',rel:'noopener noreferrer',
-        'aria-label':`Open ${item.place.name} official listing in a new tab`},children) : el('div',props,children);
+        'aria-label':`Open ${item.place.name} on Google Maps in a new tab`},children) : el('div',props,children);
     return el('li',{},card);
   });
   list.append(...cards);
