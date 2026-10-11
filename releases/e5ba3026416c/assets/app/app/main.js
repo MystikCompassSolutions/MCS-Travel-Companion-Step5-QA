@@ -34,7 +34,7 @@ let homePreviewIndex = null;
 let exploreFilter = 'all', personalPageScrollTop = 0;
 let collectionMapContext = null;
 let activeMapPreview = null;
-let exploreSession = {mode: 'list', selectedId: null, camera: null};
+let exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0};
 let exploreReturn = null;
 
 function fitDetailOverlays() {
@@ -701,8 +701,11 @@ function explore() {
   }
   picker.addEventListener('keydown', event => {if (event.key === 'Escape') {event.preventDefault();closePicker();}});
   const list = el('ul', {class: 'place-list'});
-  activeMapPreview = exploreMapPreview(bundle, exploreSession, detail);
   const results = el('p', {class: 'visually-hidden', role: 'status', 'aria-live': 'polite'});
+  const listView = el('section', {id: 'explore-list-view', class: 'explore-list-view', 'aria-label': 'Curated places'},
+    strip, picker, activeDay, results, el('h2', {class: 'place-list-heading'}, 'Places & addresses'),
+    el('p', {class: 'day-meta'}, 'Available offline. List numbers identify entries, not travel order.'), list);
+  activeMapPreview = exploreMapPreview(bundle, exploreSession, detail, listView);
   function matches(place) {
     if (collectionMapContext) return collectionMapContext.placeIds.includes(place.placeId);
     const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
@@ -733,11 +736,13 @@ function explore() {
       const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
       const target = placeTarget(bundle, place.placeId);
       if (!activities.length && target) activities.push(target.activity);
-      return el('li', {class: 'place-row'}, el('span', {class: 'place-number', 'aria-hidden': true}, String(index + 1)),
+      return el('li', {class: 'place-row', 'data-place': place.placeId}, el('span', {class: 'place-number', 'aria-hidden': true}, String(index + 1)),
         el('div', {class: 'place-copy'}, el('h2', {id: `place-${place.placeId}`, tabindex: '-1'}, place.name),
         el('p', {}, place.address ?? 'Address pending verification'),
         target?.member?.description ? el('p', {}, target.member.description) : null,
         el('div', {class: 'place-actions'},
+          activeMapPreview.hasPlace?.(place.placeId) ? button('Select place', () => activeMapPreview.select(place.placeId, true),
+            {class: 'text-action place-select', 'aria-label': `Select ${place.name}`, 'aria-pressed': 'false'}) : null,
           ...activities.map(activity => button(activities.length === 1 ? 'Details' : editorialText(activity.name), () => detail(activity),
             {class: 'text-action', 'aria-label': `Activity detail: ${editorialText(activity.name)}`})),
           navigator.onLine ? el('a', {class: 'text-action',
@@ -746,6 +751,7 @@ function explore() {
             el('small', {}, 'Map needs internet'))));
     }));
     if (!places.length) list.append(el('li', {class: 'place-row'}, 'No mapped places in this filter.'));
+    activeMapPreview.syncSelection?.();
     if (announce) results.textContent = `${places.length} ${places.length === 1 ? 'place' : 'places'} for ${
       exploreFilter.startsWith('day:') ? `Day ${bundle.days[selectedDay].dayNumber}` :
         filters.find(filter => filter.id === exploreFilter).label}.`;
@@ -774,10 +780,7 @@ function explore() {
   requestAnimationFrame(() => {const chip = chips[filters.findIndex(filter => filter.id ===
     (exploreFilter.startsWith('day:') ? 'days' : exploreFilter))];
     strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;});
-  return [el('p', {class: 'section-kicker'}, 'Places curated for your journey'),
-    el('h1', {}, 'Explore'), activeMapPreview.element, strip, picker, activeDay, results,
-    el('h2', {class: 'place-list-heading'}, 'Places & addresses'),
-    el('p', {class: 'day-meta'}, 'Every authored place is available below, including offline. List numbers identify entries, not travel order.'), list];
+  return activeMapPreview.element ? [activeMapPreview.element] : [el('h1', {}, 'Explore'), listView];
 }
 
 function budgetEstimate(total, currency, activeRate) {
@@ -1168,7 +1171,7 @@ async function switchPack(name) {
     const result = reconcileContent(loaded ?? newTravelerState(next), next);
     bundle = next; state = result.state; packName = name; view = 'Home'; exploreFilter = 'all';
     collectionMapContext = null;
-    exploreSession = {mode: 'list', selectedId: null, camera: null}; exploreReturn = null;
+    exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0}; exploreReturn = null;
     try {localStorage.setItem('mcs-active-sample', name);} catch {}
     resetDay(); clearSync(); render();
     coordinator = createTabCoordinator(bundle.trip.tripId, revision => {
