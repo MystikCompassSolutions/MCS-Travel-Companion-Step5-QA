@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.8",
+    "contentVersion": "0.1.9",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.8",
+    "contentVersion": "0.1.9",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -58,7 +58,17 @@
       "category": "attraction",
       "regionId": "region_tokyo",
       "address": "Tokyo — exact address pending verification",
-      "status": "active"
+      "status": "active",
+      "latitude": 35.7200147,
+      "longitude": 139.76078,
+      "sourceIds": [
+        "src_geo_nezu",
+        "src_geo_identity_nezu"
+      ],
+      "verificationRecordIds": [
+        "ver_geo_nezu_latitude",
+        "ver_geo_nezu_longitude"
+      ]
     },
     {
       "placeId": "place_shibuya",
@@ -78,12 +88,18 @@
       "officialWebsite": "https://www.teamlab.art/e/tokyo/",
       "sourceIds": [
         "source_teamlab_borderless_official",
-        "source_azabudai_borderless_official"
+        "source_azabudai_borderless_official",
+        "src_geo_borderless",
+        "src_geo_identity_borderless"
       ],
       "verificationRecordIds": [
-        "verify_borderless_address"
+        "verify_borderless_address",
+        "ver_geo_borderless_latitude",
+        "ver_geo_borderless_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6620024,
+      "longitude": 139.7434178
     },
     {
       "placeId": "place_universal_osaka",
@@ -120,13 +136,19 @@
       ],
       "sourceIds": [
         "source_collection_shibuya109",
-        "source_collection_map_shibuya109"
+        "source_collection_map_shibuya109",
+        "src_geo_shibuya109",
+        "src_geo_identity_shibuya109"
       ],
       "verificationRecordIds": [
         "verify_collection_shibuya109",
-        "verify_collection_map_shibuya109"
+        "verify_collection_map_shibuya109",
+        "ver_geo_shibuya109_latitude",
+        "ver_geo_shibuya109_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6595895,
+      "longitude": 139.6987173
     },
     {
       "placeId": "place_nintendo_tokyo",
@@ -150,13 +172,19 @@
       ],
       "sourceIds": [
         "source_collection_nintendo_tokyo",
-        "source_collection_map_nintendo_tokyo"
+        "source_collection_map_nintendo_tokyo",
+        "src_geo_nintendo_tokyo",
+        "src_geo_identity_nintendo_tokyo"
       ],
       "verificationRecordIds": [
         "verify_collection_nintendo_tokyo",
-        "verify_collection_map_nintendo_tokyo"
+        "verify_collection_map_nintendo_tokyo",
+        "ver_geo_nintendo_tokyo_latitude",
+        "ver_geo_nintendo_tokyo_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.661925,
+      "longitude": 139.6989888
     },
     {
       "placeId": "place_donki_shibuya",
@@ -210,13 +238,19 @@
       ],
       "sourceIds": [
         "source_collection_hands_shibuya",
-        "source_collection_map_hands_shibuya"
+        "source_collection_map_hands_shibuya",
+        "src_geo_hands_shibuya",
+        "src_geo_identity_hands_shibuya"
       ],
       "verificationRecordIds": [
         "verify_collection_hands_shibuya",
-        "verify_collection_map_hands_shibuya"
+        "verify_collection_map_hands_shibuya",
+        "ver_geo_hands_shibuya_latitude",
+        "ver_geo_hands_shibuya_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6620269,
+      "longitude": 139.6978809
     },
     {
       "placeId": "place_afuri_harajuku",
@@ -1144,6 +1178,106 @@
       "accessedAt": "2026-10-10",
       "active": true,
       "notes": "Business/branch identity cross-check only: Gyukatsu Motomura WITH Harajuku Branch; 1-14-30 Jingumae, WITH HARAJUKU B1F B106. No Google ratings, hours, reviews or photos imported."
+    },
+    {
+      "sourceId": "src_geo_nezu",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "Nezu Shrine geographic geometry",
+      "url": "https://www.openstreetmap.org/way/464629204",
+      "active": true,
+      "notes": "OSM way 464629204 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_identity_nezu",
+      "sourceType": "operator",
+      "publisher": "Nezu Shrine",
+      "title": "Official venue identity and access",
+      "url": "https://www.nedujinja.or.jp/access/",
+      "active": true,
+      "notes": "Identity/address cross-check; does not independently certify OSM coordinates.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_borderless",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "teamLab Borderless geographic geometry",
+      "url": "https://www.openstreetmap.org/node/11512273700",
+      "active": true,
+      "notes": "OSM node 11512273700 version 8; authored venue POI, not an entrance or indoor navigation position. Coordinate verification for sample QA only, not commercial itinerary clearance.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_identity_borderless",
+      "sourceType": "operator",
+      "publisher": "teamLab Borderless",
+      "title": "Official venue identity and access",
+      "url": "https://www.teamlab.art/e/tokyo/",
+      "active": true,
+      "notes": "Identity/address cross-check; does not independently certify OSM coordinates.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_shibuya109",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "SHIBUYA109 geographic geometry",
+      "url": "https://www.openstreetmap.org/way/55895868",
+      "active": true,
+      "notes": "OSM way 55895868 version 17; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_identity_shibuya109",
+      "sourceType": "operator",
+      "publisher": "SHIBUYA109",
+      "title": "Official venue identity and access",
+      "url": "https://shibuya109.jp/access/",
+      "active": true,
+      "notes": "Identity/address cross-check; does not independently certify OSM coordinates.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_nintendo_tokyo",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "Nintendo TOKYO geographic geometry",
+      "url": "https://www.openstreetmap.org/node/7012926451",
+      "active": true,
+      "notes": "OSM node 7012926451 version 8; authored venue POI, not an entrance or indoor navigation position. Coordinate verification for sample QA only, not commercial itinerary clearance.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_identity_nintendo_tokyo",
+      "sourceType": "operator",
+      "publisher": "Nintendo TOKYO",
+      "title": "Official venue identity and access",
+      "url": "https://www.nintendo.com/jp/officialstore/index.html",
+      "active": true,
+      "notes": "Identity/address cross-check; does not independently certify OSM coordinates.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_hands_shibuya",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "Hands Shibuya geographic geometry",
+      "url": "https://www.openstreetmap.org/way/136713209",
+      "active": true,
+      "notes": "OSM way 136713209 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance.",
+      "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_identity_hands_shibuya",
+      "sourceType": "operator",
+      "publisher": "Hands Shibuya",
+      "title": "Official venue identity and access",
+      "url": "https://info.hands.net/en/list/shibuya/",
+      "active": true,
+      "notes": "Identity/address cross-check; does not independently certify OSM coordinates.",
+      "accessedAt": "2026-10-11"
     }
   ],
   "verification": [
@@ -1582,6 +1716,166 @@
       ],
       "nextReviewDue": "2027-04-10",
       "notes": "Cross-checked against operator branch identity. Listing 0x97eebf0c1723b7d4. Final destination tested in Edge. No operational facts or commercial curation approval implied."
+    },
+    {
+      "verificationId": "ver_geo_nezu_latitude",
+      "targetType": "place",
+      "targetId": "place_nezu",
+      "fieldPath": "latitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_nezu"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 464629204 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_nezu_longitude",
+      "targetType": "place",
+      "targetId": "place_nezu",
+      "fieldPath": "longitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_nezu"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 464629204 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_borderless_latitude",
+      "targetType": "place",
+      "targetId": "place_borderless",
+      "fieldPath": "latitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_borderless"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 11512273700 version 8; authored venue POI, not an entrance or indoor navigation position. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_borderless_longitude",
+      "targetType": "place",
+      "targetId": "place_borderless",
+      "fieldPath": "longitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_borderless"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 11512273700 version 8; authored venue POI, not an entrance or indoor navigation position. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_shibuya109_latitude",
+      "targetType": "place",
+      "targetId": "place_shibuya109",
+      "fieldPath": "latitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_shibuya109"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 55895868 version 17; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_shibuya109_longitude",
+      "targetType": "place",
+      "targetId": "place_shibuya109",
+      "fieldPath": "longitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_shibuya109"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 55895868 version 17; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_nintendo_tokyo_latitude",
+      "targetType": "place",
+      "targetId": "place_nintendo_tokyo",
+      "fieldPath": "latitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_nintendo_tokyo"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 7012926451 version 8; authored venue POI, not an entrance or indoor navigation position. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_nintendo_tokyo_longitude",
+      "targetType": "place",
+      "targetId": "place_nintendo_tokyo",
+      "fieldPath": "longitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_nintendo_tokyo"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 7012926451 version 8; authored venue POI, not an entrance or indoor navigation position. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_hands_shibuya_latitude",
+      "targetType": "place",
+      "targetId": "place_hands_shibuya",
+      "fieldPath": "latitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_hands_shibuya"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 136713209 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_hands_shibuya_longitude",
+      "targetType": "place",
+      "targetId": "place_hands_shibuya",
+      "fieldPath": "longitude",
+      "scope": "Explore A1 Tokyo pilot coordinate",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_hands_shibuya"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 136713209 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
     }
   ],
   "badges": [

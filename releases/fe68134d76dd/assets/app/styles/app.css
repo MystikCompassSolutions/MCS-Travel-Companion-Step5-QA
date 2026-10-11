@@ -1,4 +1,30 @@
 * { box-sizing: border-box; }
+/* A1 pilot only; no locked-screen overrides. Cards sit outside the gesture surface. */
+.explore-pilot { margin: 1rem 0; padding: 12px; border: 1px solid var(--indigo-700); border-radius: 12px; background: var(--paper); color: var(--indigo-900); min-width: 0; }
+main[data-screen="Explore"] .explore-pilot .day-meta { color: var(--indigo-700); }
+main[data-screen="Explore"] .explore-pilot :focus-visible { outline-color: var(--indigo-700); }
+.explore-pilot h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.pilot-switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.pilot-switch button[aria-pressed="true"], .pilot-place-choice[aria-pressed="true"] { background: var(--indigo-900); color: var(--paper); }
+.pilot-status, .pilot-gesture-help { font-size: .875rem; overflow-wrap: anywhere; }
+.pilot-canvas { width: 100%; height: 440px; height: clamp(320px, 55dvh, 480px); position: relative; border-radius: 8px; overflow: hidden; background: var(--cream); }
+.explore-pilot [hidden] { display: none !important; }
+.pilot-pin { width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 3px solid var(--indigo-900); border-radius: 50%; background: var(--gold); color: var(--indigo-900); font-size: 20px; box-shadow: 0 1px 4px #0008; }
+.pilot-pin.is-selected { background: var(--indigo-900); color: var(--paper); border-color: var(--gold); z-index: 1; }
+.pilot-pin:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.explore-pilot .maplibregl-ctrl-group button { width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border-radius: 0; }
+.pilot-attribution { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; font-size: .75rem; line-height: 1.3; }
+.pilot-attribution a { display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; max-width: 100%; }
+.pilot-place-choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pilot-place-choice { text-align: left; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; font-size: .875rem; }
+.pilot-preview { display: flex; gap: 12px; padding: 12px; background: var(--cream); border-radius: 8px; }
+.pilot-preview h3, .pilot-preview p { margin: 0; overflow-wrap: anywhere; }
+.pilot-preview h3 { font-size: 1.05rem; }
+.pilot-preview p, .pilot-editorial { font-size: .8rem; }
+.pilot-preview-copy { min-width: 0; flex: 1; }
+.pilot-thumbnail { width: 56px; height: 64px; flex: 0 0 56px; object-fit: cover; border-radius: 6px; }
+.pilot-neutral { display: grid; place-items: center; color: var(--indigo-700); background: var(--paper); }
+@media (forced-colors: active) { .pilot-pin, .pilot-pin.is-selected { border-color: ButtonText; } .pilot-pin.is-selected { outline: 3px solid Highlight; } }
 :root { --app-nav-row: clamp(48px, 3rem, 88px); --app-nav-height: calc(var(--app-nav-row) + 8px + env(safe-area-inset-bottom)); }
 html { height: 100%; overscroll-behavior-y: none; }
 body { height: 100vh; height: 100dvh; overflow: hidden; overscroll-behavior-y: none; margin: 0; background: var(--cream); color: var(--indigo-900); font: 1.0625rem/1.55 var(--body-font); }
