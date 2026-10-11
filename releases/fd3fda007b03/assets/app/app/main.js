@@ -5,7 +5,7 @@ import {chooseOption, resolveDay, selectedOptions, effectiveOptions, optionSched
 import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
 import {exploreFilterChoices} from './explore-navigation.js';
 import {exploreMapPreview} from './explore-map-preview.js';
-import {placeTarget} from './explore-pilot.js';
+import {projectExplore} from '../domain/explore.js';
 import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, formatHomeMoney, parseMoney, currencyDigits,
   convertPlanningEstimate, normalizePlanningRate} from '../domain/budget.js';
 import {newTravelerState, createTravelerStore, reconcileContent, serializeTravelerState,
@@ -31,7 +31,8 @@ let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
 let homePreviewIndex = null;
-let exploreFilter = 'all', personalPageScrollTop = 0;
+let exploreScope = {dayId: null, category: 'all', regionId: null};
+let personalPageScrollTop = 0;
 let collectionMapContext = null;
 let activeMapPreview = null;
 let exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0};
@@ -483,7 +484,7 @@ function detailActions(activity, place, className = 'detail-actions', editorial 
   const collection = curatedCollection(activity, bundle);
   const actions = [place || collection ? button(editorial ? [icon('map'), 'Open Map'] : 'Open Map', () => {
     collectionMapContext = collection ? {title:activity.name,placeIds:collection.items.map(item=>item.place.placeId)} : null;
-    if (collection) exploreFilter = 'all';
+    if (collection) exploreScope = {dayId: null, category: 'all', regionId: null};
     go('Explore');
   },
     {class: 'primary gold-action', 'aria-label': `Open ${editorialText(activity.name)} in Explore map`}) : null,
@@ -663,124 +664,109 @@ function detail(activity) {
 }
 
 function explore() {
-  const today = currentDay();
-  const todayIndex = today.phase === 'active' ? today.index : null;
-  let selectedDay = exploreFilter.startsWith('day:') ? Number(exploreFilter.slice(4)) : null;
-  if (selectedDay !== null && (!Number.isInteger(selectedDay) || selectedDay < 0 || selectedDay >= bundle.days.length)) {
-    exploreFilter = 'all'; selectedDay = null;
-  }
-  if (exploreFilter === 'today' && todayIndex === null) exploreFilter = 'all';
-  const filters = exploreFilterChoices(bundle.days.length, todayIndex, selectedDay);
-  if (!filters.some(filter => filter.id === exploreFilter) && selectedDay === null) exploreFilter = 'all';
-  const picks = new Set(bundle.badges.filter(badge => badge.label === 'MCS PICK').map(badge => badge.badgeId));
-  const alternatives = new Set(bundle.optionGroups.flatMap(group => group.optionIds
-    .filter(id => id !== group.defaultOptionId && id !== group.baseOptionId)
-    .flatMap(id => bundle.options.find(option => option.optionId === id)?.activityIds ?? [])));
+  const initial = projectExplore(bundle, state, exploreScope);
+  if (initial.invalidToday) exploreScope.dayId = null;
+  const todayIndex = initial.today ? bundle.days.findIndex(d => d.dayId === initial.today.dayId) : null;
+  const selectedIndex = bundle.days.findIndex(d => d.dayId === exploreScope.dayId);
+  const filters = exploreFilterChoices(bundle.days.length, todayIndex, selectedIndex < 0 ? null : selectedIndex);
   const chips = filters.map(filter => button(filter.label,
-    () => filter.id === 'days' ? togglePicker() : select(filter.id),
-    {class: 'filter-chip', 'aria-pressed': String(filter.id === exploreFilter ||
-      (filter.id === 'days' && exploreFilter.startsWith('day:'))),
+    () => filter.id === 'days' ? togglePicker() : chooseFilter(filter.id),
+    {class: 'filter-chip', 'aria-pressed': 'false',
       'aria-label': filter.id === 'days' ? 'Choose itinerary day' : `Show ${filter.label} places`,
       ...(filter.id === 'days' ? {'aria-expanded': 'false', 'aria-controls': 'explore-day-picker'} : {})}));
   const strip = el('div', {class: 'filter-strip', role: 'group', 'aria-label': 'Explore place filters'}, chips);
-  const daysChip = chips[filters.findIndex(filter => filter.id === 'days')];
+  const daysChip = chips[filters.findIndex(f => f.id === 'days')];
   const picker = el('section', {id: 'explore-day-picker', class: 'explore-day-picker',
     'aria-label': 'Choose a day to filter places', hidden: true},
     el('div', {class: 'explore-day-picker-head'}, el('strong', {}, 'Itinerary days'),
-      button('Clear day filter', () => {select('all', true);closePicker();}, {class: 'text-action'})),
-    el('div', {class: 'explore-day-list'}, bundle.days.map((day, index) =>
+      button('Clear day filter', () => {exploreScope.dayId = null; update(true, true); closePicker();}, {class:'text-action'})),
+    el('div', {class:'explore-day-list'}, bundle.days.map(day =>
       button(`Day ${day.dayNumber} · ${editorialText(day.title)}`, () => {
-        selectedDay = index; select(`day:${index}`, true); closePicker();
-      }, {'aria-label': `Show places for Day ${day.dayNumber}: ${editorialText(day.title)}`}))));
-  const activeDay = el('p', {class: 'explore-active-day', hidden: true});
-  function closePicker() {picker.hidden = true;daysChip.setAttribute('aria-expanded', 'false');daysChip.focus({preventScroll: true});}
-  function togglePicker() {
-    picker.hidden = !picker.hidden;
-    daysChip.setAttribute('aria-expanded', String(!picker.hidden));
-    if (!picker.hidden) picker.querySelector('button').focus({preventScroll: true});
+        collectionMapContext = null; exploreScope.dayId = day.dayId; exploreScope.regionId = day.primaryRegionId;
+        update(true, true); closePicker();
+      }, {'aria-label':`Show places for Day ${day.dayNumber}: ${editorialText(day.title)}`}))));
+  const scopeLabel = el('p', {class:'explore-scope-label'});
+  const filterArea = el('div', {class:'explore-filters'}, strip, picker, scopeLabel);
+  function closePicker() {picker.hidden = true; daysChip.setAttribute('aria-expanded','false'); daysChip.focus({preventScroll:true});}
+  function togglePicker() {picker.hidden = !picker.hidden; daysChip.setAttribute('aria-expanded',String(!picker.hidden));
+    if (!picker.hidden) picker.querySelector('button').focus({preventScroll:true});}
+  picker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closePicker();}});
+  const list = el('ul',{class:'place-list'});
+  const results = el('p',{class:'visually-hidden',role:'status','aria-live':'polite'});
+  const listView = el('section',{id:'explore-list-view',class:'explore-list-view','aria-label':'Curated places'},
+    results,el('h2',{class:'place-list-heading'},'Places & activities'),
+    el('p',{class:'day-meta'},'Available offline. Visit numbers follow the selected day. Curated recommendations and unselected alternatives are not numbered stops.'),list);
+  let model;
+  function projection() {
+    return projectExplore(bundle,state,{...exploreScope,placeIds:collectionMapContext?.placeIds});
   }
-  picker.addEventListener('keydown', event => {if (event.key === 'Escape') {event.preventDefault();closePicker();}});
-  const list = el('ul', {class: 'place-list'});
-  const results = el('p', {class: 'visually-hidden', role: 'status', 'aria-live': 'polite'});
-  const listView = el('section', {id: 'explore-list-view', class: 'explore-list-view', 'aria-label': 'Curated places'},
-    strip, picker, activeDay, results, el('h2', {class: 'place-list-heading'}, 'Places & addresses'),
-    el('p', {class: 'day-meta'}, 'Available offline. List numbers identify entries, not travel order.'), list);
-  activeMapPreview = exploreMapPreview(bundle, exploreSession, detail, listView);
-  function matches(place) {
-    if (collectionMapContext) return collectionMapContext.placeIds.includes(place.placeId);
-    const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
-    if (exploreFilter === 'all') return true;
-    if (exploreFilter.startsWith('day:') || exploreFilter === 'today') {
-      const index = exploreFilter === 'today' ? todayIndex : Number(exploreFilter.slice(4));
-      return resolveDay(bundle, state, bundle.days[index]).some(item =>
-        activities.some(activity => activity.activityId === item.referencedEntityId));
+  function renderList() {
+    const scrollTop = listView.isConnected ? listView.scrollTop : null;
+    const nodes = [];
+    for (const region of model.regions) {
+      nodes.push(el('li',{class:'explore-region-heading'},el('h2',{},region.name)));
+      for (const entry of model.entries.filter(e=>e.regionId===region.regionId)) {
+        const visit = entry.dayNumber ? `Day ${entry.dayNumber}${entry.visitOrdinal ? ` · Visit ${entry.visitOrdinal}` : entry.member ? ' · Curated option' : ' · Alternative'}` : '';
+        nodes.push(el('li',{class:'place-row','data-entry':entry.id,'data-place':entry.placeId??''},
+          el('span',{class:'place-number','aria-label':entry.markerNumber ? `Visit ${entry.markerNumber}` : 'Not a numbered itinerary stop'},
+            entry.markerNumber ? String(entry.markerNumber) : entry.kind==='alternative' ? '◇' : '·'),
+          el('div',{class:'place-copy'},el('h2',{tabindex:'-1'},entry.name),
+            el('p',{},`${entry.category} · ${entry.neighborhood??entry.region}`),
+            el('p',{},`${entry.editorial}${visit ? ' · '+visit : ''}`),
+            el('p',{},entry.place?.address??'Address pending verification'),
+            entry.member?.description ? el('p',{},entry.member.description) : null,
+            el('p',{class:'place-location-note'},entry.locationNote),
+            el('div',{class:'place-actions'},
+              button('Select place',()=>activeMapPreview.select(entry.id,true),{class:'text-action place-select',
+                'aria-label':`Select ${entry.name}${entry.markerNumber ? ' visit '+entry.markerNumber : ''}`,'aria-pressed':'false'}),
+              entry.target ? button('Details',()=>{activeMapPreview.select(entry.id);exploreSession.returnFocusId=entry.id;detail(entry.target);},
+                {class:'text-action','aria-label':`Activity detail: ${editorialText(entry.target.name)}`}) :
+                el('small',{},'Activity detail unavailable')))));
+      }
     }
-    if (exploreFilter === 'picks') return activities.some(activity => activity.badgeIds.some(id => picks.has(id)));
-    if (exploreFilter === 'alternatives') return activities.some(activity => alternatives.has(activity.activityId));
-    return place.category === exploreFilter;
+    list.replaceChildren(...nodes);
+    if (!model.entries.length) list.append(el('li',{class:'place-row'},'No places match this day/category. Try All to reset.'));
+    if (scrollTop !== null) listView.scrollTop = scrollTop;
   }
-  function update(announce = false) {
-    chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(filters[index].id === exploreFilter ||
-      (filters[index].id === 'days' && exploreFilter.startsWith('day:')))));
-    daysChip.textContent = selectedDay === null ? 'Days ▾' : `Day ${bundle.days[selectedDay].dayNumber} ▾`;
-    activeDay.hidden = !exploreFilter.startsWith('day:');
-    if (!activeDay.hidden) activeDay.replaceChildren(`Showing Day ${bundle.days[selectedDay].dayNumber}: ${bundle.days[selectedDay].title} · `,
-      button('Clear filter', () => select('all', true), {class: 'text-action'}));
-    if (collectionMapContext) {
-      activeDay.hidden=false;
-      activeDay.replaceChildren(`Places in ${collectionMapContext.title} · `,
-        button('Show all places',()=>select('all',true),{class:'text-action'}));
-    }
-    const places = bundle.places.filter(matches);
-    list.replaceChildren(...places.map((place, index) => {
-      const activities = bundle.activities.filter(activity => activity.placeId === place.placeId);
-      const target = placeTarget(bundle, place.placeId);
-      if (!activities.length && target) activities.push(target.activity);
-      return el('li', {class: 'place-row', 'data-place': place.placeId}, el('span', {class: 'place-number', 'aria-hidden': true}, String(index + 1)),
-        el('div', {class: 'place-copy'}, el('h2', {id: `place-${place.placeId}`, tabindex: '-1'}, place.name),
-        el('p', {}, place.address ?? 'Address pending verification'),
-        target?.member?.description ? el('p', {}, target.member.description) : null,
-        el('div', {class: 'place-actions'},
-          activeMapPreview.hasPlace?.(place.placeId) ? button('Select place', () => activeMapPreview.select(place.placeId, true),
-            {class: 'text-action place-select', 'aria-label': `Select ${place.name}`, 'aria-pressed': 'false'}) : null,
-          ...activities.map(activity => button(activities.length === 1 ? 'Details' : editorialText(activity.name), () => detail(activity),
-            {class: 'text-action', 'aria-label': `Activity detail: ${editorialText(activity.name)}`})),
-          navigator.onLine ? el('a', {class: 'text-action',
-            href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + (place.address ?? ''))}`,
-            target: '_blank', rel: 'noopener noreferrer', 'aria-label': `Open external map for ${place.name}`}, 'Map ↗') :
-            el('small', {}, 'Map needs internet'))));
-    }));
-    if (!places.length) list.append(el('li', {class: 'place-row'}, 'No mapped places in this filter.'));
-    activeMapPreview.syncSelection?.();
-    if (announce) results.textContent = `${places.length} ${places.length === 1 ? 'place' : 'places'} for ${
-      exploreFilter.startsWith('day:') ? `Day ${bundle.days[selectedDay].dayNumber}` :
-        filters.find(filter => filter.id === exploreFilter).label}.`;
+  function update(announce = false, frame = false, requestedId) {
+    const started = performance.now();
+    const previouslySelected = exploreSession.selectedId;
+    model = projection(); exploreScope.regionId = model.regionId;
+    chips.forEach((chip,i)=>chip.setAttribute('aria-pressed',String(
+      filters[i].id==='all' ? !exploreScope.dayId&&exploreScope.category==='all'&&!collectionMapContext :
+      filters[i].id==='today' ? exploreScope.dayId==='today' :
+      filters[i].id==='days' ? !!exploreScope.dayId&&exploreScope.dayId!=='today' : exploreScope.category===filters[i].id)));
+    daysChip.textContent = model.day ? `Day ${model.day.dayNumber} ▾` : 'Days ▾';
+    scopeLabel.textContent = collectionMapContext ? collectionMapContext.title :
+      `${model.day ? 'Day '+model.day.dayNumber : 'All days'} · ${exploreScope.category==='all' ? 'All categories' : filters.find(f=>f.id===exploreScope.category)?.label??'All categories'}`;
+    renderList();
+    if (frame) {exploreSession.listScrollTop = 0; listView.scrollTop = 0;}
+    activeMapPreview?.update(model,{frame,selectedId:requestedId??exploreSession.selectedId});
+    activeMapPreview?.syncSelection();
+    if (announce) results.textContent = `${model.entries.length} results. ${scopeLabel.textContent}. ${
+      previouslySelected!==exploreSession.selectedId ? 'Selection updated. ' : ''}${model.entries.find(e=>e.id===exploreSession.selectedId)?.name??'No selected place'}.`;
+    if (activeMapPreview?.element) activeMapPreview.element.dataset.updateMs = String(performance.now() - started);
   }
-  function select(id, focus = false) {
-    collectionMapContext = null;
-    if (!id.startsWith('day:')) selectedDay = null;
-    exploreFilter = id; update(true);
-    const index = filters.findIndex(filter => filter.id === (id.startsWith('day:') ? 'days' : id));
-    const chip = chips[index];
-    strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;
-    if (focus) chip.focus({preventScroll: true});
+  function chooseFilter(id) {
+    collectionMapContext=null;
+    if (id==='all') exploreScope={dayId:null,category:'all',regionId:exploreScope.regionId};
+    else if (id==='today') {exploreScope.dayId='today';exploreScope.regionId=initial.today?.primaryRegionId;}
+    else exploreScope.category=exploreScope.category===id?'all':id;
+    update(true,true);
   }
-  strip.addEventListener('keydown', event => {
-    const index = filters.findIndex(filter => filter.id ===
-      (exploreFilter.startsWith('day:') ? 'days' : exploreFilter));
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? filters.length - 1 :
-      event.key === 'ArrowRight' ? Math.min(filters.length - 1, index + 1) :
-      event.key === 'ArrowLeft' ? Math.max(0, index - 1) : -1;
-    if (next < 0) return;
-    event.preventDefault();
-    if (filters[next].id === 'days') {chips[next].focus({preventScroll: true});return;}
-    select(filters[next].id, true);
+  strip.addEventListener('keydown',event=>{
+    const current=chips.indexOf(document.activeElement);
+    const next=event.key==='Home'?0:event.key==='End'?chips.length-1:
+      event.key==='ArrowRight'?Math.min(chips.length-1,current+1):event.key==='ArrowLeft'?Math.max(0,current-1):-1;
+    if(next>=0){event.preventDefault();chips[next].focus({preventScroll:true});chips[next].scrollIntoView({block:'nearest',inline:'nearest'});}
   });
+  model=projection();exploreScope.regionId=model.regionId;renderList();
+  activeMapPreview=exploreMapPreview(bundle,exploreSession,detail,listView,{model,filters:filterArea,
+    onRegion:(id,entryId)=>{exploreScope.regionId=id;update(true,false,entryId);
+      if (entryId && exploreSession.mode === 'list') requestAnimationFrame(() =>
+        [...list.querySelectorAll('[data-entry]')].find(n => n.dataset.entry === entryId)?.querySelector('.place-select')?.focus({preventScroll:true}));}});
   update();
-  requestAnimationFrame(() => {const chip = chips[filters.findIndex(filter => filter.id ===
-    (exploreFilter.startsWith('day:') ? 'days' : exploreFilter))];
-    strip.scrollLeft = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2;});
-  return activeMapPreview.element ? [activeMapPreview.element] : [el('h1', {}, 'Explore'), listView];
+  return [activeMapPreview.element];
 }
 
 function budgetEstimate(total, currency, activeRate) {
@@ -1169,7 +1155,7 @@ async function switchPack(name) {
     let loaded; storageIssue = null;
     try {loaded = await store.load(next.trip.tripId);} catch (error) {storageIssue = error;}
     const result = reconcileContent(loaded ?? newTravelerState(next), next);
-    bundle = next; state = result.state; packName = name; view = 'Home'; exploreFilter = 'all';
+    bundle = next; state = result.state; packName = name; view = 'Home'; exploreScope = {dayId: null, category: 'all', regionId: null};
     collectionMapContext = null;
     exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0}; exploreReturn = null;
     try {localStorage.setItem('mcs-active-sample', name);} catch {}

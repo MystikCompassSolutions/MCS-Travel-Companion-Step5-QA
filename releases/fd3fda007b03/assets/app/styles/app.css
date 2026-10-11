@@ -637,3 +637,31 @@ main[data-screen="Explore"] .explore-pilot .explore-list-view .day-meta { color:
 .place-select[aria-pressed="true"]::after { content: ' ✓'; }
 @media (orientation: landscape) and (max-height: 600px) { main[data-screen="Explore"] { min-height: calc(200px + 14rem); } }
 @media (forced-colors: active) { .place-row.is-selected { outline-color: Highlight; } }
+
+/* A2 functional filters/cards; the approved geographic surface and gestures remain. */
+.explore-filters { position: relative; flex-shrink: 0; min-width: 0; }
+.explore-filters .filter-strip { padding-bottom: 2px; }
+.explore-filters .filter-chip { min-width: 44px; }
+.explore-scope-label { margin: 0; font-size: .75rem; color: var(--night-muted); }
+.explore-filters .explore-day-picker { position: absolute; inset-inline: 0; top: 100%; z-index: 5; max-height: 50dvh; overflow-y: auto; }
+.pilot-context select { max-width: 40%; min-height: 44px; min-width: 70px; padding: 4px; font-size: 1rem; color: var(--indigo-900); background: var(--paper); }
+.explore-count { flex: 1; min-width: 0; }
+.explore-preview { min-width: 0; flex-shrink: 0; background: var(--cream); color: var(--indigo-900); }
+.explore-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; min-width: 0; scrollbar-width: none; padding: 2px; gap: 8px; }
+.explore-carousel::-webkit-scrollbar { display: none; }
+.explore-carousel::after { content: ''; flex: 0 0 12px; }
+.explore-place-card { flex: 0 0 calc(100% - 12px); min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; border: 2px solid transparent; }
+.explore-place-card.is-selected { border-color: var(--indigo-700); }
+.carousel-controls { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; }
+.carousel-controls button { min-width: 44px; padding: 4px; background: transparent; color: var(--indigo-900); }
+main[data-screen="Explore"] .pilot-tools .carousel-controls button { color: var(--paper); }
+.card-position { font-size: .75rem; }
+.explore-region-heading { list-style: none; }
+.explore-region-heading h2 { font-size: 1.1rem; margin: 12px 0 8px; }
+.place-location-note { font-size: .8rem; }
+.pilot-map-empty { position: absolute; inset: 0; display: grid; place-content: center; padding: 16px; color: var(--paper); background: var(--night-raised); margin: 0; }
+.pilot-map-empty[hidden] { display: none; }
+.explore-empty { padding: 8px; }
+main[data-screen="Explore"] .explore-preview :focus-visible { outline-color: var(--indigo-700); }
+@media (min-width: 768px) { .explore-place-card { flex-basis: min(420px, 75%); } .explore-carousel::after { flex-basis: max(25%, calc(100% - 420px)); } }
+@media (forced-colors: active) { .explore-place-card.is-selected { border-color: Highlight; } }

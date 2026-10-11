@@ -2,7 +2,7 @@
   "manifest": {
     "bundleId": "bundle_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.9",
+    "contentVersion": "0.1.10",
     "tripId": "trip_jp_sample",
     "classification": "sample",
     "sampleNotice": "Unverified structural sample. Prices and timings are test values, not travel guidance."
@@ -10,7 +10,7 @@
   "trip": {
     "tripId": "trip_jp_sample",
     "schemaVersion": "1.0.0",
-    "contentVersion": "0.1.9",
+    "contentVersion": "0.1.10",
     "title": "Japan · Tokyo + Osaka",
     "editionType": "full",
     "primaryCountryCode": "JP",
@@ -107,12 +107,19 @@
       "category": "attraction",
       "regionId": "region_osaka",
       "sourceIds": [
-        "source_universal_official"
+        "source_universal_official",
+        "src_geo_universal_osaka",
+        "src_geo_identity_universal_osaka"
       ],
       "verificationRecordIds": [
-        "verify_universal_identity"
+        "verify_universal_identity",
+        "ver_geo_universal_osaka_latitude",
+        "ver_geo_universal_osaka_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 34.6657375,
+      "longitude": 135.432598,
+      "coordinatePrecision": "site"
     },
     {
       "placeId": "place_shibuya109",
@@ -208,13 +215,20 @@
       ],
       "sourceIds": [
         "source_collection_donki_shibuya",
-        "source_collection_map_donki_shibuya"
+        "source_collection_map_donki_shibuya",
+        "src_geo_donki_shibuya",
+        "src_geo_identity_donki_shibuya"
       ],
       "verificationRecordIds": [
         "verify_collection_donki_shibuya",
-        "verify_collection_map_donki_shibuya"
+        "verify_collection_map_donki_shibuya",
+        "ver_geo_donki_shibuya_latitude",
+        "ver_geo_donki_shibuya_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6604804,
+      "longitude": 139.6978596,
+      "coordinatePrecision": "building"
     },
     {
       "placeId": "place_hands_shibuya",
@@ -274,13 +288,20 @@
       ],
       "sourceIds": [
         "source_collection_afuri_harajuku",
-        "source_collection_map_afuri_harajuku"
+        "source_collection_map_afuri_harajuku",
+        "src_geo_afuri_harajuku",
+        "src_geo_identity_afuri_harajuku"
       ],
       "verificationRecordIds": [
         "verify_collection_afuri_harajuku",
-        "verify_collection_map_afuri_harajuku"
+        "verify_collection_map_afuri_harajuku",
+        "ver_geo_afuri_harajuku_latitude",
+        "ver_geo_afuri_harajuku_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.672992,
+      "longitude": 139.7038124,
+      "coordinatePrecision": "venue"
     },
     {
       "placeId": "place_marion_harajuku",
@@ -304,13 +325,20 @@
       ],
       "sourceIds": [
         "source_collection_marion_harajuku",
-        "source_collection_map_marion_harajuku"
+        "source_collection_map_marion_harajuku",
+        "src_geo_marion_harajuku",
+        "src_geo_identity_marion_harajuku"
       ],
       "verificationRecordIds": [
         "verify_collection_marion_harajuku",
-        "verify_collection_map_marion_harajuku"
+        "verify_collection_map_marion_harajuku",
+        "ver_geo_marion_harajuku_latitude",
+        "ver_geo_marion_harajuku_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6712569,
+      "longitude": 139.7049064,
+      "coordinatePrecision": "venue"
     },
     {
       "placeId": "place_roastery",
@@ -334,13 +362,20 @@
       ],
       "sourceIds": [
         "source_collection_roastery",
-        "source_collection_map_roastery"
+        "source_collection_map_roastery",
+        "src_geo_roastery",
+        "src_geo_identity_roastery"
       ],
       "verificationRecordIds": [
         "verify_collection_roastery",
-        "verify_collection_map_roastery"
+        "verify_collection_map_roastery",
+        "ver_geo_roastery_latitude",
+        "ver_geo_roastery_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6654945,
+      "longitude": 139.7048132,
+      "coordinatePrecision": "venue"
     },
     {
       "placeId": "place_motomura_harajuku",
@@ -364,13 +399,39 @@
       ],
       "sourceIds": [
         "source_collection_motomura_harajuku",
-        "source_collection_map_motomura_harajuku"
+        "source_collection_map_motomura_harajuku",
+        "src_geo_motomura_harajuku",
+        "src_geo_identity_motomura_harajuku"
       ],
       "verificationRecordIds": [
         "verify_collection_motomura_harajuku",
-        "verify_collection_map_motomura_harajuku"
+        "verify_collection_map_motomura_harajuku",
+        "ver_geo_motomura_harajuku_latitude",
+        "ver_geo_motomura_harajuku_longitude"
       ],
-      "status": "active"
+      "status": "active",
+      "latitude": 35.6707312,
+      "longitude": 139.7033717,
+      "coordinatePrecision": "building"
+    },
+    {
+      "placeId": "place_planets",
+      "name": "teamLab Planets",
+      "category": "attraction",
+      "regionId": "region_tokyo",
+      "neighborhood": "Toyosu",
+      "status": "active",
+      "latitude": 35.64938,
+      "longitude": 139.789728,
+      "coordinatePrecision": "venue",
+      "sourceIds": [
+        "src_geo_planets",
+        "src_geo_identity_planets"
+      ],
+      "verificationRecordIds": [
+        "ver_geo_planets_latitude",
+        "ver_geo_planets_longitude"
+      ]
     }
   ],
   "days": [
@@ -524,7 +585,8 @@
         }
       ],
       "presentationVariant": "editorial",
-      "heroMediaId": "media_nezu"
+      "heroMediaId": "media_nezu",
+      "primaryCategory": "history_culture"
     },
     {
       "activityId": "act_shibuya",
@@ -626,7 +688,8 @@
         }
       ],
       "presentationVariant": "immersive",
-      "heroMediaId": "media_teamlab-borderless-mcs"
+      "heroMediaId": "media_teamlab-borderless-mcs",
+      "primaryCategory": "arts_museums"
     },
     {
       "activityId": "act_planets",
@@ -647,7 +710,9 @@
       "status": "draft",
       "indoorOutdoor": "indoor",
       "presentationVariant": "immersive",
-      "heroMediaId": "media_immersive"
+      "heroMediaId": "media_immersive",
+      "placeId": "place_planets",
+      "primaryCategory": "arts_museums"
     },
     {
       "activityId": "act_osaka",
@@ -1278,6 +1343,146 @@
       "active": true,
       "notes": "Identity/address cross-check; does not independently certify OSM coordinates.",
       "accessedAt": "2026-10-11"
+    },
+    {
+      "sourceId": "src_geo_donki_shibuya",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "MEGA Don Quijote Shibuya geographic geometry",
+      "url": "https://www.openstreetmap.org/way/136691387",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM way 136691387 version 15. Shibuya Honten, 28-6 Udagawacho; building bounding-box center. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_donki_shibuya",
+      "sourceType": "operator",
+      "publisher": "MEGA Don Quijote Shibuya",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://www.donki.com/en/store/shop_detail.php?shop_id=442",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "Shibuya Honten, 28-6 Udagawacho; building bounding-box center."
+    },
+    {
+      "sourceId": "src_geo_afuri_harajuku",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "AFURI Harajuku geographic geometry",
+      "url": "https://www.openstreetmap.org/node/4455902416",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM node 4455902416 version 5. Harajuku branch, 3-63-1 Sendagaya; mapped venue POI, not Karakurenai. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_afuri_harajuku",
+      "sourceType": "operator",
+      "publisher": "AFURI Harajuku",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://afuri.com/findus/",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "Harajuku branch, 3-63-1 Sendagaya; mapped venue POI, not Karakurenai."
+    },
+    {
+      "sourceId": "src_geo_marion_harajuku",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "Marion Crepes geographic geometry",
+      "url": "https://www.openstreetmap.org/node/4701499191",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM node 4701499191 version 6. Takeshita Street branch, 1-6-15 Jingumae; mapped venue POI, not Cute Cube. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_marion_harajuku",
+      "sourceType": "operator",
+      "publisher": "Marion Crepes",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://www.marion.co.jp/store/tokyo/",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "Takeshita Street branch, 1-6-15 Jingumae; mapped venue POI, not Cute Cube."
+    },
+    {
+      "sourceId": "src_geo_roastery",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "The Roastery geographic geometry",
+      "url": "https://www.openstreetmap.org/node/2722519857",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM node 2722519857 version 11. The Roastery by Nozy Coffee, 5-17-13 Jingumae; mapped venue POI, not Starbucks. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_roastery",
+      "sourceType": "operator",
+      "publisher": "The Roastery",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://www.tysons.jp/roastery/en/access/",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "The Roastery by Nozy Coffee, 5-17-13 Jingumae; mapped venue POI, not Starbucks."
+    },
+    {
+      "sourceId": "src_geo_motomura_harajuku",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "Gyukatsu Motomura geographic geometry",
+      "url": "https://www.openstreetmap.org/way/548694425",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM way 548694425 version 7. WITH HARAJUKU building bounding-box center. Building/operator confirm Motomura B1F B106 occupancy; position is approximate for the restaurant, not a verified indoor unit or entrance. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_motomura_harajuku",
+      "sourceType": "operator",
+      "publisher": "Gyukatsu Motomura",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://withharajuku.jp/",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "WITH HARAJUKU building bounding-box center. Building/operator confirm Motomura B1F B106 occupancy; position is approximate for the restaurant, not a verified indoor unit or entrance."
+    },
+    {
+      "sourceId": "src_geo_universal_osaka",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "Universal Studios Japan geographic geometry",
+      "url": "https://www.openstreetmap.org/relation/5695002",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM relation 5695002 version 15. USJ park site bounding-box center of outer way 32560852 version 23; not a Super Nintendo World sub-area coordinate. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_universal_osaka",
+      "sourceType": "operator",
+      "publisher": "Universal Studios Japan",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://www.usj.co.jp/web/en/us/access",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "USJ park site bounding-box center of outer way 32560852 version 23; not a Super Nintendo World sub-area coordinate."
+    },
+    {
+      "sourceId": "src_geo_planets",
+      "sourceType": "map",
+      "publisher": "OpenStreetMap contributors",
+      "title": "teamLab Planets geographic geometry",
+      "url": "https://www.openstreetmap.org/node/6291685287",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "OSM node 6291685287 version 9. Toyosu venue, 6-1-16 Toyosu, not Borderless; mapped venue POI. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "sourceId": "src_geo_identity_planets",
+      "sourceType": "operator",
+      "publisher": "teamLab Planets",
+      "title": "Official branch/site identity cross-check",
+      "url": "https://architects.team-lab.com/projects/teamLab_planets/",
+      "active": true,
+      "accessedAt": "2026-10-11",
+      "notes": "Toyosu venue, 6-1-16 Toyosu, not Borderless; mapped venue POI."
     }
   ],
   "verification": [
@@ -1876,13 +2081,252 @@
       ],
       "nextReviewDue": "2027-01-11",
       "notes": "OSM way 136713209 version 9; derived polygon centroid, approximate venue footprint anchor, not an entrance. Coordinate verification for sample QA only, not commercial itinerary clearance."
+    },
+    {
+      "verificationId": "ver_geo_donki_shibuya_latitude",
+      "targetType": "place",
+      "targetId": "place_donki_shibuya",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_donki_shibuya",
+        "src_geo_identity_donki_shibuya"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 136691387 version 15. Shibuya Honten, 28-6 Udagawacho; building bounding-box center. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_donki_shibuya_longitude",
+      "targetType": "place",
+      "targetId": "place_donki_shibuya",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_donki_shibuya",
+        "src_geo_identity_donki_shibuya"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 136691387 version 15. Shibuya Honten, 28-6 Udagawacho; building bounding-box center. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_afuri_harajuku_latitude",
+      "targetType": "place",
+      "targetId": "place_afuri_harajuku",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_afuri_harajuku",
+        "src_geo_identity_afuri_harajuku"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 4455902416 version 5. Harajuku branch, 3-63-1 Sendagaya; mapped venue POI, not Karakurenai. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_afuri_harajuku_longitude",
+      "targetType": "place",
+      "targetId": "place_afuri_harajuku",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_afuri_harajuku",
+        "src_geo_identity_afuri_harajuku"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 4455902416 version 5. Harajuku branch, 3-63-1 Sendagaya; mapped venue POI, not Karakurenai. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_marion_harajuku_latitude",
+      "targetType": "place",
+      "targetId": "place_marion_harajuku",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_marion_harajuku",
+        "src_geo_identity_marion_harajuku"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 4701499191 version 6. Takeshita Street branch, 1-6-15 Jingumae; mapped venue POI, not Cute Cube. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_marion_harajuku_longitude",
+      "targetType": "place",
+      "targetId": "place_marion_harajuku",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_marion_harajuku",
+        "src_geo_identity_marion_harajuku"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 4701499191 version 6. Takeshita Street branch, 1-6-15 Jingumae; mapped venue POI, not Cute Cube. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_roastery_latitude",
+      "targetType": "place",
+      "targetId": "place_roastery",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_roastery",
+        "src_geo_identity_roastery"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 2722519857 version 11. The Roastery by Nozy Coffee, 5-17-13 Jingumae; mapped venue POI, not Starbucks. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_roastery_longitude",
+      "targetType": "place",
+      "targetId": "place_roastery",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_roastery",
+        "src_geo_identity_roastery"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 2722519857 version 11. The Roastery by Nozy Coffee, 5-17-13 Jingumae; mapped venue POI, not Starbucks. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_motomura_harajuku_latitude",
+      "targetType": "place",
+      "targetId": "place_motomura_harajuku",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_motomura_harajuku",
+        "src_geo_identity_motomura_harajuku"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 548694425 version 7. WITH HARAJUKU building bounding-box center. Building/operator confirm Motomura B1F B106 occupancy; position is approximate for the restaurant, not a verified indoor unit or entrance. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_motomura_harajuku_longitude",
+      "targetType": "place",
+      "targetId": "place_motomura_harajuku",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_motomura_harajuku",
+        "src_geo_identity_motomura_harajuku"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM way 548694425 version 7. WITH HARAJUKU building bounding-box center. Building/operator confirm Motomura B1F B106 occupancy; position is approximate for the restaurant, not a verified indoor unit or entrance. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_universal_osaka_latitude",
+      "targetType": "place",
+      "targetId": "place_universal_osaka",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_universal_osaka",
+        "src_geo_identity_universal_osaka"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM relation 5695002 version 15. USJ park site bounding-box center of outer way 32560852 version 23; not a Super Nintendo World sub-area coordinate. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_universal_osaka_longitude",
+      "targetType": "place",
+      "targetId": "place_universal_osaka",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_universal_osaka",
+        "src_geo_identity_universal_osaka"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM relation 5695002 version 15. USJ park site bounding-box center of outer way 32560852 version 23; not a Super Nintendo World sub-area coordinate. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_planets_latitude",
+      "targetType": "place",
+      "targetId": "place_planets",
+      "fieldPath": "latitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_planets",
+        "src_geo_identity_planets"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 6291685287 version 9. Toyosu venue, 6-1-16 Toyosu, not Borderless; mapped venue POI. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
+    },
+    {
+      "verificationId": "ver_geo_planets_longitude",
+      "targetType": "place",
+      "targetId": "place_planets",
+      "fieldPath": "longitude",
+      "scope": "Explore A2 sample geographic coverage",
+      "riskLevel": "moderate",
+      "status": "verified",
+      "verifiedAt": "2026-10-11",
+      "verifiedBy": "MCS QA geographic audit",
+      "sourceIds": [
+        "src_geo_planets",
+        "src_geo_identity_planets"
+      ],
+      "nextReviewDue": "2027-01-11",
+      "notes": "OSM node 6291685287 version 9. Toyosu venue, 6-1-16 Toyosu, not Borderless; mapped venue POI. Position is not an entrance or walking direction. Geographic sample QA only; no operating/admission claims verified."
     }
   ],
   "badges": [
     {
       "badgeId": "badge_pick",
       "label": "MCS PICK",
-      "semanticType": "brand"
+      "semanticType": "brand",
+      "classificationKey": "mcs_pick"
     },
     {
       "badgeId": "badge_book",

@@ -73,6 +73,7 @@ export function validateBundle(bundle,schema,{publish=false,now=new Date()}={}) 
   if(cost&&(cost.category!=='upgrade'||cost.mandatory||activity.costIds.includes(id)))errors.push('Optional upgrade must be a separate nonmandatory upgrade cost');
  }
  for(const p of bundle.places) if((p.latitude===undefined)!==(p.longitude===undefined))errors.push('Incomplete coordinates');
+ for(const p of bundle.places) if(p.coordinatePrecision && p.latitude===undefined)errors.push('Coordinate precision requires coordinates');
  for(const a of bundle.activities) if(a.reservationInfo?.reservationLevel==='required'&&!a.reservationInfo.bookAheadGuidance)errors.push('Required reservation lacks guidance');
  for(const v of bundle.verification) if(!all.has(v.targetId))errors.push('Verification target missing');
  for(const m of bundle.media) if(!m.decorative&&!m.altText.trim())errors.push('Meaningful media needs alt text');
