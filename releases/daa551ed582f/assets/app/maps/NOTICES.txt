@@ -1,5 +1,5 @@
 Explore A1 OpenFreeMap Liberty snapshot — retrieved 2026-10-11
-From https://tiles.openfreemap.org/styles/liberty; modified only to remove the building-3d extrusion layer for the 2D A1 pilot.
+From https://tiles.openfreemap.org/styles/liberty; A1 removed the building-3d extrusion layer. B1 (2026-10-13) recolors the retained 2D Liberty paint properties to MCS dark indigo/charcoal, muted roads, blue water and green parks. Geography, layer filters/order, label layout, source URLs, Noto glyphs and Maki sprites are unchanged. MCS palette modifications by Mystik Compass Solutions. Original OSM Liberty / OSM Bright / Mapbox Open Styles design attribution and full licenses remain below.
 
 Renderer: MapLibre GL JS 6.13.0, BSD-3-Clause. Full renderer/dependency texts: ../vendor/maplibre/LICENSES.txt
 

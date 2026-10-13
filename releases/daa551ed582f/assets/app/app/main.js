@@ -4,7 +4,7 @@ import {chooseOption, resolveDay, selectedOptions, effectiveOptions, optionSched
   calendarDay, currentTripDay} from '../domain/itinerary.js';
 import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
 import {exploreFilterChoices} from './explore-navigation.js';
-import {exploreMapPreview} from './explore-map-preview.js';
+import {exploreMapPreview, previewLocationNote} from './explore-map-preview.js';
 import {projectExplore} from '../domain/explore.js';
 import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, formatHomeMoney, parseMoney, currencyDigits,
   convertPlanningEstimate, normalizePlanningRate} from '../domain/budget.js';
@@ -715,7 +715,7 @@ function explore() {
             el('p',{},`${entry.editorial}${visit ? ' · '+visit : ''}`),
             el('p',{},entry.place?.address??'Address pending verification'),
             entry.member?.description ? el('p',{},entry.member.description) : null,
-            el('p',{class:'place-location-note'},entry.locationNote),
+            el('p',{class:'place-location-note'},previewLocationNote(entry) ?? entry.locationNote),
             el('div',{class:'place-actions'},
               button('Select place',()=>activeMapPreview.select(entry.id,true),{class:'text-action place-select',
                 'aria-label':`Select ${entry.name}${entry.markerNumber ? ' visit '+entry.markerNumber : ''}`,'aria-pressed':'false'}),
