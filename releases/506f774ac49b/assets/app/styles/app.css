@@ -528,6 +528,72 @@ main[data-screen="Explore"] .explore-active-day .text-action { color: var(--gold
 .category-list strong { margin-left: auto; font-variant-numeric: tabular-nums; }
 .category-list .ui-icon { color: var(--indigo-700); }
 
+/* Focused Budget convergence: every new rule stays inside the Budget surface. */
+main[data-screen="Budget"] { max-width: 620px; padding-top: 20px; }
+.personal-budget-page { container-type: inline-size; }
+.personal-budget-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.personal-budget-header > div { min-width: 0; }
+.personal-budget-title { font-size: 1.9rem; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+.budget-destination { font-size: .875rem; color: var(--indigo-700); margin: 0; text-wrap: pretty; }
+.budget-currency { font-size: .8125rem; color: var(--muted); margin: 4px 0 0; }
+.budget-settings { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 10px; background: transparent; border-color: transparent; }
+#budget-status { margin: 8px 0 0; font-size: .875rem; }
+#budget-status:empty { display: none; }
+.personal-budget-overview { padding: 18px 0 12px; text-align: center; }
+.personal-budget-figure { display: grid; place-items: center; width: min(100%, 17rem); margin: 0 auto; }
+.personal-budget-figure > * { grid-area: 1 / 1; }
+.personal-budget-figure .budget-ring { position: static; width: 100%; height: auto; aspect-ratio: 1; }
+.personal-budget-center { width: 72%; padding: 18px 0; font-variant-numeric: tabular-nums; }
+.personal-budget-center p { margin: 0; }
+.budget-spent { margin: 0; font: 650 2rem/1.2 var(--body-font); letter-spacing: -.04em; overflow-wrap: anywhere; }
+.budget-spent-label { font-size: .875rem; color: var(--indigo-700); }
+.personal-budget-center .budget-of { font-size: .875rem; color: var(--muted); margin-top: 8px; text-wrap: balance; }
+.personal-budget-center .budget-percent { font-size: 1rem; font-weight: 650; margin-top: 12px; }
+.budget-remaining { font-size: 1.125rem; font-weight: 650; font-variant-numeric: tabular-nums; margin: 10px 0 0; }
+.budget-remaining.is-over-budget { color: var(--danger); }
+.personal-budget-empty { padding: 16px 0; }
+.personal-budget-empty h2 { font-size: 1.6rem; margin: 0 0 10px; }
+.personal-budget-empty p:not(.budget-spent) { font-size: .9375rem; color: var(--muted); text-wrap: pretty; }
+.personal-budget-empty .budget-spent { font-size: 1.625rem; margin: 16px 0; }
+.budget-set-action { background: transparent; }
+.budget-support { color: var(--muted); font-size: .8125rem; line-height: 1.5; text-wrap: pretty; }
+.budget-unconverted { margin: 12px auto 0; max-width: 28rem; }
+.budget-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin: 4px 0 24px; font-weight: 650; }
+.budget-add span { font-size: 1.4rem; line-height: 1; }
+.personal-budget-categories h2 { font-size: 1.3rem; margin: 0 0 10px; font-weight: 600; }
+.personal-category-list { list-style: none; padding: 0; margin: 0; }
+.personal-category-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: .875rem; }
+.personal-category-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--indigo-700); background: #EAE4F0; }
+.personal-category-icon .ui-icon { width: 18px; height: 18px; }
+.category-food { background: #F2E4C9; color: #80622D; }
+.category-transport { background: #DEEBEA; color: #315E5B; }
+.category-shopping { background: #EDE1EC; color: #694967; }
+.personal-category-list strong, .personal-category-share, .budget-daily-list strong { font-variant-numeric: tabular-nums; }
+.personal-category-list strong { text-align: right; }
+.personal-category-share { min-width: 2.25em; color: var(--muted); text-align: right; font-size: .8125rem; }
+.personal-budget-page .compact-disclosure { margin: 0; border-bottom: 1px solid var(--line); }
+.personal-budget-page .compact-disclosure > summary { min-height: 48px; font-size: .875rem; padding-block: 12px; }
+.personal-budget-page .disclosure-body { padding: 12px 0 18px; }
+.personal-budget-page label { display: block; font-size: .875rem; }
+.personal-budget-page .error:empty { display: none; }
+.personal-budget-page [hidden] { display: none !important; }
+.budget-daily-list, .budget-history { list-style: none; margin: 0; padding: 0; }
+.budget-daily-list li, .budget-history-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; font-size: .875rem; }
+.budget-daily-list li { padding-block: 10px; border-bottom: 1px solid var(--line); }
+.budget-history li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.budget-history li:last-child { border-bottom: 0; }
+.budget-history .row button { font-size: .875rem; }
+@container (max-width: 17rem) {
+  .personal-category-list li { grid-template-columns: 30px minmax(0, 1fr) auto; }
+  .personal-category-list strong { grid-column: 2; text-align: left; }
+  .personal-category-share { grid-column: 3; grid-row: 1 / 3; }
+}
+@media (forced-colors: active) {
+  .personal-budget-figure .ring-track { stroke: GrayText; }
+  .personal-budget-figure .ring-value { stroke: CanvasText; }
+  .personal-category-icon { border: 1px solid CanvasText; }
+}
+
 /* Reference tiles and a private, full-height trip control center. */
 .reference-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0; }
 .reference-tile { border: 1px solid var(--line); background: var(--paper); border-radius: 12px; padding: 0 12px; }

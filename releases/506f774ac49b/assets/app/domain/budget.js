@@ -16,6 +16,12 @@ export function formatHomeMoney(minor, currency) {
     minimumFractionDigits: wholeAmount ? 0 : digits, maximumFractionDigits: digits}).format(minor / divisor);
 }
 
+// Editing uses an exact decimal string, never a rounded floating-point value.
+export function moneyInputValue(minor, currency) {
+  const digits = currencyDigits(currency), value = BigInt(minor), divisor = 10n ** BigInt(digits);
+  return digits ? `${value / divisor}.${String(value % divisor).padStart(digits, '0')}` : String(value);
+}
+
 export function parseMoney(input, currency) {
   const digits = currencyDigits(currency);
   const pattern = new RegExp(`^\\d{1,12}(?:\\.\\d{1,${Math.max(digits, 1)}})?$`);
@@ -143,4 +149,22 @@ export function actualBudget(state) {
   }
   if (!Number.isSafeInteger(spentMinor)) throw new Error('Expense total overflow');
   return {spentMinor, remainingMinor: state.budgetPlan.totalMinor - spentMinor, unconverted};
+}
+
+// Same eligibility contract as actualBudget: only explicit Home Currency actuals.
+// Calendar dates are transaction dates, independent of an itinerary start date.
+export function dailySpending(state) {
+  const totals = new Map();
+  let undatedMinor = 0;
+  for (const expense of state.actualExpenses) {
+    const value = expense.currency === state.homeCurrency ? expense.amountMinor : expense.convertedHomeMinor;
+    if (value === undefined) continue;
+    const date = expense.date;
+    const usable = /^\d{4}-\d{2}-\d{2}$/.test(date ?? '') &&
+      Number.isFinite(Date.parse(`${date}T12:00:00Z`)) &&
+      new Date(`${date}T12:00:00Z`).toISOString().slice(0, 10) === date;
+    if (usable) totals.set(date, (totals.get(date) ?? 0) + value);
+    else undatedMinor += value;
+  }
+  return {days: [...totals.entries()].sort(([a], [b]) => b.localeCompare(a)), undatedMinor};
 }
