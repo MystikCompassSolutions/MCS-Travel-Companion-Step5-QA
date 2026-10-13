@@ -6,15 +6,14 @@ import {adjacentDayIndex, swipeDayDirection} from './day-navigation.js';
 import {exploreFilterChoices} from './explore-navigation.js';
 import {exploreMapPreview, previewLocationNote} from './explore-map-preview.js';
 import {projectExplore} from '../domain/explore.js';
-import {travelerEstimate, actualBudget, availableUpgradeCosts, formatMoney, formatHomeMoney, parseMoney, currencyDigits,
-  convertPlanningEstimate, normalizePlanningRate} from '../domain/budget.js';
+import {actualBudget, formatMoney, formatHomeMoney} from '../domain/budget.js';
+import {budgetView} from './budget-view.js';
 import {newTravelerState, createTravelerStore, reconcileContent, serializeTravelerState,
   parseTravelerExport, EXPORT_LIMIT_BYTES, STATE_VERSION, ConflictError, CorruptStateError} from '../storage/traveler-state.js';
 import {createTabCoordinator} from '../storage/tab-coordination.js';
 import {loadRuntimeContracts} from './runtime-contracts.js';
 import {registerOffline, repairAppFiles} from '../offline/register.js';
-import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress, budgetRing, spendingCategories,
-  } from './visual.js';
+import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress} from './visual.js';
 import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant, activityPresentationFamily,
   activityEditorialContent, nearbyInspirationItems, curatedCollection} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
@@ -769,126 +768,13 @@ function explore() {
   return [activeMapPreview.element];
 }
 
-function budgetEstimate(total, currency, activeRate) {
-  const range = total.maximumMinor === null ? `from ${formatMoney(total.minimumMinor, currency)}` :
-    `${formatMoney(total.minimumMinor, currency)}${total.maximumMinor !== total.minimumMinor ?
-      `–${formatMoney(total.maximumMinor, currency)}` : ''}`;
-  let conversion = null;
-  if (activeRate?.fromCurrency === currency) {
-    const min = convertPlanningEstimate(total.minimumMinor, currency, state.homeCurrency,
-      activeRate.homePerDestination);
-    const max = total.maximumMinor === null ? null : convertPlanningEstimate(total.maximumMinor,
-      currency, state.homeCurrency, activeRate.homePerDestination);
-    conversion = el('p', {class: 'planning-conversion'}, `≈ ${formatMoney(min, state.homeCurrency)}${
-      max !== null && max !== min ? `–${formatMoney(max, state.homeCurrency)}` : ''} ${state.homeCurrency}`);
-  }
-  return el('div', {class: 'estimate-row'},
-    el('p', {class: 'section-kicker'}, 'MCS estimate · per traveler'),
-    el('p', {class: 'compact-value'}, `${range} ${currency}`), conversion,
-    total.unknownCosts ? el('small', {}, `${total.unknownCosts} unpriced item${total.unknownCosts === 1 ? '' : 's'}`) : null);
-}
-
 function budget() {
-  const actual = actualBudget(state);
-  const homeBudgetHidden = state.preferences?.homeBudgetVisible === false;
-  const total = el('input', {type: 'text', inputmode: 'decimal', required: true,
-    value: String(state.budgetPlan.totalMinor / (10 ** currencyDigits(state.homeCurrency)))});
-  const form = el('form', {class: 'inline-form', onSubmit: event => {
-    event.preventDefault();
-    try {const value = parseMoney(total.value, state.homeCurrency);
-      commit(current => ({...current, budgetPlan: {...current.budgetPlan, totalMinor: value}})).catch(() => {});
-    } catch (error) {alert(error.message);}
-  }}, field(`My total budget (${state.homeCurrency})`, total),
-  el('button', {type: 'submit', disabled: !!storageIssue}, 'Save budget'));
-  const amount = el('input', {type: 'text', inputmode: 'decimal', required: true});
-  const expenseCurrency = el('select', {}, ['USD', 'JPY', 'ISK', 'EUR', 'GBP', 'CAD', 'AUD'].map(value =>
-    el('option', {value, selected: value === state.homeCurrency}, value)));
-  const converted = el('input', {type: 'text', inputmode: 'decimal'});
-  const note = el('input', {type: 'text', maxLength: 1000});
-  const category = el('select', {}, ['activity', 'transport', 'lodging', 'food', 'shopping', 'other'].map(value =>
-    el('option', {value}, value)));
-  const expenseForm = el('form', {onSubmit: event => {
-    event.preventDefault();
-    try {
-      const currency = expenseCurrency.value;
-      const expense = {id: `expense_${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10),
-        category: category.value, amountMinor: parseMoney(amount.value, currency), currency, note: note.value};
-      if (currency !== state.homeCurrency && converted.value) expense.convertedHomeMinor = parseMoney(converted.value, state.homeCurrency);
-      commit(current => ({...current, actualExpenses: [...current.actualExpenses, expense]})).catch(() => {});
-    } catch (error) {alert(error.message);}
-  }}, field('Expense amount', amount), field('Expense currency', expenseCurrency),
-  field(`Manual converted amount in ${state.homeCurrency} (optional)`, converted),
-  field('Category', category), field('Expense note', note),
-  el('button', {type: 'submit', disabled: !!storageIssue}, 'Add expense'));
-  const expenses = el('ul', {}, state.actualExpenses.map(expense => el('li', {},
-    `${expense.category}: ${formatMoney(expense.amountMinor, expense.currency)} · ${expense.note ?? ''}`,
-    button(`Remove ${expense.category} expense`, () => {
-      if (confirm('Remove this expense from this device?')) commit(current => ({...current,
-        actualExpenses: current.actualExpenses.filter(entry => entry.id !== expense.id)})).catch(() => {});
-    }, {disabled: !!storageIssue}))));
-  const upgrades = availableUpgradeCosts(bundle, state);
-  const estimate = travelerEstimate(bundle, state);
-  const destinationCurrency = Object.keys(estimate)[0] ?? bundle.costs[0]?.currency;
-  const activeRate = state.planningRate?.fromCurrency === destinationCurrency &&
-    state.planningRate.toCurrency === state.homeCurrency ? state.planningRate : null;
-  const rateError = el('p', {id: 'planning-rate-error', class: 'error', role: 'alert'});
-  const rateInput = el('input', {type: 'text', inputmode: 'decimal',
-    'aria-describedby': 'planning-rate-error', 'aria-required': 'true',
-    placeholder: 'e.g. 0.0063', value: activeRate?.homePerDestination ?? '',
-    onInput: () => {rateInput.removeAttribute('aria-invalid'); rateError.textContent = '';}});
-  const rateForm = destinationCurrency && destinationCurrency !== state.homeCurrency ?
-    el('form', {class: 'inline-form', novalidate: true, onSubmit: event => {
-      event.preventDefault();
-      try {
-        const normalizedRate = normalizePlanningRate(rateInput.value);
-        convertPlanningEstimate(1, destinationCurrency, state.homeCurrency, normalizedRate);
-        commit(current => ({...current, planningRate: {fromCurrency: destinationCurrency,
-          toCurrency: current.homeCurrency, homePerDestination: normalizedRate,
-          recordedAt: new Date().toISOString()}})).catch(() => {});
-      } catch (error) {rateError.textContent = error.message; rateInput.setAttribute('aria-invalid', 'true'); rateInput.focus();}
-    }}, field(`Planning rate: 1 ${destinationCurrency} equals how many ${state.homeCurrency}?`, rateInput),
-    el('button', {type: 'submit', disabled: !!storageIssue}, activeRate ? 'Update rate' : 'Save rate')) : null;
-  const estimateRows = Object.entries(estimate).map(([currency, total]) =>
-    budgetEstimate(total, currency, activeRate));
-  const progress = budgetProgress(actual.spentMinor, state.budgetPlan.totalMinor);
-  const categories = spendingCategories(state);
-  return [el('h1', {}, 'Budget'),
-    homeBudgetHidden ? el('section', {class: 'budget-home-preference'},
-      el('div', {}, el('p', {class: 'section-kicker'}, 'Home preference'),
-        el('p', {}, 'Your personal budget card is hidden from Home.')),
-      button('Show budget card on Home', () => commit(current => ({...current,
-        preferences: {...current.preferences, homeBudgetVisible: true}})).catch(() => {}),
-      {disabled: !!storageIssue})) : null,
-    el('section', {class: 'budget-overview'},
-      el('div', {class: 'budget-estimates'}, estimateRows),
-      activeRate ? el('p', {class: 'day-meta'}, `Using planning rate 1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}. Approximate; not a current bank or card rate.`) : null,
-      el('div', {class: 'budget-visual'}, budgetRing(progress),
-        el('div', {class: 'my-budget-total'}, el('p', {class: 'section-kicker'}, `My budget · ${state.homeCurrency}`),
-          el('p', {class: 'compact-value'}, formatMoney(state.budgetPlan.totalMinor, state.homeCurrency)),
-          el('p', {class: 'budget-progress-label'}, progress.label))),
-      el('dl', {class: 'budget-metrics'},
-        el('div', {}, el('dt', {}, 'Spent'), el('dd', {}, formatMoney(actual.spentMinor, state.homeCurrency))),
-        el('div', {}, el('dt', {}, 'Remaining'), el('dd', {}, formatMoney(actual.remainingMinor, state.homeCurrency)))),
-      actual.unconverted.length ? el('p', {class: 'day-meta'}, `${actual.unconverted.length} other-currency expense${actual.unconverted.length === 1 ? '' : 's'} not included yet.`) : null,
-    ),
-    el('section', {class: 'category-summary'}, el('h2', {}, 'My spending by category'),
-      categories.length ? el('ul', {class: 'category-list'}, categories.map(([category, amount]) =>
-        el('li', {}, icon(({activity: 'compass', lodging: 'Home', transport: 'transit', food: 'food',
-          shopping: 'shopping'}[category] ?? 'Budget')),
-        el('span', {}, category), el('strong', {}, formatMoney(amount, state.homeCurrency))))) :
-        el('p', {class: 'empty-state'}, 'Your spending starts here. Add a personal expense when you’re ready.')),
-    disclosure('Set my budget', form, {id: 'set-budget'}),
-    disclosure('Planning rate / currency settings', [
-      el('p', {}, 'Home currency is set in My Trip. Destination estimates stay in their authored currency.'),
-      rateForm ? el('p', {}, 'Use a rate you recorded for planning. Converted amounts are approximate and can differ from bank or card charges.') :
-        el('p', {}, 'Your home and destination currency match; no conversion is needed.'),
-      rateForm, rateError], {id: 'planning-rate'}),
-    disclosure('How estimates work', [el('p', {}, 'This is a solo-traveler planning estimate. Authored group, one-way and round-trip costs are shown at their full value; no shared cost is automatically split.'),
-      el('p', {}, 'My budget, spent and remaining are individual amounts in Home Currency. For shared lodging, transport or meals, record only your personal share as an actual expense. Unpriced and open-ended costs are flagged.')], {id: 'estimate-rules'}),
-    upgrades.length ? disclosure('Optional upgrades', [el('p', {}, 'Only upgrades for selected activities appear here.'),
-      ...upgrades.flatMap(entry => upgradeChoices(entry.activity))], {id: 'upgrades'}) : null,
-    disclosure('Add actual spending', [el('p', {}, 'For a shared cost, enter only your personal share. No automatic splitting.'), expenseForm], {id: 'add-expense'}),
-    disclosure(`Spending history · ${state.actualExpenses.length}`, expenses, {id: 'expenses'})].filter(Boolean);
+  return budgetView(bundle, state, {commit, storageIssue, disclosure, upgradeChoices,
+    openHomeCurrency: () => {
+      myTrip();
+      const basics = personal.querySelector('details[data-section="trip-basics"]');
+      if (basics) {basics.open = true; basics.querySelector('select')?.focus();}
+    }});
 }
 
 function referenceArticle(article) {

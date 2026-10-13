@@ -28,7 +28,8 @@ export function icon(name, className = 'ui-icon') {
     leaf: 'M4 20 18 6 M4 16C2 7 10 3 21 3c0 11-4 19-13 16',
     camera: 'M3 7h4l2-3h6l2 3h4v14H3z M12 10a4 4 0 1 0 0 8a4 4 0 1 0 0-8',
     tree: 'M12 2 5 11h4l-6 7h18l-6-7h4z M12 18v4',
-    map: 'm3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2z M9 3v16 M15 5v16'
+    map: 'm3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2z M9 3v16 M15 5v16',
+    settings: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M9 2h6l1 4 4 1 2 5-2 5-4 1-1 4H9l-1-4-4-1-2-5 2-5 4-1z'
   };
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   for (const [key, value] of Object.entries({class: className, viewBox: '0 0 24 24',
