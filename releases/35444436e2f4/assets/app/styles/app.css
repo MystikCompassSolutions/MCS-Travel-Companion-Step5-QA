@@ -574,7 +574,10 @@ main[data-screen="Budget"] { max-width: 620px; padding-top: 20px; }
 .personal-budget-page .compact-disclosure > summary { min-height: 48px; font-size: .875rem; padding-block: 12px; }
 .personal-budget-page .disclosure-body { padding: 12px 0 18px; }
 .personal-budget-page label { display: block; font-size: .875rem; }
-.personal-budget-page .budget-expense-date { display: block; min-inline-size: 0; block-size: max(44px, 2.75rem); min-block-size: 44px; padding: 8px 12px; line-height: 1.25; }
+/* iOS native date appearance can replace border-box with content-box and impose
+   a locale-dependent minimum width. Opt out of theme sizing, keeping type=date
+   and its native picker. Do not hide overflow or reset the traveler's scroll. */
+.personal-budget-page .budget-expense-date { -webkit-appearance: none; appearance: none; display: block; box-sizing: border-box; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; block-size: max(44px, 2.75rem); min-block-size: 44px; padding: 8px 12px; line-height: 1.25; text-align: left; }
 .personal-budget-page .budget-expense-date::-webkit-date-and-time-value { min-height: 1.25em; text-align: left; }
 .personal-budget-page .budget-estimate-row { padding: 10px 0; border-bottom: 0; }
 .personal-budget-page .budget-estimate-row .section-kicker { margin-bottom: 6px; }
