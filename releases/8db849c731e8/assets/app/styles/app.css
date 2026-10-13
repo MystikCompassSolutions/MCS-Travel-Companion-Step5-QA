@@ -536,7 +536,6 @@ main[data-screen="Budget"] { max-width: 620px; padding-top: 20px; }
 .personal-budget-title { font-size: 1.9rem; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
 .budget-destination { font-size: .875rem; color: var(--indigo-700); margin: 0; text-wrap: pretty; }
 .budget-currency { font-size: .8125rem; color: var(--muted); margin: 4px 0 0; }
-.budget-settings { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 10px; background: transparent; border-color: transparent; }
 #budget-status { margin: 8px 0 0; font-size: .875rem; }
 #budget-status:empty { display: none; }
 .personal-budget-overview { padding: 18px 0 12px; text-align: center; }
@@ -575,6 +574,14 @@ main[data-screen="Budget"] { max-width: 620px; padding-top: 20px; }
 .personal-budget-page .compact-disclosure > summary { min-height: 48px; font-size: .875rem; padding-block: 12px; }
 .personal-budget-page .disclosure-body { padding: 12px 0 18px; }
 .personal-budget-page label { display: block; font-size: .875rem; }
+.personal-budget-page .budget-expense-date { display: block; min-inline-size: 0; block-size: max(44px, 2.75rem); min-block-size: 44px; padding: 8px 12px; line-height: 1.25; }
+.personal-budget-page .budget-expense-date::-webkit-date-and-time-value { min-height: 1.25em; text-align: left; }
+.personal-budget-page .budget-estimate-row { padding: 10px 0; border-bottom: 0; }
+.personal-budget-page .budget-estimate-row .section-kicker { margin-bottom: 6px; }
+.personal-budget-page .estimate-intro { margin: 0; }
+.personal-budget-page .estimate-primary { margin-bottom: 4px; }
+.personal-budget-page .estimate-original, .personal-budget-page .estimate-rate-note, .personal-budget-page .estimate-cost-flags { margin: 2px 0; }
+.personal-budget-page .estimate-rate-action { font-size: .9375rem; padding-inline: 12px; margin: 2px 0 6px; }
 .personal-budget-page .error:empty { display: none; }
 .personal-budget-page [hidden] { display: none !important; }
 .budget-daily-list, .budget-history { list-style: none; margin: 0; padding: 0; }
