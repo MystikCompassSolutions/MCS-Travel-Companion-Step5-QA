@@ -665,3 +665,71 @@ main[data-screen="Explore"] .pilot-tools .carousel-controls button { color: var(
 main[data-screen="Explore"] .explore-preview :focus-visible { outline-color: var(--indigo-700); }
 @media (min-width: 768px) { .explore-place-card { flex-basis: min(420px, 75%); } .explore-carousel::after { flex-basis: max(25%, calc(100% - 420px)); } }
 @media (forced-colors: active) { .explore-place-card.is-selected { border-color: Highlight; } }
+
+/* B1: one geographic surface, compact chrome and a dark editorial preview.
+   Every visual chip/marker retains a 44px interactive area. */
+main[data-screen="Explore"] { min-height: calc(240px + 12rem); }
+.explore-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; min-width: 0; }
+.explore-heading h1 { margin: 0; font-size: 1.65rem; line-height: 1.2; min-width: 0; overflow-wrap: anywhere; }
+.explore-heading select { width: auto; max-width: 45%; min-width: 80px; min-height: 44px; margin: 0; padding: 4px 8px; font-size: 1rem; border-color: #ffffff30; background: var(--night-raised); color: var(--paper); }
+.explore-top { gap: 4px; }
+.explore-subtitle { margin: 0; color: var(--night-muted); font-size: .8125rem; flex: 1; min-width: 100px; }
+.explore-top .pilot-switch { flex-wrap: nowrap; gap: 0; padding: 2px; background: var(--night-raised); border: 1px solid #ffffff30; border-radius: 9px; }
+.explore-top .pilot-switch button { border: 0; border-radius: 6px; padding: 4px 12px; font-size: .875rem; background: transparent; color: var(--paper); }
+.explore-top .pilot-switch button[aria-pressed="true"] { background: var(--gold); color: var(--indigo-900); font-weight: 700; }
+.explore-filters .filter-strip { margin: 0; gap: 4px; padding-block: 4px; scroll-behavior: smooth; }
+main[data-screen="Explore"] .explore-filters .filter-chip { position: relative; isolation: isolate; background: transparent; border: 0; border-radius: 0; padding: 6px 10px; font-size: .8125rem; min-height: 44px; color: var(--paper); }
+.explore-filters .filter-chip::before { content: ''; position: absolute; inset: 6px 0; z-index: -1; background: var(--night-raised); border: 1px solid #ffffff30; border-radius: 8px; }
+main[data-screen="Explore"] .explore-filters .filter-chip[aria-pressed="true"] { background: transparent; color: var(--indigo-900); font-weight: 700; }
+.explore-filters .filter-chip[aria-pressed="true"]::before { background: var(--gold); border-color: var(--gold); }
+.explore-scope-label { padding: 0 0 4px; font-size: .75rem; }
+.pilot-context { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.pilot-surface { min-height: 240px; background: #211e43; border-radius: 10px 10px 0 0; }
+.pilot-canvas { border-radius: inherit; background: #211e43; }
+.pilot-tools { position: absolute; top: 8px; right: 8px; z-index: 3; justify-content: flex-end; gap: 4px; }
+.pilot-tools summary { min-width: 44px; padding: 10px 8px; border: 1px solid #ffffff30; border-radius: 8px; background: #171b2a; color: var(--paper); box-shadow: 0 2px 8px #0005; }
+.pilot-place-choices, .pilot-controls-body { top: calc(100% + 4px); width: min(320px, calc(100vw - 48px)); max-height: min(45dvh, 400px); }
+.explore-preview { position: absolute; inset-inline: 8px; bottom: 8px; z-index: 2; background: #171b2a; color: var(--paper); border-radius: 10px; box-shadow: 0 4px 18px #0006; }
+.explore-carousel { padding: 0; gap: 8px; border-radius: inherit; align-items: flex-start; overflow-y: hidden; }
+.explore-place-card { padding: 10px; gap: 10px; background: #171b2a; color: var(--paper); border-radius: 10px; border-width: 1px; }
+.explore-place-card.is-selected { border-color: #c5a25680; }
+.pilot-preview-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.pilot-preview h3 { font-family: var(--body-font); font-size: .9375rem; line-height: 1.3; }
+.pilot-preview .pilot-place-meta { font-size: .75rem; line-height: 1.4; color: var(--night-muted); }
+.pilot-preview .pilot-editorial { font-size: .75rem; line-height: 1.4; color: var(--gold-light); }
+.pilot-preview .text-action { display: flex; width: 100%; min-height: 44px; padding: 5px 0; color: var(--gold-light); font-size: .8125rem; text-align: left; }
+.pilot-location-note { display: block; padding-top: 6px; border-top: 1px solid #ffffff30; color: var(--night-muted); font-size: .75rem; line-height: 1.4; }
+.pilot-preview .pilot-thumbnail { width: 52px; height: 68px; flex-basis: 52px; }
+.pilot-preview .pilot-neutral { background: #393064; color: var(--gold-light); }
+.explore-preview .carousel-controls { gap: 4px; justify-content: flex-end; padding-inline: 4px; border-top: 1px solid #ffffff18; }
+.explore-preview .carousel-controls button { color: var(--paper); }
+.explore-preview .card-position { color: var(--night-muted); margin-inline-end: auto; padding-left: 8px; }
+.pilot-copyright { justify-content: space-between; gap: 0; background: #171b2a; color: var(--night-muted); font-size: .6875rem; }
+.pilot-copyright a { color: var(--night-muted); }
+main[data-screen="Explore"] .explore-preview :focus-visible { outline-color: var(--gold-light); }
+.pilot-pin { display: grid; place-items: center; border: 0; border-radius: 0; background: transparent; color: #211e43; font-size: 17px; box-shadow: none; }
+.pilot-pin::before { content: ''; position: absolute; width: 30px; height: 30px; border-radius: 50%; background: #c5a256; border: 2px solid #211e43; box-shadow: 0 2px 6px #0009; }
+.pilot-pin.is-visit::before { border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); }
+.pilot-pin-label { position: relative; z-index: 1; font-weight: 700; }
+.pilot-pin.is-selected { background: transparent; color: #211e43; }
+.pilot-pin.is-selected::before { background: #edd29a; border-color: #fcfaf6; box-shadow: 0 0 0 3px #c5a25670, 0 3px 8px #0009; }
+.pilot-pin.is-cluster::before { width: 36px; height: 30px; border-radius: 7px; }
+.explore-pilot.is-reflow .pilot-surface { flex-wrap: wrap; }
+.explore-pilot.is-reflow .pilot-canvas { position: relative; height: max(240px, 40dvh); }
+.explore-pilot.is-reflow .explore-preview, .explore-pilot.is-reflow .pilot-tools { position: relative; inset: auto; width: 100%; }
+.explore-pilot.is-reflow .pilot-tools { flex-wrap: wrap; }
+.explore-pilot.is-reflow .pilot-place-choices, .explore-pilot.is-reflow .pilot-controls-body { position: relative; width: 100%; }
+@media (orientation: landscape) and (max-height: 600px) {
+  main[data-screen="Explore"] { min-height: calc(300px + 12rem); }
+  .pilot-surface { min-height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) { .explore-filters .filter-strip { scroll-behavior: auto; } }
+@media (forced-colors: active) {
+  .pilot-pin::before, .pilot-pin.is-selected::before { background: ButtonFace; border-color: ButtonText; box-shadow: none; }
+  .pilot-pin, .pilot-pin.is-selected { color: ButtonText; }
+  .pilot-pin.is-selected::before { outline: 3px solid Highlight; }
+  .explore-filters .filter-chip::before { background: ButtonFace; border-color: ButtonText; }
+  .explore-filters .filter-chip[aria-pressed="true"]::before { background: Highlight; }
+  .explore-filters .filter-chip[aria-pressed="true"] { color: HighlightText; }
+  .explore-place-card.is-selected { border-color: Highlight; }
+}

@@ -3,6 +3,13 @@ import {icon, mediaImage} from './visual.js';
 import {createGeographicMap} from './geographic-map.js';
 import {reconcileExploreSelection, exploreCardWindow} from '../domain/explore.js';
 
+export function previewLocationNote(entry) {
+  if (entry.mapped) return null;
+  return !entry.member && entry.activity?.collection
+    ? 'No collection anchor. Verified members have their own map locations.'
+    : entry.locationNote;
+}
+
 // One supplied projection drives the map, carousel and complete List. UI state is
 // session-only; this component never writes traveler state or resolves schedules.
 export function exploreMapPreview(bundle, session, openDetail, listView, options) {
@@ -18,24 +25,25 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
   const failure = el('div', {class: 'pilot-failure', hidden: true}, message, retry, viewPlaces);
   const selected = el('p', {class: 'visually-hidden', role: 'status', 'aria-live': 'polite'});
   const choices = el('div', {class: 'pilot-place-choices', role: 'group', 'aria-label': 'Select an itinerary place'});
-  const placeSummary = el('summary', {}, 'Places');
+  const placeSummary = el('summary', {'aria-label': 'Choose named locations'}, 'Locations');
   const placePicker = el('details', {class: 'pilot-places'}, placeSummary, choices);
   const regionSelect = el('select', {'aria-label': 'Explore region', onChange: () => options.onRegion(regionSelect.value)});
   const resultCount = el('span', {class: 'explore-count', role: 'status', 'aria-live': 'polite'});
   const mapButton = button('Map', () => mode('map'), {'aria-pressed': 'false', 'aria-controls': 'itinerary-map'});
-  const listButton = button('List', () => mode('list'), {'aria-pressed': 'false', 'aria-controls': 'explore-list-view'});
+  const listButton = button('Places', () => mode('list'), {'aria-pressed': 'false', 'aria-controls': 'explore-list-view'});
+  const heading = el('h1', {}, 'Explore');
   const activate = el('div', {class: 'pilot-activation'},
     el('p', {}, 'Explore your curated places on the street map.'),
     button('Activate Map', () => {session.activated = true; start();}),
     el('p', {class: 'day-meta'}, 'Internet required. Opening the map contacts OpenFreeMap, which receives your IP address.'));
-  const empty = el('p', {class: 'pilot-map-empty', hidden: true}, 'No verified map locations in this scope. View List for authored places and activities.');
+  const empty = el('p', {class: 'pilot-map-empty', hidden: true}, 'No verified map locations in this scope. View Places for authored places and activities.');
   const link = (text, href) => el('a', {href, target: '_blank', rel: 'noopener noreferrer'}, text);
   const controls = el('details', {class: 'pilot-controls'}, el('summary', {}, 'Map controls'),
     el('div', {class: 'pilot-controls-body'},
       el('div', {class: 'pilot-switch'}, button('Zoom in', () => controller?.zoomBy(1)), button('Zoom out', () => controller?.zoomBy(-1))),
       button('Zoom to selected place', () => controller?.focusSelected()),
       button('Show filtered locations', () => controller?.fitAll()),
-      el('p', {}, 'Drag to explore · Pinch to zoom. Keyboard: focus the map and use arrow keys to pan, + / − to zoom. Places and List provide named selection. Plain numbers are day visit order; a number with + opens nearby places; dots are curated locations; diamonds are unselected alternatives. No walking directions are shown.'),
+      el('p', {}, 'Drag to explore · Pinch to zoom. Keyboard: focus the map and use arrow keys to pan, + / − to zoom. Places provides the complete accessible list. Locations provides named selection. Plain numbers are day visit order; a number with + opens nearby places; dots are curated locations; diamonds are unselected alternatives. No walking directions are shown.'),
       el('div', {class: 'pilot-attribution'}, link('MapLibre', 'https://maplibre.org/'),
         link('OpenFreeMap', 'https://openfreemap.org/'),
         link('Liberty style / font licenses', new URL('../maps/NOTICES.txt', import.meta.url).href))));
@@ -47,10 +55,19 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
   const previous = button('‹', () => adjacent(-1), {'aria-label': 'Previous place preview'});
   const next = button('›', () => adjacent(1), {'aria-label': 'Next place preview'});
   const cardControls = el('div', {class: 'carousel-controls', role: 'group', 'aria-label': 'Place preview navigation'}, previous, cardPosition, next);
-  const preview = el('section', {class: 'explore-preview', 'aria-label': 'Selected place previews'}, carousel);
-  const surface = el('div', {class: 'pilot-surface'}, canvas, activate, empty);
+  const preview = el('section', {class: 'explore-preview', 'aria-label': 'Selected place previews'}, carousel, cardControls);
+  const sizePreview = () => {if (disposed) return;
+    const card = cards.find(c => c.dataset.entry === session.selectedId);
+    if (card) carousel.style.height = `${Math.ceil(card.getBoundingClientRect().height)}px`;
+  };
+  const cardObserver = new ResizeObserver(sizePreview);
+  const surface = el('div', {class: 'pilot-surface'}, canvas, activate, empty,
+    el('div', {class: 'pilot-tools'}, placePicker, controls), preview);
   const mapView = el('div', {class: 'pilot-map-view'},
-    el('div', {class: 'pilot-tools'}, cardControls, controls), surface, credits, preview);
+    surface, credits);
+  // Secondary disclosures share one contextual surface, never two expanded panels.
+  for (const [current, other] of [[placePicker, controls], [controls, placePicker]])
+    current.addEventListener('toggle', () => {if (current.open) other.open = false;});
   for (const disclosure of [placePicker, controls]) disclosure.addEventListener('keydown', event => {
     if (event.key === 'Escape') {event.preventDefault(); disclosure.open = false; disclosure.querySelector('summary').focus({preventScroll: true});}
   });
@@ -67,6 +84,7 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
     }
   }
   function renderCards() {
+    cardObserver.disconnect();
     cardEntries = exploreCardWindow(entries(), session.selectedId);
     cards = cardEntries.map(entry => {
       const photo = mediaImage(bundle, entry.thumbnail, 'pilot-thumbnail', true);
@@ -75,14 +93,15 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
       return el('article', {class: 'pilot-preview explore-place-card', 'data-entry': entry.id,
         'aria-label': entryLabel(entry), onFocusin: () => select(entry.id, false, false)},
         photo ?? neutral(), el('div', {class: 'pilot-preview-copy'}, el('h3', {}, entry.name),
-          el('p', {}, `${entry.category} · ${entry.neighborhood ?? entry.region}`),
+          el('p', {class: 'pilot-place-meta'}, `${entry.neighborhood ?? entry.region} · ${entry.category}`),
           el('small', {class: 'pilot-editorial'}, `${entry.editorial} · ${visitLabel(entry)}`),
           entry.target ? button(entry.member ? `Open ${entry.parent.collection.kind} collection` : 'Open activity detail',
             () => {session.returnFocusId = entry.id; openDetail(entry.target);},
             {class: 'text-action', 'aria-label': `Open ${entry.target.name} for ${entry.name}`}) : el('small', {}, 'Activity detail unavailable'),
-          !entry.mapped ? el('small', {}, entry.locationNote) : null));
+          previewLocationNote(entry) ? el('small', {class: 'pilot-location-note'}, previewLocationNote(entry)) : null));
     });
     carousel.replaceChildren(...cards);
+    cards.forEach(card => cardObserver.observe(card));
     if (!cards.length) carousel.append(el('p', {class: 'explore-empty'}, 'No places match this scope. Try All or another category.'));
   }
   function select(id, announce = false, align = true) {
@@ -94,12 +113,14 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
     if (!cardEntries.some(e => e.id === id)) renderCards();
     cards.forEach(card => {const active = card.dataset.entry === id; card.classList.toggle('is-selected', active);
       card.setAttribute('aria-current', active ? 'true' : 'false');});
+    sizePreview();
     choices.querySelectorAll('button').forEach(choice => choice.setAttribute('aria-pressed', String(choice.dataset.entry === id)));
     const index = entries().findIndex(e => e.id === id);
     cardPosition.textContent = `${index + 1} / ${entries().length}`;
     previous.disabled = index <= 0; next.disabled = index >= entries().length - 1;
     const wasNearbyChooser = placeSummary.textContent === 'Nearby places';
-    placeSummary.textContent = 'Places';
+    placeSummary.textContent = 'Locations';
+    placeSummary.setAttribute('aria-label', 'Choose named locations');
     if (align) requestAnimationFrame(() => {if (disposed) return; const card = cards.find(c => c.dataset.entry === id);
       if (card) carousel.scrollLeft += card.getBoundingClientRect().left - carousel.getBoundingClientRect().left;});
     if (announce && changed) selected.textContent = `${entryLabel(entry)} selected. ${visitLabel(entry)}.`;
@@ -131,19 +152,24 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
       button(entryLabel(entry), () => select(entry.id, true), {class: 'pilot-place-choice', 'data-entry': entry.id,
         'data-place': entry.placeId ?? '',
         'aria-pressed': String(session.selectedId === entry.id)})));
-    placeSummary.textContent = 'Nearby places'; placePicker.open = true;
+    placeSummary.textContent = 'Nearby places';
+    placeSummary.setAttribute('aria-label', 'Choose overlapping locations'); placePicker.open = true;
     choices.querySelector('button')?.focus({preventScroll: true});
     selected.textContent = `${ids.length} nearby places. Choose a named place.`;
   }
   placePicker.addEventListener('toggle', () => {if (!placePicker.open && placeSummary.textContent === 'Nearby places') refreshChoices();});
   function refreshChoices() {
-    placeSummary.textContent = 'Places';
+    placeSummary.textContent = 'Locations';
+    placeSummary.setAttribute('aria-label', 'Choose named locations');
     choices.replaceChildren(...entries().map(entry => button(entryLabel(entry), () => select(entry.id, true),
       {class:'pilot-place-choice', 'data-entry':entry.id, 'data-place':entry.placeId??'', 'aria-pressed':String(session.selectedId===entry.id)})));
   }
   const points = () => model.mapEntries.map(e => ({id:e.id,placeId:e.placeId,name:e.name,label:entryLabel(e),
     latitude:e.place.latitude,longitude:e.place.longitude,number:e.markerNumber,alternative:e.kind==='alternative'}));
-  function resize() {requestAnimationFrame(() => {if (!disposed && session.mode === 'map') controller?.resize();});}
+  function resize() {requestAnimationFrame(() => {if (!disposed && session.mode === 'map') {
+    region.classList.toggle('is-reflow', parseFloat(getComputedStyle(document.documentElement).fontSize) > 22);
+    controller?.resize();
+  }});}
   const observer = new ResizeObserver(resize); observer.observe(surface);
   function start() {
     if (disposed || !model.mapEntries.length) return;
@@ -157,6 +183,7 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
         if(disposed)return;mapStatus=status;region.dataset.mapStatus=status;
         message.textContent=text;failure.hidden=status==='ready';retry.hidden=viewPlaces.hidden=status!=='failed';
         controls.hidden=status!=='ready';
+        preview.hidden=status==='failed';
         if(status==='failed'){canvas.hidden=true;mode('list',false);
           if(document.activeElement===document.body||mapView.contains(document.activeElement))retry.focus({preventScroll:true});}
       }});
@@ -177,7 +204,9 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
   }
   function update(nextModel, {frame = false, selectedId = session.selectedId} = {}) {
     const oldRegion=regionId; model=nextModel;regionId=model.regionId;
-    regionSelect.replaceChildren(...model.regions.map(r=>el('option',{value:r.regionId},r.name)));
+    const regionName = bundle.regions.find(r=>r.regionId===regionId)?.name;
+    heading.textContent = regionName ? `Explore ${regionName}` : 'Explore';
+    regionSelect.replaceChildren(...model.regions.map(r=>el('option',{value:r.regionId},`${r.name} (${model.entries.filter(e=>e.regionId===r.regionId).length})`)));
     regionSelect.value=regionId??'';regionSelect.disabled=!model.regions.length;
     resultCount.textContent=`${model.entries.length} results · ${model.mapEntries.length} on map`;
     session.selectedId=reconcileExploreSelection(entries(),selectedId);
@@ -189,10 +218,11 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
       camera:oldRegion!==regionId?session.cameras[regionId]:null,fit:frame||oldRegion!==regionId});
     if(session.activated&&!controller&&currentMode==='map'&&model.mapEntries.length)start();
   }
-  region.append(el('div',{class:'explore-top'},el('h1',{},'Explore'),
+  region.append(el('div',{class:'explore-heading'},heading,regionSelect),
+    el('div',{class:'explore-top'},el('p',{class:'explore-subtitle'},'Places curated for your journey'),
     el('div',{class:'pilot-switch',role:'group','aria-label':'Map or place list'},mapButton,listButton)),
-    options.filters,el('div',{class:'pilot-context'},regionSelect,resultCount,placePicker),failure,mapView,listView,selected);
-  controls.hidden=true;canvas.hidden=true;update(model);
+    options.filters,el('div',{class:'pilot-context'},resultCount),failure,mapView,listView,selected);
+  controls.hidden=true;canvas.hidden=true;preview.hidden=true;update(model);
   requestAnimationFrame(()=>{if(!disposed){mode(session.mode??'map');if(session.returnFocusId){
     const id=session.returnFocusId;session.returnFocusId=null;
     const target=session.mode==='list'?[...listView.querySelectorAll('[data-entry]')].find(n=>n.dataset.entry===id)?.querySelector('.place-select'):
@@ -200,5 +230,5 @@ export function exploreMapPreview(bundle, session, openDetail, listView, options
   }}});
   return {element:region,select,syncSelection,update,
     dispose(){if(currentMode==='list')session.listScrollTop=listView.scrollTop;
-      disposed=true;clearTimeout(scrollTimer);observer.disconnect();controller?.dispose();}};
+      disposed=true;clearTimeout(scrollTimer);observer.disconnect();cardObserver.disconnect();controller?.dispose();}};
 }

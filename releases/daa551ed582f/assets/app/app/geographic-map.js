@@ -10,6 +10,14 @@ export function mapUnavailableMessage(online) {
   return online ? 'Map unavailable. Please try again.' : 'Map unavailable. Check your connection and try again.';
 }
 
+export function markerPresentation(group) {
+  const point = group[0];
+  const collision = group.length > 1;
+  return {text: collision ? `${group.length}+` : point.number ? String(point.number) : point.alternative ? '◇' : '●',
+    visit: !collision && !!point.number, collision,
+    label: collision ? `Choose ${group.length} nearby places: ${group.map(p => p.label).join(', ')}` : `Select ${point.label}`};
+}
+
 export function allowedMapRequest(url) {
   const parsed = new URL(url);
   return parsed.origin === MAP_PROVIDER.origin && !parsed.search &&
@@ -38,6 +46,11 @@ export function createGeographicMap({container, points, selectedId, camera, regi
   let library;
   let map, timer, disposed = false, failed = false;
   const markers = new Map(); const started = performance.now();
+  // Reserve screen space for the floating preview when framing actual points.
+  // This affects camera composition only; geographic coordinates remain exact.
+  const framingPadding = () => ({top: 60, left: 44, right: 44,
+    bottom: Math.min(container.clientHeight * .55,
+      (container.parentElement.querySelector('.explore-preview')?.offsetHeight ?? 0) + 36)});
   const cleanup = () => {clearTimeout(timer); map?.remove(); map = null; markers.clear();};
   function fail(reason) {
     if (disposed || failed) return;
@@ -61,13 +74,17 @@ export function createGeographicMap({container, points, selectedId, camera, regi
     const groups = overlappingPoints(points, coordinate => map.project(coordinate));
     for (const group of groups) {
       const point = group[0], element = document.createElement('button');
+      const presentation = markerPresentation(group);
       element.type = 'button'; element.className = 'pilot-pin';
-      element.textContent = group.length > 1 ? `${group.length}+` : point.number ? String(point.number) : point.alternative ? '◇' : '●';
-      element.classList.toggle('is-cluster', group.length > 1);
+      const label = document.createElement('span'); label.className = 'pilot-pin-label';
+      label.textContent = presentation.text;
+      element.append(label);
+      element.classList.toggle('is-visit', presentation.visit);
+      element.classList.toggle('is-cluster', presentation.collision);
       element.dataset.place = point.placeId;
       element.dataset.entry = point.id;
       element.dataset.entries = JSON.stringify(group.map(p => p.id));
-      element.setAttribute('aria-label', group.length > 1 ? `Choose ${group.length} nearby places: ${group.map(p => p.label).join(', ')}` : `Select ${point.label}`);
+      element.setAttribute('aria-label', presentation.label);
       element.addEventListener('click', () => {
         if (group.length > 1) onChooseGroup(group.map(p => p.id));
         else {select(point.id); onSelect(point.id);}
@@ -81,7 +98,7 @@ export function createGeographicMap({container, points, selectedId, camera, regi
     const coordinates = points.map(p => [p.longitude, p.latitude]);
     map.fitBounds([[Math.min(...coordinates.map(p => p[0])), Math.min(...coordinates.map(p => p[1]))],
       [Math.max(...coordinates.map(p => p[0])), Math.max(...coordinates.map(p => p[1]))]],
-      {padding: 56, maxZoom: 13, duration: 0});
+      {padding: framingPadding(), maxZoom: 13, duration: 0});
   }
   void (async () => {
     try {
@@ -95,7 +112,7 @@ export function createGeographicMap({container, points, selectedId, camera, regi
       const style = await response.json();
       if (disposed || failed) return;
       const bounds = points.reduce((b, p) => b.extend([p.longitude, p.latitude]), new lib.LngLatBounds());
-      map = new lib.Map({container, style, bounds, fitBoundsOptions: {padding: 56, maxZoom: 13},
+      map = new lib.Map({container, style, bounds, fitBoundsOptions: {padding: framingPadding(), maxZoom: 13},
         ...(camera ? {center: camera.center, zoom: camera.zoom, bounds: undefined} : {}),
         ...MAP_GESTURES,
         minZoom: 9, maxZoom: 18, renderWorldCopies: false, attributionControl: false, trackResize: false,
