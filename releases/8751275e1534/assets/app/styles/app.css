@@ -837,12 +837,9 @@ html[data-screen="Home"] .notice { top: var(--home-notice-top, 78px); }
 html[data-screen="Home"] #connection[data-state="offline"] { top: var(--home-connection-top, 112px); }
 .home-hero .hero-content { padding-top: max(calc(env(safe-area-inset-top) + clamp(128px, 16dvh, 150px)), var(--home-overlay-clearance, 0px)); }
 html[data-screen="Explore"] #screen-content { display: flex; flex-direction: column; flex: 1; min-height: 0; flex-shrink: 1; }
-/* Light Detail has a cream header above its existing cover; notice offsets are cover-local. */
-html:is([data-screen="detail-editorial"], [data-screen="detail-standard"]) #screen-content { position: relative; }
-html:is([data-screen="detail-editorial"], [data-screen="detail-standard"]) #connection[data-state="offline"] { top: var(--detail-connection-top, 56px); }
-/* The new compass occupies the former immersive Back position. Keep Back below notices. */
-html[data-screen="detail-immersive"] .detail-back { top: var(--detail-overlay-clearance, 116px); }
-.detail-hero-immersive .hero-content { padding-top: max(140px, calc(var(--detail-overlay-clearance, 88px) + 52px)); }
+/* All Detail covers share header/Back clearance; the editorial content surface stays independent. */
+html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var(--detail-overlay-clearance, 116px); }
+.detail-hero .hero-content { padding-top: max(140px, calc(var(--detail-overlay-clearance, 88px) + 52px)); }
 @media (forced-colors: active) {
   #app-header { color: CanvasText !important; }
   #app-header .brand img { opacity: 0; }
