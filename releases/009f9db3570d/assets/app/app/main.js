@@ -17,6 +17,7 @@ import {icon, mediaImage, mediaCredits, homeHeroMediaId, budgetProgress} from '.
 import {activityCostPresentation, copyAddressText, editorialText, activityPresentationVariant, activityPresentationFamily,
   activityEditorialContent, nearbyInspirationItems, curatedCollection} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
+import {primaryHeaderSurfaces, updateHeaderSurface} from './shared-header.js';
 
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
@@ -26,6 +27,7 @@ const connection = document.querySelector('#connection');
 const sync = document.querySelector('#sync');
 const appUpdate = document.querySelector('#app-update');
 const myTripButton = document.querySelector('#my-trip');
+const appHeader = document.querySelector('#app-header');
 let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0;
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
@@ -38,10 +40,19 @@ let exploreSession = {mode: 'map', activated: false, selectedId: null, camera: n
 let exploreReturn = null;
 
 function fitDetailOverlays() {
+  if (main.dataset.screen === 'Home') {
+    const notice = document.querySelector('.notice'), root = document.documentElement;
+    root.style.setProperty('--home-notice-top', `${appHeader.offsetHeight + 8}px`);
+    root.style.setProperty('--home-connection-top', `${notice.offsetTop + notice.offsetHeight + 8}px`);
+    const last = navigator.onLine ? notice : connection;
+    root.style.setProperty('--home-overlay-clearance', `${last.offsetTop + last.offsetHeight + 12}px`);
+    return;
+  }
   if (!main.dataset.screen?.startsWith('detail-')) return;
   const header = document.querySelector('header'), notice = document.querySelector('.notice');
   const root = document.documentElement;
-  root.style.setProperty('--detail-notice-top', `${header.offsetHeight + 8}px`);
+  const coverHeaderHeight = appHeader.dataset.surface === 'dark-media' ? header.offsetHeight : 0;
+  root.style.setProperty('--detail-notice-top', `${coverHeaderHeight + 8}px`);
   root.style.setProperty('--detail-connection-top', `${notice.offsetTop + notice.offsetHeight + 8}px`);
   const last = navigator.onLine ? notice : connection;
   root.style.setProperty('--detail-overlay-clearance', `${last.offsetTop + last.offsetHeight + 12}px`);
@@ -599,6 +610,7 @@ function detail(activity) {
   const editorial = activityEditorialContent(activity);
   main.dataset.screen = `detail-${tone}`;
   document.documentElement.dataset.screen = main.dataset.screen;
+  updateHeaderSurface(appHeader, light ? 'light' : 'dark-media');
   const media = bundle.media.find(asset => asset.mediaId === activity.heroMediaId);
   const region = bundle.regions.find(candidate => candidate.regionId === activity.regionId);
   const groups = bundle.optionGroups.filter(group => group.optionIds.some(id =>
@@ -798,6 +810,7 @@ function referenceArticle(article) {
 function info(emergencyOnly = false) {
   if (emergencyOnly) {view = 'Info'; renderNav();}
   main.dataset.screen = 'Info'; document.documentElement.dataset.screen = 'Info';
+  updateHeaderSurface(appHeader, 'light');
   const groups = [['Entry & Documents', 'documents', /entry|document|requirement/],
     ['Money', 'Budget', /money|payment|currency/], ['Transit', 'transit', /transit|transport/],
     ['Connectivity', 'connectivity', /connectivity|internet|esim/], ['Culture & Etiquette', 'culture', /culture|etiquette/]];
@@ -1028,9 +1041,11 @@ function render() {
   document.documentElement.dataset.theme = bundle.trip.defaultThemeId;
   document.documentElement.dataset.screen = view;
   main.dataset.screen = view;
+  updateHeaderSurface(appHeader, primaryHeaderSurfaces[view]);
   renderNav();
   main.replaceChildren(...({Home: home, Itinerary: itinerary, Explore: explore, Budget: budget, Info: info}[view] ?? home)()
     .filter(Boolean));
+  fitDetailOverlays();
 }
 
 async function switchPack(name) {
