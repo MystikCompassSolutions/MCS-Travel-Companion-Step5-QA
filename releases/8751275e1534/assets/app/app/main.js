@@ -53,9 +53,11 @@ function fitDetailOverlays() {
   const root = document.documentElement;
   const coverHeaderHeight = appHeader.dataset.surface === 'dark-media' ? header.offsetHeight : 0;
   root.style.setProperty('--detail-notice-top', `${coverHeaderHeight + 8}px`);
-  root.style.setProperty('--detail-connection-top', `${notice.offsetTop + notice.offsetHeight + 8}px`);
+  const noticeBottom = notice?.offsetHeight ? notice.offsetTop + notice.offsetHeight : coverHeaderHeight;
+  root.style.setProperty('--detail-connection-top', `${noticeBottom + 8}px`);
   const last = navigator.onLine ? notice : connection;
-  root.style.setProperty('--detail-overlay-clearance', `${last.offsetTop + last.offsetHeight + 12}px`);
+  const overlayBottom = last?.offsetHeight ? last.offsetTop + last.offsetHeight : coverHeaderHeight;
+  root.style.setProperty('--detail-overlay-clearance', `${overlayBottom + 12}px`);
 }
 // Observe rendered text rather than guessing banner height at large text sizes.
 const detailOverlayObserver = new ResizeObserver(fitDetailOverlays);
@@ -610,7 +612,8 @@ function detail(activity) {
   const editorial = activityEditorialContent(activity);
   main.dataset.screen = `detail-${tone}`;
   document.documentElement.dataset.screen = main.dataset.screen;
-  updateHeaderSurface(appHeader, light ? 'light' : 'dark-media');
+  // Every Detail cover has its own dark scrim/fallback, independent of the content family below.
+  updateHeaderSurface(appHeader, 'dark-media');
   const media = bundle.media.find(asset => asset.mediaId === activity.heroMediaId);
   const region = bundle.regions.find(candidate => candidate.regionId === activity.regionId);
   const groups = bundle.optionGroups.filter(group => group.optionIds.some(id =>
