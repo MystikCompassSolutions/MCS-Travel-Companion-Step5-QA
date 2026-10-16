@@ -18,6 +18,8 @@ import {activityCostPresentation, copyAddressText, editorialText, activityPresen
   activityEditorialContent, nearbyInspirationItems, curatedCollection} from './activity-detail.js';
 import {homeTripPresentation} from './home-trip.js';
 import {primaryHeaderSurfaces, updateHeaderSurface} from './shared-header.js';
+import {loadSamplePhrasebook} from '../domain/phrases.js';
+import {travelInfoView} from './travel-info-view.js';
 
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
@@ -29,6 +31,7 @@ const appUpdate = document.querySelector('#app-update');
 const myTripButton = document.querySelector('#my-trip');
 const appHeader = document.querySelector('#app-header');
 let bundle, state, store, coordinator, schemas = {}, view = 'Home', dayIndex = 0;
+let phrasebook = null, phraseError = false, infoTopic = null, infoReturnScroll = 0, infoFromHome = false;
 let packName = 'japan', saveQueue = Promise.resolve(), offlineStatus = '', storageIssue = null;
 let itineraryScrollTop = 0;
 let homePreviewIndex = null;
@@ -169,7 +172,7 @@ function commit(transform) {
   return operation;
 }
 
-function go(name) {view = name; render(); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
+function go(name) {if(name==='Info'){infoTopic=null;infoFromHome=false;} view = name; render(); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
 function disclosure(title, body, {id, open = false, className = ''} = {}) {
   return el('details', {class: `compact-disclosure ${className}`, 'data-section': id, open},
     el('summary', {}, el('span', {class: 'disclosure-title'}, title)), el('div', {class: 'disclosure-body'}, body));
@@ -792,50 +795,23 @@ function budget() {
     }});
 }
 
-function referenceArticle(article) {
-  const records = bundle.verification.filter(record => article.verificationRecordIds?.includes(record.verificationId));
-  const metadata = records.length ? records.map(record =>
-    `${record.status.replaceAll('_', ' ')}${record.verifiedAt ? ` · Checked ${record.verifiedAt}` : ''}${
-      record.nextReviewDue ? ` · Review due ${record.nextReviewDue}` : ''}`).join('; ') : 'Verification pending in this sample';
-  return [el('p', {class: 'verification-label'},
-    `${article.audienceCountry === 'US' ? 'U.S. travelers · ' : ''}${article.riskLevel === 'high' ? 'High-risk information · ' : ''}${metadata}`),
-    ...article.contentBlocks.map(block => el('div', {}, block.text ? el('p', {}, block.text) : null,
-      block.items?.length ? el('ul', {}, block.items.map(item => el('li', {}, item))) : null,
-      ...(block.links ?? []).map(link => el('a', {class: 'text-action', href: link.url,
-        target: '_blank', rel: 'noopener noreferrer'}, link.label)))),
-    ...[...new Set([...(article.sourceIds ?? []), ...records.flatMap(record => record.sourceIds)])]
-      .map(id => bundle.sources.find(source => source.sourceId === id))
-      .filter(source => source?.active && ['official', 'government', 'operator', 'tourism_board'].includes(source.sourceType))
-      .map(source => el('a', {class: 'text-action', href: source.url,
-        target: '_blank', rel: 'noopener noreferrer'}, `Official source · ${source.title}`))];
-}
-
 function info(emergencyOnly = false) {
-  if (emergencyOnly) {view = 'Info'; renderNav();}
+  if (emergencyOnly) {infoFromHome = view==='Home'; infoTopic='emergency'; view = 'Info'; renderNav();}
   main.dataset.screen = 'Info'; document.documentElement.dataset.screen = 'Info';
   updateHeaderSurface(appHeader, 'light');
-  const groups = [['Entry & Documents', 'documents', /entry|document|requirement/],
-    ['Money', 'Budget', /money|payment|currency/], ['Transit', 'transit', /transit|transport/],
-    ['Connectivity', 'connectivity', /connectivity|internet|esim/], ['Culture & Etiquette', 'culture', /culture|etiquette/]];
-  const referenceTiles = groups.map(([title, iconName, pattern]) => {
-    const articles = bundle.travelInfo.filter(article => pattern.test(`${article.category} ${article.title}`.toLowerCase()));
-    return disclosure(el('span', {class: 'reference-title'}, icon(iconName), title), articles.length ?
-      articles.flatMap(article => [el('h2', {}, article.title), ...referenceArticle(article)]) :
-      el('p', {}, 'Guidance pending research and verification. This sample supplies no travel requirements or advice.'),
-    {id: `reference-${iconName}`, className: 'reference-tile'});
+  const nodes=travelInfoView({bundle,phrasebook,phraseError,topic:infoTopic,
+    backLabel:infoFromHome?'Back to Home':'Back to Travel Info',
+    onOpen:topic=>{
+      infoReturnScroll=appScroll.scrollTop;infoFromHome=false;infoTopic=topic;
+      main.replaceChildren(...info());appScroll.scrollTop=0;main.focus({preventScroll:true});
+    },
+    onBack:()=>{
+      if(infoFromHome){infoFromHome=false;infoTopic=null;go('Home');return;}
+      const previous=infoTopic;infoTopic=null;main.replaceChildren(...info());appScroll.scrollTop=infoReturnScroll;
+      const target=previous==='emergency'?main.querySelector('.info-emergency'):main.querySelector(`[data-topic="${previous}"]`);
+      target?.focus({preventScroll:true});
+    }
   });
-  const nodes = [el('h1', {}, emergencyOnly ? 'Emergency Help' : 'Travel Info'),
-    el('p', {class: 'day-meta'}, 'Sample information is unverified; confirm current official guidance before travel.'),
-    ...bundle.emergencyResources.map(resource => el('section', {class: 'compact-section emergency-tile'},
-      icon('help'),
-      el('p', {class: 'section-kicker'}, 'Emergency help'), el('h2', {}, resource.organizationName),
-      el('p', {}, resource.instructions), el('strong', {}, 'Pending verification · No emergency number is supplied.'))),
-    ...(!emergencyOnly ? [el('section', {class: 'reference-grid', 'aria-label': 'Travel reference topics'}, referenceTiles),
-      disclosure('Traveler requirements', el('p', {}, bundle.trip.internationalBuyerNotice), {id: 'traveler-requirements'}),
-      ...bundle.travelInfo.map(article => disclosure(article.title,
-        referenceArticle(article),
-        {id: article.articleId})),
-      disclosure('Photography & Visual Credits', mediaCredits(bundle), {id: 'media-credits'})] : [])];
   if (emergencyOnly) {main.replaceChildren(...nodes); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
   return nodes;
 }
@@ -1055,11 +1031,14 @@ async function switchPack(name) {
   try {
     await saveQueue.catch(() => {});
     const next = await loadSamplePack(name, schemas.content);
+    let nextBook=null; phraseError=false;
+    try {nextBook=await loadSamplePhrasebook(name,next,schemas.phrasebook);} catch {phraseError=true;}
     coordinator?.close();
     let loaded; storageIssue = null;
     try {loaded = await store.load(next.trip.tripId);} catch (error) {storageIssue = error;}
     const result = reconcileContent(loaded ?? newTravelerState(next), next);
     bundle = next; state = result.state; packName = name; view = 'Home'; exploreScope = {dayId: null, category: 'all', regionId: null};
+    phrasebook=nextBook;infoTopic=null;infoFromHome=false;
     collectionMapContext = null;
     exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0}; exploreReturn = null;
     try {localStorage.setItem('mcs-active-sample', name);} catch {}

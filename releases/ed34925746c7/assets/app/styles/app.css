@@ -801,6 +801,54 @@ main[data-screen="Explore"] .explore-preview :focus-visible { outline-color: var
 }
 
 /* Step 5.5A: one in-flow header; explicit surface context, unchanged brand pixels. */
+/* Travel Info: an editorial reference surface, scoped away from approved screens. */
+html[data-screen="Info"] body, html[data-screen="Info"] .notice { background: var(--cream); }
+main[data-screen="Info"] { color: var(--indigo-900); }
+.travel-info { padding: 4px 0 20px; min-width: 0; }
+.travel-info .info-eyebrow { margin: 0 0 8px; font-size: .6875rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--indigo-700); }
+.travel-info h1 { font-size: clamp(2.25rem, 6vw, 3.25rem); font-weight: 600; margin: 0 0 6px; }
+.travel-info .info-destination { margin: 0; font-size: .9rem; color: var(--muted); }
+.travel-info .info-intro { margin-bottom: 24px; }
+.travel-info .info-emergency { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 16px; border: 1px solid #C5A25680; border-left: 3px solid var(--gold); border-radius: 12px; background: var(--paper); color: var(--indigo-900); }
+.travel-info .info-emergency > span { flex: 1; min-width: 0; }
+.travel-info .info-emergency strong { display: block; font-size: .9375rem; }
+.travel-info .info-emergency small { display: block; margin-top: 4px; font-size: .75rem; line-height: 1.5; color: var(--muted); }
+.travel-info .info-emergency > .ui-icon { flex-shrink: 0; color: #876526; width: 22px; height: 22px; }
+.travel-info .info-guide-heading { margin: 28px 0 14px; font-size: 1.5rem; font-weight: 600; }
+.travel-info .info-topic-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,max(8.5rem,calc((100% - 24px)/3))),1fr)); gap: 12px; }
+.travel-info .info-topic { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; min-width: 0; min-height: 142px; padding: 18px 14px; border: 1px solid var(--line); border-radius: 12px; text-align: left; color: var(--indigo-900); background: var(--paper); box-shadow: 0 2px 8px #211E4304; }
+.travel-info .info-topic > .ui-icon { color: #876526; width: 26px; height: 26px; margin-bottom: 4px; }
+.travel-info .info-topic-title { font-weight: 650; font-size: .9375rem; line-height: 1.4; }
+.travel-info .info-topic-hint { font-size: .6875rem; line-height: 1.45; color: var(--muted); }
+.travel-info button:hover { border-color: #876526; background: #FCFAF6; }
+.travel-info :focus-visible { outline: 3px solid var(--indigo-700); outline-offset: 3px; }
+.travel-info .info-credits { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 12px; font-size: .8125rem; color: var(--muted); }
+.travel-info .info-credits summary { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.travel-info .info-credits summary::after { content: '+'; margin-left: auto; }
+.travel-info .info-credits[open] summary::after { content: '−'; }
+.travel-info .info-credits p { font-size: .8125rem; }
+.travel-info .info-credits a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.travel-info .info-back { margin-bottom: 20px; padding-left: 0; padding-right: 10px; border: 0; background: transparent; color: var(--indigo-700); text-decoration: underline; font-size: .875rem; }
+.travel-info .info-article, .travel-info .info-applicability, .travel-info .info-phrase { padding: 20px; margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.travel-info h2 { margin: 0 0 12px; font-weight: 600; }
+.travel-info .info-warning { padding: 12px; border-left: 3px solid #876526; background: #EFE5D0; color: var(--indigo-900); font-size: .875rem; }
+.travel-info .info-warning p { margin: 0; }
+.travel-info .info-evidence { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: .75rem; color: var(--muted); }
+.travel-info .info-evidence p { margin: 4px 0; }
+.travel-info .info-source, .travel-info .info-contact { display: flex; align-items: center; min-height: 44px; max-width: 100%; color: var(--indigo-700); overflow-wrap: anywhere; }
+.travel-info .info-empty, .travel-info .info-phrase-notice { font-size: .875rem; color: var(--muted); }
+.travel-info .info-phrase-group { margin: 28px 0; }
+.travel-info .info-phrase h3 { font-family: var(--body-font); font-size: 1rem; margin: 0; }
+.travel-info .info-context { font-size: .8125rem; color: var(--muted); }
+.travel-info .info-variant { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+.travel-info .info-local { font-size: 1.5rem; line-height: 1.65; margin: 0 0 10px; user-select: text; unicode-bidi: isolate; }
+.travel-info .info-transliteration, .travel-info .info-pronunciation { font-size: .875rem; margin: 6px 0; color: var(--indigo-700); }
+.travel-info .info-copy-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+.travel-info .info-copy-controls button { font-size: .8125rem; background: transparent; border-color: #39306480; color: var(--indigo-700); }
+.travel-info .info-language { font-size: .75rem; color: var(--muted); }
+.travel-info .info-copy-status { font-size: .8125rem; margin: 6px 0 0; }
+.travel-info .info-copy-status textarea { display: block; width: 100%; min-width: 0; font-size: max(16px,1rem); margin-top: 10px; }
+@media (forced-colors: active) { .travel-info button, .travel-info article, .travel-info .info-applicability { border-color: ButtonText; } .travel-info .info-warning { border-color: CanvasText; } }
 #app-header {
   position: relative; z-index: 4; inset: auto; display: flex; flex-wrap: nowrap;
   align-items: center; gap: 16px; width: 100%; min-width: 0;
