@@ -18,6 +18,8 @@ export function icon(name, className = 'ui-icon') {
     help: 'M12 2l10 18H2z M12 8v5 M12 17h.01',
     lock: 'M5 10h14v12H5z M8 10V6a4 4 0 0 1 8 0v4 M12 15v3',
     arrow: 'M4 12h16 M14 6l6 6-6 6',
+    flight: 'M22 2 9 15 M22 2l-5 20-4-9-9-4z',
+    lodging: 'M3 21V7l9-4 9 4v14 M8 21v-6h8v6 M7 9h2 M15 9h2 M7 12h2 M15 12h2',
     external: 'M14 3h7v7 M21 3l-9 9 M10 3H3v18h18v-7',
     copy: 'M9 8h11v13H9z M5 16H3V3h12v2',
     close: 'M6 6l12 12 M6 18 18 6',
