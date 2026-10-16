@@ -20,6 +20,9 @@ import {homeTripPresentation} from './home-trip.js';
 import {primaryHeaderSurfaces, updateHeaderSurface} from './shared-header.js';
 import {loadSamplePhrasebook} from '../domain/phrases.js';
 import {travelInfoView} from './travel-info-view.js';
+import {myTripView} from './my-trip-view.js';
+import {itineraryContext} from '../domain/itinerary-context.js';
+import {flightContextView, lodgingContextView} from './itinerary-context-view.js';
 
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
@@ -37,6 +40,7 @@ let itineraryScrollTop = 0;
 let homePreviewIndex = null;
 let exploreScope = {dayId: null, category: 'all', regionId: null};
 let personalPageScrollTop = 0;
+let tripSession = {page: 'overview', edit: null, scroll: {}};
 let collectionMapContext = null;
 let activeMapPreview = null;
 let exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0};
@@ -373,6 +377,7 @@ function itinerary() {
 
   function paint(announce = false) {
     const day = bundle.days[dayIndex];
+    const context = itineraryContext(state, day.dayNumber);
     previous.disabled = dayIndex === 0;
     next.disabled = dayIndex === total - 1;
     chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(index === dayIndex)));
@@ -380,7 +385,7 @@ function itinerary() {
       day.pace || day.expectedWalkingLevel ? el('p', {class: 'day-meta'},
         [day.pace, day.expectedWalkingLevel ? `${day.expectedWalkingLevel} walking` : null].filter(Boolean).join(' · ')) : null,
       day.weatherNotes || day.summary ? el('p', {class: 'day-summary'}, day.weatherNotes ?? day.summary) : null,
-      dayTimeline(day)].filter(Boolean));
+      flightContextView(context), dayTimeline(day), lodgingContextView(context)].filter(Boolean));
     if (announce) status.textContent = `Showing Day ${day.dayNumber} of ${total}: ${editorialText(day.title)}`;
     requestAnimationFrame(() => {
       const chip = chips[dayIndex];
@@ -789,9 +794,7 @@ function explore() {
 function budget() {
   return budgetView(bundle, state, {commit, storageIssue, disclosure, upgradeChoices,
     openHomeCurrency: () => {
-      myTrip();
-      const basics = personal.querySelector('details[data-section="trip-basics"]');
-      if (basics) {basics.open = true; basics.querySelector('select')?.focus();}
+      myTrip({page: 'basics', focus: 'page-title'});
     }});
 }
 
@@ -816,62 +819,6 @@ function info(emergencyOnly = false) {
   return nodes;
 }
 
-const bookingFields = {
-  personalFlights: [['name', 'Flight label', 'text'], ['airline', 'Airline', 'text'],
-    ['flightNumber', 'Flight number', 'text'], ['origin', 'Origin', 'text'], ['destination', 'Destination', 'text'],
-    ['departureDateTime', 'Departure date and time', 'datetime-local'], ['arrivalDateTime', 'Arrival date and time', 'datetime-local'],
-    ['confirmationCode', 'Confirmation code', 'text'], ['notes', 'Notes', 'textarea']],
-  personalLodging: [['name', 'Lodging label', 'text'], ['address', 'Address', 'text'],
-    ['checkInDate', 'Check-in date', 'date'], ['checkOutDate', 'Check-out date', 'date'],
-    ['phone', 'Phone', 'tel'], ['confirmationCode', 'Confirmation code', 'text'], ['notes', 'Notes', 'textarea']],
-  personalReservations: [['name', 'Reservation label', 'text'], ['dateTime', 'Reservation date and time', 'datetime-local'],
-    ['activityId', 'Related activity (optional)', 'activity'], ['paymentStatus', 'Payment status', 'text'],
-    ['confirmationCode', 'Confirmation code', 'text'], ['notes', 'Notes', 'textarea']]
-};
-
-function bookingForm(key, label, existing = null) {
-  const inputs = Object.fromEntries(bookingFields[key].map(([name, caption, type]) => {
-    const input = type === 'textarea' ? el('textarea', {maxLength: 10000, value: existing?.[name] ?? ''}) :
-      type === 'activity' ? el('select', {}, el('option', {value: ''}, 'None'),
-        bundle.activities.map(activity => el('option', {value: activity.activityId,
-          selected: existing?.[name] === activity.activityId}, editorialText(activity.name)))) :
-        el('input', {type, value: existing?.[name] ?? '', maxLength: 1000, required: name === 'name'});
-    return [name, {caption, input}];
-  }));
-  return el('form', {onSubmit: event => {
-    event.preventDefault();
-    const entry = {...existing, id: existing?.id ?? `personal_${crypto.randomUUID()}`};
-    for (const [name, {input}] of Object.entries(inputs)) {
-      if (input.value.trim()) entry[name] = input.value.trim(); else delete entry[name];
-    }
-    if (key === 'personalFlights' && entry.departureDateTime && entry.arrivalDateTime &&
-        entry.arrivalDateTime < entry.departureDateTime) {alert('Arrival must be after departure.', personal); return;}
-    if (key === 'personalLodging' && entry.checkInDate && entry.checkOutDate &&
-        entry.checkOutDate < entry.checkInDate) {alert('Check-out must be after check-in.', personal); return;}
-    if (key === 'personalReservations' && entry.activityId &&
-        !bundle.activities.some(activity => activity.activityId === entry.activityId)) {
-      alert('Choose an activity from this itinerary or leave it blank.', personal); return;
-    }
-    commit(current => ({...current, [key]: existing ? current[key].map(item => item.id === existing.id ? entry : item) :
-      [...current[key], entry]})).then(myTrip).catch(() => {});
-  }}, ...Object.values(inputs).map(({caption, input}) => field(caption, input)),
-  el('button', {type: 'submit'}, existing ? `Save ${label.toLowerCase()}` : `Add ${label.toLowerCase()}`));
-}
-
-function bookingSection(key, label) {
-  return disclosure(el('span', {}, label, el('small', {}, ` · ${state[key].length} saved`)), [
-    ...state[key].map(entry => el('div', {class: 'booking-entry'},
-      el('strong', {}, entry.name ?? entry.id),
-      el('details', {}, el('summary', {}, `Edit ${entry.name ?? label}`), bookingForm(key, label, entry)),
-      button(`Remove ${entry.name ?? label}`, () => {
-        if (confirm(`Remove this ${label.toLowerCase()} entry from this device?`))
-          commit(current => ({...current, [key]: current[key].filter(item => item.id !== entry.id)}))
-            .then(myTrip).catch(() => {});
-      }))),
-    el('details', {}, el('summary', {}, `Add ${label.toLowerCase()}`), bookingForm(key, label))],
-  {id: key, className: 'trip-disclosure'});
-}
-
 function downloadText(filename, text) {
   const url = URL.createObjectURL(new Blob([text], {type: 'application/json'}));
   const link = el('a', {href: url, download: filename}); link.click();
@@ -887,14 +834,57 @@ function showPersonal() {
   dialog.querySelector('.close').focus({preventScroll: true});
 }
 
-function myTrip() {
-  const openSections = new Set([...personal.querySelectorAll('details[data-section][open]')]
-    .map(section => section.dataset.section));
-  const scroll = dialog.open ? personal.scrollTop : 0;
-  personal.replaceChildren(el('section', {class: 'trip-private'}, icon('lock'), el('div', {},
-    el('p', {class: 'section-kicker'}, 'Your personal trip'), el('strong', {}, bundle.trip.title),
-    el('p', {class: 'day-meta'}, 'Private to this device · Export a backup before changing browsers.'))),
-    el('p', {id: 'save-status', role: 'status'}, ''));
+function tripDataSettings() {
+  const backupBody = el('div');
+  backupBody.append(button('Export My Trip', () => {
+    try {downloadText(`${state.tripId}.traveler-state.json`, serializeTravelerState(state, schemas.export));}
+    catch (error) {alert(error.message, personal);}
+  }));
+  const file = el('input', {type: 'file', accept: '.json,application/json', onChange: async event => {
+    try {
+      const selected = event.target.files[0]; if (!selected) return;
+      if (selected.size > EXPORT_LIMIT_BYTES) throw new Error('Import exceeds the 2 MiB limit.');
+      const imported = parseTravelerExport(await selected.text(), bundle.trip.tripId, schemas.export,
+        schemas.legacyExport, schemas.legacyTraveler);
+      const preview = card(el('h2', {}, 'Review import'),
+        el('p', {}, `This replaces this trip’s local data with a backup for ${imported.tripId}. ${imported.actualExpenses.length} expenses and ${imported.personalReservations.length} reservations.`),
+        button('Replace local trip with this backup', () => commit(current =>
+          reconcileContent({...imported, revision: current.revision}, bundle).state).then(() => myTrip({message: 'Backup imported on this device.'})).catch(() => {})),
+        button('Cancel import', () => {preview.remove(); file.focus();}));
+      backupBody.append(preview);
+      preview.querySelector('h2').tabIndex = -1;
+      preview.querySelector('h2').focus();
+    } catch (error) {alert(error.message, personal);}
+  }});
+  backupBody.append(field('Import My Trip · review before replacing', file));
+  backupBody.append(button('Delete this trip’s local data', () => {
+    if (confirm('Delete this trip’s personal data from this browser? Export a backup first if you want to keep it.'))
+      commit(current => ({...newTravelerState(bundle), revision: current.revision})).then(() => myTrip({message: 'Local trip data deleted.'})).catch(() => {});
+  }, {class: 'trip-destructive'}));
+  if (navigator.storage?.persist) backupBody.append(button('Ask browser to keep local trip data', async () => {
+    try {const granted = await navigator.storage.persist();
+      document.querySelector('#save-status').textContent = granted ?
+        'This browser granted persistent local storage. Backups are still recommended.' :
+        'Persistent storage was not granted. Export backups regularly.';
+    } catch {document.querySelector('#save-status').textContent = 'Persistent storage could not be requested. Export backups regularly.';}
+  }));
+  backupBody.append(button('Repair app files (keep My Trip data)', () => {
+    repairAppFiles().catch(error => alert(error.message, personal));
+  }));
+
+  return el('div', {class: 'trip-settings'},
+    disclosure('Backup / Export / Import', backupBody, {id: 'backup', className: 'trip-disclosure'}),
+    disclosure('About this app', el('p', {},
+      `App build ${document.querySelector('meta[name="mcs-build-version"]')?.content ?? 'development'} · Traveler State ${STATE_VERSION}`),
+      {id: 'about', className: 'trip-disclosure'}));
+}
+
+function myTrip(options = {}) {
+  const openSections = new Set([...personal.querySelectorAll('details[data-section][open]')].map(n => n.dataset.section));
+  if (!dialog.open) tripSession = {page: 'overview', edit: null, scroll: {}};
+  if (options.page) {tripSession.page = options.page; tripSession.edit = null;}
+  const status = el('p', {id: 'save-status', role: 'status', 'aria-live': 'polite'}, options.message ?? '');
+  personal.replaceChildren(status);
   if (storageIssue) {
     personal.append(el('p', {class: 'error', role: 'alert'}, storageIssue.message));
     if (storageIssue instanceof CorruptStateError) personal.append(
@@ -914,93 +904,18 @@ function myTrip() {
     showPersonal();
     return;
   }
-  const note = el('textarea', {maxLength: 10000, value: state.notes.trip ?? ''});
-  const start = el('input', {type: 'date', value: state.tripStartDate ?? ''});
-  const currency = el('select', {}, ['USD', 'JPY', 'ISK', 'EUR', 'GBP', 'CAD', 'AUD'].map(value =>
-    el('option', {value, selected: value === state.homeCurrency}, value)));
-  personal.append(disclosure(el('span', {class: 'reference-title trip-title'}, icon('documents'), 'Trip basics & personal notes'),
-  el('form', {class: 'personal-essentials', onSubmit: event => {
-    event.preventDefault();
-    if (currency.value !== state.homeCurrency &&
-        (state.budgetPlan.totalMinor > 0 || state.actualExpenses.length ||
-          Object.values(state.budgetPlan.categoryMinor).some(value => value > 0))) {
-      alert('Clear your budget and expenses before changing home currency; amounts are never automatically converted.', personal);
-      return;
-    }
-    document.querySelector('#save-status').textContent = 'Saving on this device…';
-    commit(current => {
-      const next = {...current, notes: {...current.notes, trip: note.value}, homeCurrency: currency.value};
-      if (currency.value !== current.homeCurrency) delete next.planningRate;
-      if (start.value) next.tripStartDate = start.value; else delete next.tripStartDate;
-      return next;
-    }).then(() => {resetDay(); render(); myTrip(); document.querySelector('#save-status').textContent = 'Saved on this device.';}).catch(() => {});
-  }}, field('Trip start date (optional)', start), field('Home currency', currency),
-  field('Personal notes', note), el('button', {type: 'submit'}, 'Save My Trip')),
-  {id: 'trip-basics', className: 'trip-disclosure'}));
-  for (const [key, label] of [['personalFlights', 'Flights'], ['personalLodging', 'Lodging'],
-    ['personalReservations', 'Reservations']]) personal.append(bookingSection(key, label));
-  const packing = el('input', {required: true, maxLength: 1000});
-  personal.append(disclosure(el('span', {}, 'Packing Checklist', el('small', {},
-    ` · ${state.packingChecklist.filter(item => item.checked).length} / ${state.packingChecklist.length}`)), [
-    ...state.packingChecklist.map(item => el('div', {class: 'packing-row'},
-      field(item.label, el('input', {type: 'checkbox', checked: item.checked, onChange: event => {
-        const checked = event.target.checked;
-        commit(current => ({...current, packingChecklist: current.packingChecklist.map(entry =>
-          entry.id === item.id ? {...entry, checked} : entry)})).then(myTrip).catch(() => {});
-      }})), button(`Remove ${item.label}`, () => {
-        if (confirm(`Remove ${item.label} from your packing list?`))
-          commit(current => ({...current, packingChecklist: current.packingChecklist.filter(entry => entry.id !== item.id)}))
-            .then(myTrip).catch(() => {});
-      }))),
-    el('form', {onSubmit: event => {
-      event.preventDefault(); const item = {id: `packing_${crypto.randomUUID()}`, label: packing.value, checked: false};
-      commit(current => ({...current, packingChecklist: [...current.packingChecklist, item]})).then(myTrip).catch(() => {});
-    }}, field('Packing item', packing), el('button', {type: 'submit'}, 'Add item'))],
-  {id: 'packing', className: 'trip-disclosure'}));
-  personal.append(disclosure('Chosen Alternatives', bundle.optionGroups.map(group => optionGroup(group)),
-    {id: 'alternatives', className: 'trip-disclosure'}));
-  const backupBody = el('div');
-  backupBody.append(button('Export My Trip', () => {
-    try {downloadText(`${state.tripId}.traveler-state.json`, serializeTravelerState(state, schemas.export));}
-    catch (error) {alert(error.message, personal);}
-  }));
-  const file = el('input', {type: 'file', accept: '.json,application/json', onChange: async event => {
-    try {
-      const selected = event.target.files[0]; if (!selected) return;
-      if (selected.size > EXPORT_LIMIT_BYTES) throw new Error('Import exceeds the 2 MiB limit.');
-      const imported = parseTravelerExport(await selected.text(), bundle.trip.tripId, schemas.export,
-        schemas.legacyExport, schemas.legacyTraveler);
-      const preview = card(el('h2', {}, 'Review import'),
-        el('p', {}, `This replaces this trip’s local data with a backup for ${imported.tripId}. ${imported.actualExpenses.length} expenses and ${imported.personalReservations.length} reservations.`),
-        button('Replace local trip with this backup', () => commit(current =>
-          reconcileContent({...imported, revision: current.revision}, bundle).state).then(myTrip).catch(() => {})),
-        button('Cancel import', () => preview.remove()));
-      backupBody.append(preview);
-    } catch (error) {alert(error.message, personal);}
-  }});
-  backupBody.append(field('Import My Trip · review before replacing', file));
-  backupBody.append(button('Delete this trip’s local data', () => {
-    if (confirm('Delete this trip’s personal data from this browser? Export a backup first if you want to keep it.'))
-      commit(current => ({...newTravelerState(bundle), revision: current.revision})).then(myTrip).catch(() => {});
-  }));
-  if (navigator.storage?.persist) backupBody.append(button('Ask browser to keep local trip data', async () => {
-    try {const granted = await navigator.storage.persist();
-      document.querySelector('#save-status').textContent = granted ?
-        'This browser granted persistent local storage. Backups are still recommended.' :
-        'Persistent storage was not granted. Export backups regularly.';
-    } catch {document.querySelector('#save-status').textContent = 'Persistent storage could not be requested. Export backups regularly.';}
-  }));
-  backupBody.append(button('Repair app files (keep My Trip data)', () => {
-    repairAppFiles().catch(error => alert(error.message, personal));
-  }));
-  personal.append(disclosure('Backup / Export / Import', backupBody, {id: 'backup', className: 'trip-disclosure'}));
-  personal.append(disclosure('About this app', el('p', {},
-    `App build ${document.querySelector('meta[name="mcs-build-version"]')?.content ?? 'development'} · Traveler State ${STATE_VERSION}`),
-  {id: 'about', className: 'trip-disclosure'}));
+
+  personal.append(myTripView({bundle, state, session: tripSession, redraw: myTrip, commit,
+    settings: tripDataSettings, onBasicsSaved: () => {resetDay(); render();}}));
   for (const section of personal.querySelectorAll('details[data-section]'))
     if (openSections.has(section.dataset.section)) section.open = true;
   showPersonal();
-  personal.scrollTop = scroll;
+  personal.scrollTop = tripSession.scroll[tripSession.page] ?? 0;
+  if (options.focus) requestAnimationFrame(() => {
+    const target = [...personal.querySelectorAll('[data-trip-focus]')].find(n => n.dataset.tripFocus === options.focus);
+    target?.focus({preventScroll: true});
+    if (target?.matches('input,select,textarea')) keepFocusedFieldVisible();
+  });
 }
 
 function navIcon(name) {
