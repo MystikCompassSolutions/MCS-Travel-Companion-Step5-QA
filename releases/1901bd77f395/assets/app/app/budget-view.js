@@ -1,4 +1,5 @@
 import {el, button, field} from './dom.js';
+import {editingForm} from './edit-protection.js';
 import {icon, budgetProgress, budgetRing, spendingCategories} from './visual.js';
 import {actualBudget, travelerEstimate, availableUpgradeCosts, dailySpending,
   moneyInputValue, formatHomeMoney, formatMoney, parseMoney,
@@ -40,11 +41,12 @@ export function budgetEstimatePresentation(total, currency, homeCurrency, planni
   } catch {return {primary: null, original, approximate: false, unavailable: 'Planning conversion unavailable'};}
 }
 
-export function budgetView(bundle, state, {commit, storageIssue, disclosure, upgradeChoices, openHomeCurrency}) {
+export function budgetView(bundle, state, {commit, storageIssue, disclosure, upgradeChoices, openHomeCurrency, edits, openEditor, finishEditor, closeEditor}) {
   const actual = actualBudget(state), progress = budgetProgress(actual.spentMinor, state.budgetPlan.totalMinor);
   const money = value => formatHomeMoney(value, state.homeCurrency);
   const disabled = !!storageIssue;
   function openSection(id, focus) {
+    if (editors[id]) {const entry = editors[id]; void openEditor(entry.title, entry.content, entry.form); return;}
     const section = document.querySelector(`details[data-section="${id}"]`);
     if (!section) return;
     section.open = true;
@@ -69,19 +71,19 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
   }
   const total = amountInput(state.budgetPlan.totalMinor, state.homeCurrency);
   const totalError = errorFor('budget-total-error', [total]);
-  const budgetForm = el('form', {novalidate: true, onSubmit: event => {
+  const budgetForm = editingForm(edits, 'budget:total', 'My budget', {novalidate: true, onSubmit: event => {
     event.preventDefault();
     try {
       const value = parseMoney(total.value.trim(), state.homeCurrency);
-      commit(current => ({...current, budgetPlan: {...current.budgetPlan, totalMinor: value}}))
-        .then(() => saved('Personal budget saved on this device.')).catch(() => {});
-    } catch (error) {totalError.show(error.message, total);}
+      return commit(current => ({...current, budgetPlan: {...current.budgetPlan, totalMinor: value}}))
+        .then(() => finishEditor(event.currentTarget, 'Personal budget saved on this device.'));
+    } catch (error) {totalError.show(error.message, total); return false;}
   }}, field(`My total budget (${state.homeCurrency})`, total), totalError.node,
   el('button', {type: 'submit', disabled}, 'Save budget'));
 
   let editingId = null;
   const amount = amountInput(undefined, state.homeCurrency);
-  const expenseCurrency = el('select', {}, currencyChoices(state.homeCurrency).map(value =>
+  const expenseCurrency = el('select', {'aria-label': 'Expense currency'}, currencyChoices(state.homeCurrency).map(value =>
     el('option', {value, selected: value === state.homeCurrency}, value)));
   const converted = el('input', {type: 'text', inputmode: 'decimal'});
   const convertedField = field(`Manual converted amount in ${state.homeCurrency} (optional)`, converted);
@@ -93,18 +95,13 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
     convertedField.hidden = conversionHelp.hidden = expenseCurrency.value === state.homeCurrency;
   }
   expenseCurrency.addEventListener('change', currencyChanged); currencyChanged();
-  const category = el('select', {}, Object.entries(categories).map(([value, [label]]) => el('option', {value}, label)));
+  const category = el('select', {'aria-label': 'Category'}, Object.entries(categories).map(([value, [label]]) => el('option', {value}, label)));
   const date = el('input', {type: 'date', class: 'budget-expense-date', required: true, value: localDate()});
   const note = el('input', {type: 'text', maxLength: 10000});
   const expenseError = errorFor('expense-error', [amount, converted, date]);
   const expenseSubmit = el('button', {type: 'submit', disabled}, 'Save expense');
-  const cancelEdit = button('Cancel edit', () => {
-    editingId = null; amount.value = converted.value = note.value = '';
-    expenseCurrency.value = state.homeCurrency; currencyChanged(); date.value = localDate();
-    expenseSubmit.textContent = 'Save expense'; cancelEdit.hidden = true;
-    expenseError.node.textContent = ''; amount.focus();
-  }, {hidden: true});
-  const expenseForm = el('form', {novalidate: true, onSubmit: event => {
+  const cancelEdit = button('Cancel edit', closeEditor, {hidden: true});
+  const expenseForm = editingForm(edits, 'budget:expense', 'Actual spending', {novalidate: true, onSubmit: event => {
     event.preventDefault();
     let invalid = amount;
     try {
@@ -119,12 +116,12 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
       const expense = {id: id ?? `expense_${crypto.randomUUID()}`, date: date.value,
         category: category.value, amountMinor, currency, note: note.value,
         ...(convertedHomeMinor !== undefined ? {convertedHomeMinor} : {})};
-      commit(current => {
+      return commit(current => {
         if (id && !current.actualExpenses.some(entry => entry.id === id)) throw new Error('This expense was removed. Reload before editing it.');
         return {...current, actualExpenses: id ? current.actualExpenses.map(entry => entry.id === id ? expense : entry) :
           [...current.actualExpenses, expense]};
-      }).then(() => saved(id ? 'Expense updated on this device.' : 'Expense saved on this device.', 'expenses')).catch(() => {});
-    } catch (error) {expenseError.show(error.message, invalid);}
+      }).then(() => finishEditor(event.currentTarget, id ? 'Expense updated on this device.' : 'Expense saved on this device.', 'expenses'));
+    } catch (error) {expenseError.show(error.message, invalid); return false;}
   }}, el('p', {class: 'budget-support'}, 'Record only your personal share of a purchase.'),
   amountLabel, field('Expense currency', expenseCurrency), convertedField, conversionHelp,
   field('Category', category), field('Expense date', date), field('Expense note', note), expenseError.node,
@@ -147,7 +144,7 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
       el('p', {class: 'budget-support'}, expense.date, expense.currency !== state.homeCurrency ?
         ` · Original ${formatHomeMoney(expense.amountMinor, expense.currency)} ${expense.currency}${value === undefined ? ' · Not included in totals' : ' · Explicit conversion'}` : '',
         expense.note ? ` · ${expense.note}` : ''),
-      el('div', {class: 'row'}, button('Edit', () => editExpense(expense), {disabled, 'aria-label': `Edit ${categoryName(expense.category)} expense on ${expense.date}`}),
+      el('div', {class: 'row'}, button('Edit', () => editExpense(expense), {disabled, 'data-budget-action': `edit-${expense.id}`, 'aria-label': `Edit ${categoryName(expense.category)} expense on ${expense.date}`}),
       button('Remove', () => {
         if (confirm('Remove this expense from this device?')) commit(current => ({...current,
           actualExpenses: current.actualExpenses.filter(entry => entry.id !== expense.id)}))
@@ -162,15 +159,15 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
   const rateInput = el('input', {type: 'text', inputmode: 'decimal', 'aria-required': 'true',
     placeholder: 'e.g. 0.0063', value: activeRate?.homePerDestination ?? ''});
   const rateError = errorFor('planning-rate-error', [rateInput]);
-  const rateForm = destinationCurrency && destinationCurrency !== state.homeCurrency ? el('form', {novalidate: true, onSubmit: event => {
+  const rateForm = destinationCurrency && destinationCurrency !== state.homeCurrency ? editingForm(edits, 'budget:rate', 'Currency & planning rate', {novalidate: true, onSubmit: event => {
     event.preventDefault();
     try {
       const rate = normalizePlanningRate(rateInput.value);
       convertPlanningEstimate(1, destinationCurrency, state.homeCurrency, rate);
-      commit(current => ({...current, planningRate: {fromCurrency: destinationCurrency, toCurrency: current.homeCurrency,
+      return commit(current => ({...current, planningRate: {fromCurrency: destinationCurrency, toCurrency: current.homeCurrency,
         homePerDestination: rate, recordedAt: new Date().toISOString()}}))
-        .then(() => saved('Planning rate saved on this device.', 'planning-rate')).catch(() => {});
-    } catch (error) {rateError.show(error.message, rateInput);}
+        .then(() => finishEditor(event.currentTarget, 'Planning rate saved on this device.'));
+    } catch (error) {rateError.show(error.message, rateInput); return false;}
   }}, field(`Planning rate: 1 ${destinationCurrency} equals how many ${state.homeCurrency}?`, rateInput),
   rateError.node, el('button', {type: 'submit', disabled}, activeRate ? 'Update rate' : 'Save rate')) : null;
   const estimateRows = Object.entries(estimate).map(([currency, total]) => {
@@ -186,8 +183,27 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
       display.approximate ? el('p', {class: 'budget-support estimate-rate-note'}, 'Approximate · recorded planning rate') : null,
       flags ? el('p', {class: 'budget-support estimate-cost-flags'}, flags) : null);
   });
+  const editors = {
+    'add-expense': {title: 'Add Actual Spending', content: expenseForm, form: expenseForm},
+    'set-budget': {title: 'My Budget', content: budgetForm, form: budgetForm},
+    'planning-rate': {title: 'Currency & Planning Rate', content: el('div', {}, ...[el('p', {}, `Home Currency: ${state.homeCurrency}. Personal amounts use this currency.`),
+      button('Manage Home Currency in My Trip', openHomeCurrency),
+      el('p', {class: 'budget-support'}, rateForm ? 'Record a positive planning rate with up to eight decimals. Estimates are approximate, not live or bank-guaranteed; actual spending is separate.' :
+        'Home and destination currencies match; no planning conversion is needed.'), rateForm,
+      activeRate ? el('p', {class: 'budget-support'}, `1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}`) : null]), form: rateForm}
+  };
   const spending = spendingCategories(state);
   const daily = dailySpending(state);
+  editors['daily-breakdown'] = {title: 'Daily Spending', content: el('div', {}, ...[el('p', {class: 'budget-support'}, `Recorded personal spending in ${state.homeCurrency}. No trip start date needed.`),
+      daily.days.length ? el('ul', {class: 'budget-daily-list'}, daily.days.map(([day, value]) => el('li', {},
+        el('time', {datetime: day}, dateLabel(day)), el('strong', {}, money(value))))) :
+        el('p', {}, 'No dated Home Currency spending is available yet.'),
+      daily.undatedMinor ? el('p', {}, `${money(daily.undatedMinor)} without a usable date remains in your spending total.`) : null]), form: null};
+  function managementCard(id, title, preview, symbol) {
+    return button([icon(symbol), el('strong', {}, title), el('span', {class: 'budget-card-preview'}, preview),
+      el('span', {class: 'budget-card-action'}, 'View & manage', icon('arrow'))], () => openSection(id),
+      {class: 'budget-management-card', 'data-budget-action': id, disabled: id !== 'daily-breakdown' && disabled});
+  }
   const remaining = actual.remainingMinor >= 0 ? `${money(actual.remainingMinor)} remaining` : `${money(-actual.remainingMinor)} over budget`;
   const summary = `${money(actual.spentMinor)} spent of ${money(state.budgetPlan.totalMinor)} personal budget. ${progress.label}. ${remaining}. Home Currency ${state.homeCurrency}.`;
   return [el('div', {class: 'personal-budget-page'},
@@ -209,7 +225,7 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
       actual.unconverted.length ? el('p', {class: 'budget-support budget-unconverted'},
         `${actual.unconverted.length} foreign expense${actual.unconverted.length === 1 ? '' : 's'} awaiting an explicit Home Currency amount; excluded from totals. Review Spending history.`) : null),
     button([el('span', {'aria-hidden': 'true'}, '+'), ' Add Expense'], () => openSection('add-expense', amount),
-      {class: 'primary budget-add', disabled}),
+      {class: 'primary budget-add', 'data-budget-action': 'add-expense', disabled}),
     el('section', {class: 'personal-budget-categories'}, el('h2', {}, 'Spending by category'),
       spending.length ? [el('ul', {class: 'personal-category-list'}, spending.map(([key, value]) => el('li', {},
         el('span', {class: `personal-category-icon category-${Object.hasOwn(categories, key) ? key : 'other'}`}, icon(categories[key]?.[1] ?? 'Budget')),
@@ -217,19 +233,15 @@ export function budgetView(bundle, state, {commit, storageIssue, disclosure, upg
         actual.spentMinor > 0 ? el('span', {class: 'personal-category-share'}, `${Math.round(value / actual.spentMinor * 100)}%`) : null))),
         actual.spentMinor > 0 ? el('p', {class: 'budget-support'}, 'Shares of recorded personal spending.') : null] :
         el('p', {class: 'budget-support'}, 'No personal expenses yet. Your first purchase will appear here.')),
-    disclosure('View Daily Breakdown', [el('p', {class: 'budget-support'}, `Recorded personal spending in ${state.homeCurrency}. No trip start date needed.`),
-      daily.days.length ? el('ul', {class: 'budget-daily-list'}, daily.days.map(([day, value]) => el('li', {},
-        el('time', {datetime: day}, dateLabel(day)), el('strong', {}, money(value))))) :
-        el('p', {}, 'No dated Home Currency spending is available yet.'),
-      daily.undatedMinor ? el('p', {}, `${money(daily.undatedMinor)} without a usable date remains in your spending total.`) : null], {id: 'daily-breakdown', className: 'budget-daily'}),
-    disclosure('Add actual spending', expenseForm, {id: 'add-expense'}),
+    el('section', {class: 'budget-management', 'aria-labelledby': 'manage-money-title'},
+      el('p', {class: 'section-kicker'}, 'Your personal finances'),
+      el('h2', {id: 'manage-money-title'}, 'Manage Your Money'),
+      el('div', {class: 'budget-management-grid'},
+        managementCard('add-expense', 'Add Spending', 'Record a new expense', 'documents'),
+        managementCard('set-budget', 'My Budget', state.budgetPlan.totalMinor > 0 ? money(state.budgetPlan.totalMinor) + ' · ' + state.homeCurrency : 'Set your personal total', 'Budget'),
+        managementCard('planning-rate', 'Currency & Rate', state.homeCurrency + (activeRate ? ' · Planning rate recorded' : ' · Review planning settings'), 'exchange'),
+        managementCard('daily-breakdown', 'Daily Spending', daily.days.length ? daily.days.length + ' spending day' + (daily.days.length === 1 ? '' : 's') + ' recorded' : 'Review your dated spending', 'chart'))),
     disclosure(`Spending history · ${state.actualExpenses.length}`, state.actualExpenses.length ? history : el('p', {}, 'Your recorded purchases will appear here.'), {id: 'expenses'}),
-    disclosure('Set my budget', budgetForm, {id: 'set-budget'}),
-    disclosure('Currency & Planning Rate', [el('p', {}, `Home Currency: ${state.homeCurrency}. Personal amounts use this currency.`),
-      button('Manage Home Currency in My Trip', openHomeCurrency),
-      el('p', {class: 'budget-support'}, rateForm ? 'Record a positive planning rate with up to eight decimals. Estimates are approximate, not live or bank-guaranteed; actual spending is separate.' :
-        'Home and destination currencies match; no planning conversion is needed.'), rateForm,
-      activeRate ? el('p', {class: 'budget-support'}, `1 ${destinationCurrency} = ${activeRate.homePerDestination} ${state.homeCurrency} · Recorded ${activeRate.recordedAt.slice(0, 10)}`) : null], {id: 'planning-rate'}),
     disclosure('MCS Trip Estimate', [el('p', {class: 'budget-support estimate-intro'}, 'Planning estimate · separate from your budget and spending.'),
       ...estimateRows,
       upgrades.length ? disclosure('Optional upgrades', upgrades.flatMap(entry => upgradeChoices(entry.activity)), {id: 'upgrades'}) : null], {id: 'mcs-estimate'}),

@@ -21,6 +21,7 @@ import {primaryHeaderSurfaces, updateHeaderSurface} from './shared-header.js';
 import {loadSamplePhrasebook} from '../domain/phrases.js';
 import {travelInfoView} from './travel-info-view.js';
 import {myTripView} from './my-trip-view.js';
+import {createEditProtection} from './edit-protection.js';
 import {itineraryContext} from '../domain/itinerary-context.js';
 import {flightContextView, lodgingContextView} from './itinerary-context-view.js';
 
@@ -45,6 +46,58 @@ let collectionMapContext = null;
 let activeMapPreview = null;
 let exploreSession = {mode: 'map', activated: false, selectedId: null, camera: null, listScrollTop: 0};
 let exploreReturn = null;
+let personalReturnFocus = myTripButton, dismissPrompt = null;
+const headerSave = dialog.querySelector('#editor-save'), headerClose = dialog.querySelector('.close');
+const edits = createEditProtection({
+  prompt: title => new Promise(resolve => {
+    const previousFocus = document.activeElement, previousTitle = document.querySelector('#personal-title').textContent;
+    const actions = dialog.querySelector('.personal-actions');
+    personal.hidden = actions.hidden = true;
+    document.querySelector('#personal-title').textContent = 'Unsaved changes';
+    const finish = choice => {
+      panel.remove(); personal.hidden = actions.hidden = false;
+      document.querySelector('#personal-title').textContent = previousTitle;
+      dismissPrompt = null; previousFocus?.focus({preventScroll: true}); resolve(choice);
+    };
+    const panel = el('section', {class: 'edit-confirmation', 'aria-label': 'Unsaved changes'},
+      el('p', {}, `You have unsaved changes in ${title.toLowerCase()}. What would you like to do?`),
+      button('Keep editing', () => finish('keep'), {class: 'primary'}),
+      button('Discard changes', () => finish('discard')),
+      button('Save changes', () => finish('save')));
+    dialog.querySelector('.personal-shell').append(panel);
+    dismissPrompt = () => finish('keep'); panel.querySelector('button').focus();
+  }),
+  changed: record => {headerSave.hidden = !record; headerSave.disabled = headerClose.disabled = !!record?.busy;},
+  failed: (form, error) => {
+    let message = form.querySelector('.edit-save-error');
+    if (!message) {message = el('p', {class: 'error edit-save-error', role: 'alert', tabindex: '-1'}); form.prepend(message);}
+    message.textContent = `Your changes have not been saved. ${error.message} Your entries are still here; keep editing or try Save again.`;
+    message.focus();
+  }
+});
+headerSave.addEventListener('click', () => {void edits.submit();});
+const closePersonal = () => edits.leave(() => dialog.close());
+headerClose.addEventListener('click', closePersonal);
+dialog.addEventListener('cancel', event => {event.preventDefault(); if (dismissPrompt) dismissPrompt(); else void closePersonal();});
+
+function openTravelerEditor(title, content, form) {
+  return edits.leave(() => {
+    personalReturnFocus = document.activeElement;
+    personal.replaceChildren(el('div', {class: 'personal-budget-page budget-sheet'}, content));
+    document.querySelector('#personal-title').textContent = title;
+    headerClose.setAttribute('aria-label', `Close ${title}`);
+    if (form) edits.reset(form);
+    showPersonal(); personal.scrollTop = 0; edits.refresh();
+    document.querySelector('#personal-title').focus({preventScroll: true});
+  });
+}
+function finishTravelerEditor(form, message, section) {
+  edits.saved(form); dialog.close();
+  const notice = document.querySelector('#budget-status');
+  if (notice) notice.textContent = message;
+  const detail = document.querySelector(`details[data-section="${section}"]`);
+  if (detail) detail.open = true;
+}
 
 function fitDetailOverlays() {
   if (main.dataset.screen === 'Home') {
@@ -105,9 +158,23 @@ function status() {
 addEventListener('online', status);
 addEventListener('offline', status);
 dialog.addEventListener('close', () => {
+  // A saved Budget editor may immediately hand this same sheet to Trip basics.
+  if (dialog.open) return;
   appScroll.style.overflowY = '';
   appScroll.scrollTop = personalPageScrollTop;
-  myTripButton.focus({preventScroll: true});
+  const focusKey = personalReturnFocus?.dataset.budgetAction;
+  if (view === 'Budget') {
+    const message = document.querySelector('#budget-status')?.textContent;
+    const opened = [...main.querySelectorAll('details[open][data-section]')].map(n => n.dataset.section);
+    render();
+    for (const detail of main.querySelectorAll('details[data-section]')) detail.open = opened.includes(detail.dataset.section);
+    if (message) document.querySelector('#budget-status').textContent = message;
+    if (focusKey) personalReturnFocus = [...main.querySelectorAll('[data-budget-action]')].find(n => n.dataset.budgetAction === focusKey);
+    appScroll.scrollTop = personalPageScrollTop;
+  }
+  edits.clear();
+  const target = personalReturnFocus?.isConnected ? personalReturnFocus : view === 'Budget' ? document.querySelector('.budget-add') : myTripButton;
+  target?.focus({preventScroll: true});
   // Native focus restoration and text-resize layout can finish after `close`.
   requestAnimationFrame(() => {
     if (!dialog.open && document.activeElement === myTripButton) appScroll.scrollTop = personalPageScrollTop;
@@ -139,7 +206,7 @@ function currentDay() {
 }
 function resetDay() {dayIndex = currentDay().index; homePreviewIndex = null;}
 
-async function reloadLatest() {
+async function loadLatest() {
   await saveQueue.catch(() => {});
   const loaded = await store.load(bundle.trip.tripId);
   state = reconcileContent(loaded ?? newTravelerState(bundle), bundle).state;
@@ -148,17 +215,23 @@ async function reloadLatest() {
   if (dialog.open) myTrip();
 }
 
+function reloadLatest() {return edits.leave(() => {void loadLatest().catch(error => alert(error.message));});}
+
 async function handleSaveFailure(error, transform) {
   if (error instanceof ConflictError) {
+    if (edits.active) {
+      alert('Another tab changed this trip. Your draft is still here. Export or copy your entries before reloading the latest trip.');
+      return;
+    }
     try {
-      await reloadLatest();
+      await loadLatest();
       syncNotice(error.message, [button('Retry my change', () => {
         clearSync(); commit(transform).then(() => {if (dialog.open) myTrip();}).catch(() => {});
       }), button('Keep latest trip', clearSync)]);
     } catch (reloadError) {alert(reloadError.message);}
     return;
   }
-  alert(error.message);
+  if (!edits.active?.busy) alert(error.message);
 }
 
 function commit(transform) {
@@ -176,7 +249,7 @@ function commit(transform) {
   return operation;
 }
 
-function go(name) {if(name==='Info'){infoTopic=null;infoFromHome=false;} view = name; render(); appScroll.scrollTop = 0; main.focus({preventScroll: true});}
+function go(name) {return edits.leave(() => {if (dialog.open) dialog.close(); if(name==='Info'){infoTopic=null;infoFromHome=false;} view = name; render(); appScroll.scrollTop = 0; main.focus({preventScroll: true});});}
 function disclosure(title, body, {id, open = false, className = ''} = {}) {
   return el('details', {class: `compact-disclosure ${className}`, 'data-section': id, open},
     el('summary', {}, el('span', {class: 'disclosure-title'}, title)), el('div', {class: 'disclosure-body'}, body));
@@ -792,9 +865,9 @@ function explore() {
 }
 
 function budget() {
-  return budgetView(bundle, state, {commit, storageIssue, disclosure, upgradeChoices,
+  return budgetView(bundle, state, {commit, storageIssue, disclosure, upgradeChoices, edits, openEditor: openTravelerEditor, finishEditor: finishTravelerEditor, closeEditor: closePersonal,
     openHomeCurrency: () => {
-      myTrip({page: 'basics', focus: 'page-title'});
+      void edits.leave(() => myTrip({page: 'basics', focus: 'page-title'}));
     }});
 }
 
@@ -829,7 +902,6 @@ function showPersonal() {
   if (dialog.open) return;
   personalPageScrollTop = appScroll.scrollTop;
   appScroll.style.overflowY = 'hidden';
-  myTripButton.focus({preventScroll: true});
   dialog.showModal();
   dialog.querySelector('.close').focus({preventScroll: true});
 }
@@ -880,6 +952,10 @@ function tripDataSettings() {
 }
 
 function myTrip(options = {}) {
+  edits.capture();
+  if (!dialog.open) personalReturnFocus = myTripButton;
+  document.querySelector('#personal-title').textContent = 'My Trip';
+  headerClose.setAttribute('aria-label', 'Close My Trip');
   const openSections = new Set([...personal.querySelectorAll('details[data-section][open]')].map(n => n.dataset.section));
   if (!dialog.open) tripSession = {page: 'overview', edit: null, scroll: {}};
   if (options.page) {tripSession.page = options.page; tripSession.edit = null;}
@@ -906,10 +982,11 @@ function myTrip(options = {}) {
   }
 
   personal.append(myTripView({bundle, state, session: tripSession, redraw: myTrip, commit,
-    settings: tripDataSettings, onBasicsSaved: () => {resetDay(); render();}}));
+    settings: tripDataSettings, edits, onBasicsSaved: () => {resetDay(); render();}}));
   for (const section of personal.querySelectorAll('details[data-section]'))
     if (openSections.has(section.dataset.section)) section.open = true;
   showPersonal();
+  edits.refresh();
   personal.scrollTop = tripSession.scroll[tripSession.page] ?? 0;
   if (options.focus) requestAnimationFrame(() => {
     const target = [...personal.querySelectorAll('[data-trip-focus]')].find(n => n.dataset.tripFocus === options.focus);
@@ -975,12 +1052,12 @@ async function start() {
       if (['japan', 'iceland'].includes(remembered)) packName = remembered;
     } catch {}
     await switchPack(packName);
-    myTripButton.addEventListener('click', () => {saveQueue.then(myTrip).catch(error => alert(error.message));});
+    myTripButton.addEventListener('click', () => {void edits.leave(() => {saveQueue.then(myTrip).catch(error => alert(error.message));});});
     try {await registerOffline(message => {offlineStatus = message; status();}, apply => {
       appUpdate.hidden = false;
       appUpdate.replaceChildren(el('span', {}, 'New version available · Your saved trip stays on this device.'),
         button('Update now', () => {
-          saveQueue.then(apply).catch(error => alert(error.message));
+          void edits.leave(() => {saveQueue.then(apply).catch(error => alert(error.message));});
         }), button('Later', () => {appUpdate.hidden = true;}));
     }, message => syncNotice(message,
       [button('Repair app files', () => repairAppFiles().catch(error => alert(error.message)))]));}

@@ -1011,3 +1011,30 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
   #app-header .brand::after { content: ''; background: CanvasText; mask: var(--header-logo) center / contain no-repeat; }
   #app-header #my-trip { color: ButtonText; background: ButtonFace; border-color: ButtonText; }
 }
+
+/* Save actions stay inside the existing sheet header; the form body alone scrolls. */
+.personal-header { flex-wrap: wrap; gap: 10px; }
+.personal-header h2 { min-width: 0; flex: 1 1 8rem; overflow-wrap: anywhere; }
+.personal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.personal-actions button { min-height: 44px; min-width: 64px; font-size: 1rem; }
+.personal-actions #editor-save { background: var(--indigo-900, #211E43); color: #FCFAF6; }
+#personal [hidden] { display: none !important; }
+#personal-title:focus { outline-offset: 3px; }
+.edit-confirmation { overflow: auto; padding: 20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+.edit-confirmation button { display: block; width: 100%; min-height: 44px; margin-top: 12px; font-size: 1rem; }
+.budget-sheet { padding: 0; min-width: 0; }
+.budget-sheet form { display: grid; gap: 14px; }
+.budget-sheet label { min-width: 0; }
+.budget-sheet input, .budget-sheet select, .budget-sheet textarea { min-width: 0; max-width: 100%; font-size: 1rem; }
+
+.personal-budget-page .budget-management { margin: 28px 0 16px; }
+.budget-management h2 { margin: 4px 0 14px; }
+.budget-management-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.personal-budget-page .budget-management-card { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 148px; padding: 16px 14px 12px; text-align: left; background: #FCFAF6; border: 1px solid #ded7c9; border-radius: 16px; color: #211E43; box-shadow: 0 3px 10px #211e4305; overflow-wrap: anywhere; }
+.budget-management-card > .ui-icon { color: #876526; width: 24px; height: 24px; margin-bottom: 12px; flex: none; }
+.budget-management-card strong { font-size: .875rem; line-height: 1.4; }
+.budget-card-preview { font-size: .75rem; line-height: 1.5; color: #5b5667; margin-top: 6px; }
+.budget-card-action { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: .625rem; color: #393064; padding-top: 14px; margin-top: auto; }
+.budget-card-action .ui-icon { width: 14px; height: 14px; flex: none; }
+@container (max-width: 20rem) { .budget-management-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (forced-colors: active) { .budget-management-card, .edit-confirmation button { border: 1px solid CanvasText; } }
