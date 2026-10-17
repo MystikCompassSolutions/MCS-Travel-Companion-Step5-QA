@@ -1,5 +1,18 @@
 import {calendarDay} from './itinerary.js';
 
+// A display-only fallback: never write a generated nickname into Traveler State.
+export function flightDisplayName(entry) {
+  const name = entry.name?.trim();
+  if (name) return name;
+  const identity = [entry.airline?.trim(), entry.flightNumber?.trim()].filter(Boolean).join(' · ');
+  if (identity) return identity;
+  const origin = entry.origin?.trim(), destination = entry.destination?.trim();
+  if (origin && destination) return `${origin} → ${destination}`;
+  if (destination) return `Flight to ${destination}`;
+  if (origin) return `Flight from ${origin}`;
+  return 'Flight';
+}
+
 // Bookings contain local wall-clock values, without timezone metadata. Never
 // reinterpret them in the device timezone or infer a date for an undated entry.
 function dateOnly(value) {

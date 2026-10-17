@@ -3,7 +3,7 @@ import {localFlightTime, contextDate} from '../domain/itinerary-context.js';
 
 export const bookingTypes = {
   personalFlights: {title: 'Flights', singular: 'Flight', icon: 'flight', fields: [
-    ['name', 'Flight label', 'text'], ['airline', 'Airline', 'text'], ['flightNumber', 'Flight number', 'text'],
+    ['name', 'Name this flight (optional)', 'text'], ['airline', 'Airline', 'text'], ['flightNumber', 'Flight number', 'text'],
     ['origin', 'Origin', 'text'], ['destination', 'Destination', 'text'],
     ['departureDateTime', 'Departure date and time', 'datetime-local'], ['arrivalDateTime', 'Arrival date and time', 'datetime-local'],
     ['confirmationCode', 'Confirmation code', 'text'], ['notes', 'Notes', 'textarea']]},

@@ -1,6 +1,6 @@
 import {el} from './dom.js';
 import {icon} from './visual.js';
-import {contextDate} from '../domain/itinerary-context.js';
+import {contextDate, flightDisplayName} from '../domain/itinerary-context.js';
 
 function block(kind, title, cards) {
   if (!cards.length) return null;
@@ -20,7 +20,7 @@ function endpoint(label, place, value, today, date) {
 export function flightContextView({date, flights}) {
   return block('flights', 'Your flights', flights.map(({entry, departure, arrival, departsToday, arrivesToday}) =>
     el('article', {class: 'context-card'},
-      el('div', {class: 'context-card-heading'}, el('h4', {}, entry.name?.trim() || 'Flight'),
+      el('div', {class: 'context-card-heading'}, el('h4', {}, flightDisplayName(entry)),
         el('span', {class: 'context-badge'}, departsToday && arrivesToday ? 'Departure & arrival today' :
           departsToday ? 'Departs today' : 'Arrives today')),
       entry.airline?.trim() || entry.flightNumber?.trim() ? el('p', {class: 'context-detail'},

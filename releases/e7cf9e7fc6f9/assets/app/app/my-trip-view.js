@@ -4,6 +4,7 @@ import {destinationLabel} from '../domain/travel-info.js';
 import {chooseOption, selectedOptions} from '../domain/itinerary.js';
 import {copyAddressText, editorialText} from './activity-detail.js';
 import {bookingTypes, tripSummary, readableDate, readableTime} from './my-trip-model.js';
+import {flightDisplayName} from '../domain/itinerary-context.js';
 
 export function myTripView({bundle, state, session, redraw, commit, settings, onBasicsSaved}) {
   const summary = tripSummary(bundle, state);
@@ -48,7 +49,7 @@ export function myTripView({bundle, state, session, redraw, commit, settings, on
     el('div', {class: 'trip-basics-bar'}, el('span', {}, summary.start ? `${bundle.days.length} days · ${state.homeCurrency}` : `Travel dates not set · ${state.homeCurrency}`),
       button('Edit trip basics', () => go('basics'), {class: 'trip-text-action', ...focus('tile-basics')})),
     el('div', {class: 'trip-tiles'},
-      tile('personalFlights', 'Flights', flight ? `${flight.entry.name} · ${readableTime(`${flight.time.date}T${flight.time.time}`)}` :
+      tile('personalFlights', 'Flights', flight ? `${flightDisplayName(flight.entry)} · ${readableTime(`${flight.time.date}T${flight.time.time}`)}` :
         state.personalFlights.length ? 'Your saved flight details' : 'Keep your journey close at hand', `${state.personalFlights.length} saved`, 'flight'),
       tile('personalLodging', 'Lodging', summary.currentStays.length > 1 ? `${summary.currentStays.length} stays cover today · review all` :
         summary.currentStays[0]?.name ?? summary.nextStay?.name ?? (state.personalLodging.length ? 'Your saved places to stay' : 'A place to arrive and unwind'), `${state.personalLodging.length} saved`, 'lodging'),
@@ -67,7 +68,7 @@ export function myTripView({bundle, state, session, redraw, commit, settings, on
     const type = bookingTypes[key];
     return [heading(type.title, `${state[key].length} saved on this device`, state[key].length ? addButton(key) : null),
       ...(state[key].length ? state[key].map(entry => {
-        const title = entry.name?.trim() || type.singular;
+        const title = key === 'personalFlights' ? flightDisplayName(entry) : entry.name?.trim() || type.singular;
         const activity = bundle.activities.find(a => a.activityId === entry.activityId);
         const feedback = el('p', {class: 'trip-copy-feedback', role: 'status'});
         return el('article', {class: 'trip-booking', 'data-booking-id': entry.id},
@@ -102,9 +103,15 @@ export function myTripView({bundle, state, session, redraw, commit, settings, on
         kind === 'activity' ? el('select', {}, el('option', {value: ''}, 'None'),
           existing?.activityId && !bundle.activities.some(a => a.activityId === existing.activityId) ? el('option', {value: existing.activityId, selected: true}, 'Previously linked activity') : null,
           ...bundle.activities.map(a => el('option', {value: a.activityId, selected: existing?.activityId === a.activityId}, editorialText(a.name)))) :
-          el('input', {type: kind, value: existing?.[name] ?? '', maxLength: 10000, required: name === 'name'});
+          el('input', {type: kind, value: existing?.[name] ?? '', maxLength: 10000, required: name === 'name' && key !== 'personalFlights'});
       input.setAttribute('aria-label', caption);
       controls.set(name, {input, initial: input.value});
+      if (key === 'personalFlights' && name === 'name') {
+        input.setAttribute('placeholder', 'Flight to Japan or Flight home');
+        input.setAttribute('aria-describedby', 'flight-name-help');
+        return el('div', {}, field(caption, input), el('p', {id: 'flight-name-help', class: 'trip-help'},
+          'A personal nickname, not your airline-issued flight number. Leave blank to use your flight details.'));
+      }
       return field(caption, input);
     });
     return [el('h3', {tabindex: '-1', ...focus('editor-title')}, `${existing ? 'Edit' : 'Add'} ${type.singular.toLowerCase()}`),
