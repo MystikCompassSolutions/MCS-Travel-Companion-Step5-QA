@@ -31,6 +31,8 @@ export function icon(name, className = 'ui-icon') {
     camera: 'M3 7h4l2-3h6l2 3h4v14H3z M12 10a4 4 0 1 0 0 8a4 4 0 1 0 0-8',
     tree: 'M12 2 5 11h4l-6 7h18l-6-7h4z M12 18v4',
     map: 'm3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2z M9 3v16 M15 5v16',
+    exchange: 'M3 7h17 M16 3l4 4-4 4 M21 17H4 M8 13l-4 4 4 4',
+    chart: 'M3 3v18h18 M7 17v-5 M12 17V7 M17 17v-8',
     settings: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M9 2h6l1 4 4 1 2 5-2 5-4 1-1 4H9l-1-4-4-1-2-5 2-5 4-1z'
   };
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

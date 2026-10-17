@@ -5,16 +5,16 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob: https://tiles.openfreemap.org; connect-src 'self' https://tiles.openfreemap.org; object-src 'none'; base-uri 'none'; form-action 'self'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="mcs-sample-root" content="./releases/e7cf9e7fc6f9/content/samples/">
+  <meta name="mcs-sample-root" content="./releases/1901bd77f395/content/samples/">
   <meta name="theme-color" content="#211E43">
-  <meta name="mcs-build-version" content="e7cf9e7fc6f9">
+  <meta name="mcs-build-version" content="1901bd77f395">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="description" content="MCS Travel Companion engineering QA sample. Not for travel use.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./assets/compass.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./assets/compass-180.png" sizes="180x180">
-  <link rel="stylesheet" href="./releases/e7cf9e7fc6f9/assets/app/styles/tokens.css">
-  <link rel="stylesheet" href="./releases/e7cf9e7fc6f9/assets/app/styles/app.css">
+  <link rel="stylesheet" href="./releases/1901bd77f395/assets/app/styles/tokens.css">
+  <link rel="stylesheet" href="./releases/1901bd77f395/assets/app/styles/app.css">
   <title>MCS Travel Companion</title>
 </head>
 <body>
@@ -32,11 +32,11 @@
   <nav id="nav" aria-label="Main navigation"></nav>
   <dialog id="personal" aria-labelledby="personal-title">
     <div class="personal-shell">
-      <div class="personal-header"><h2 id="personal-title">My Trip</h2><form method="dialog"><button class="close" aria-label="Close My Trip">Close</button></form></div>
+      <div class="personal-header"><h2 id="personal-title" tabindex="-1">My Trip</h2><div class="personal-actions"><button id="editor-save" type="button" hidden>Save</button><button class="close" type="button" aria-label="Close My Trip">Close</button></div></div>
       <div id="personal-content"></div>
     </div>
   </dialog>
   <noscript>This local sample needs JavaScript. No personal data is sent to MCS.</noscript>
-  <script type="module" src="./releases/e7cf9e7fc6f9/assets/app/app/main.js"></script>
+  <script type="module" src="./releases/1901bd77f395/assets/app/app/main.js"></script>
 </body>
 </html>
