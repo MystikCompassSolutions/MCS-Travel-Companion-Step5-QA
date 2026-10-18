@@ -15,12 +15,19 @@ export function hasPersonalScheduleChanges(bundle, item) {
     o.durationMinutes !== plannedDuration(bundle, original) || o.mode || o.notes || o.skipped));
 }
 
-export function personalScheduleMenu(item, customized) {
+// Option anchors remain resolver metadata, never interruption cards in the view.
+export function timelineItems(rows) {return rows.filter(item => item.itemType !== 'option_group');}
+export function itemAlternativeGroup(bundle, item) {
+  return !item.personal && bundle.optionGroups.find(group => group.optionGroupId === item.optionGroupId);
+}
+
+export function personalScheduleMenu(item, customized, alternatives = false) {
   const transport = item.itemType === 'transport';
   if (item.personal) return {heading: transport ? 'Your personal transportation' : 'Your personal activity', entries: [
     {id: 'edit', label: transport ? 'Edit transportation' : 'Edit activity'}, {id: 'remove', label: 'Remove personal item'}]};
   return {heading: transport ? 'Personalize transportation' : 'Personalize this stop', entries: [
     {id: 'edit', label: transport ? 'Edit transportation' : 'Edit schedule'},
+    ...(alternatives ? [{id: 'alternatives', label: 'View alternatives'}] : []),
     ...(customized ? [{id: 'reset', label: transport ? 'Reset to MCS recommendation' : 'Reset to MCS plan'}] : []),
     {id: 'skip', label: transport ? 'Skip transportation' : 'Skip this stop'}]};
 }
