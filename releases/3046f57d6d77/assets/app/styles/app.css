@@ -1058,10 +1058,6 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 #personal-content .schedule-form input::-webkit-date-and-time-value { min-height: 1.25em; text-align: left; }
 
 /* Quiet secondary controls preserve a readable authored timeline. */
-.schedule-card-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 2px; clear: both; margin-top: 4px; }
-.schedule-card-actions button { min-width: 44px; min-height: 44px; max-width: 100%; padding: 4px 6px; border: 0; border-radius: 3px; background: transparent; color: var(--indigo-700); font-size: .75rem; font-weight: 500; white-space: normal; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 3px; }
-.schedule-card-actions button:hover { background: transparent; color: var(--indigo-900); text-decoration-thickness: 2px; }
-.schedule-card-actions > span { color: var(--indigo-700); font-size: .75rem; }
 .schedule-original-time { margin-top: 8px; font-size: .6875rem; }
 .schedule-add { margin: 4px 0 16px; }
 .schedule-add > summary { display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--indigo-900); font-size: .875rem; font-weight: 600; cursor: pointer; list-style: none; }
@@ -1070,4 +1066,31 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 .schedule-add[open] > summary::before { content: '−'; }
 .schedule-add-choices { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
 .schedule-add-choices button { min-height: 44px; max-width: 100%; padding: 6px 8px; border: 0; background: transparent; color: var(--indigo-700); font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; }
-@media (forced-colors: active) { .schedule-card-actions button { color: ButtonText; } .schedule-add > summary { border-color: ButtonText; } }
+@media (forced-colors: active) { .schedule-add > summary { border-color: ButtonText; } }
+
+/* Context commands stay in the existing item header, outside its reading flow. */
+.timeline-item > .timeline-content:has(.timeline-activity-header) { container-type: inline-size; }
+.timeline-activity-header { display: grid; grid-template-columns: 38px minmax(0,1fr) auto; align-items: start; gap: 4px 8px; }
+.timeline-activity-header .timeline-thumbnail { float: none; margin: 3px 0 0; }
+.timeline-activity-header h3 { grid-column: 2; }
+.timeline-activity-header:not(:has(.timeline-thumbnail)) { grid-template-columns: minmax(0,1fr) auto; }
+.timeline-activity-header:not(:has(.timeline-thumbnail)) h3 { grid-column: 1; }
+.timeline-item-tools { display: flex; align-items: center; gap: 6px; }
+.timeline-personal-heading, .timeline-transport-heading, .timeline-quiet-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.timeline-personal-heading > :first-child, .timeline-transport-heading > :first-child, .timeline-quiet-heading > :first-child { min-width: 0; }
+.timeline-personal h3 { margin: 0 0 6px; }
+.schedule-menu-trigger { flex: none; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--indigo-700); border-radius: 6px; text-decoration: none; box-shadow: none; }
+.schedule-menu-trigger > span { font: 700 22px/1 var(--body-font); letter-spacing: 1px; }
+.schedule-menu-trigger:hover { background: transparent; color: var(--indigo-900); }
+.schedule-menu { position: fixed; inset: auto; margin: 0; width: 18rem; box-sizing: border-box; padding: 8px; overflow: auto; overscroll-behavior: contain; z-index: 100; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--indigo-900); box-shadow: 0 8px 28px #211E4326; }
+.schedule-menu[hidden] { display: none; }
+.schedule-menu::backdrop { background: transparent; pointer-events: none; }
+.schedule-menu-heading { margin: 4px 8px 8px; font-size: .75rem; color: var(--indigo-700); overflow-wrap: anywhere; }
+.schedule-menu [role="menuitem"] { display: block; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--indigo-900); text-align: left; font-size: .875rem; white-space: normal; overflow-wrap: anywhere; }
+.schedule-menu [role="menuitem"]:hover { background: var(--cream); }
+.schedule-menu :focus-visible, .schedule-menu-trigger:focus-visible { outline: 3px solid var(--indigo-700); outline-offset: -3px; }
+.schedule-recovery { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--line); }
+.schedule-day-reset { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--indigo-700); font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; }
+.schedule-day-reset:hover { background: transparent; }
+@container (max-width: 14rem) { .timeline-activity-header { grid-template-columns: 38px minmax(0,1fr); } .timeline-activity-header h3 { grid-column: 1 / -1; grid-row: 2; } .timeline-item-tools { grid-column: 2; grid-row: 1; justify-self: end; } .timeline-activity-header:not(:has(.timeline-thumbnail)) h3 { grid-column: 1 / -1; } }
+@media (forced-colors: active) { .schedule-menu { border-color: CanvasText; } .schedule-menu-trigger, .schedule-menu [role="menuitem"] { color: ButtonText; } }

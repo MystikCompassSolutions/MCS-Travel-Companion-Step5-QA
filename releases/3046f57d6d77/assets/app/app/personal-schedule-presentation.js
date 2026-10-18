@@ -14,3 +14,13 @@ export function hasPersonalScheduleChanges(bundle, item) {
   return !!(o && original && (o.dayId !== original.dayId || o.startTime !== (original.suggestedStartTime ?? '') ||
     o.durationMinutes !== plannedDuration(bundle, original) || o.mode || o.notes || o.skipped));
 }
+
+export function personalScheduleMenu(item, customized) {
+  const transport = item.itemType === 'transport';
+  if (item.personal) return {heading: transport ? 'Your personal transportation' : 'Your personal activity', entries: [
+    {id: 'edit', label: transport ? 'Edit transportation' : 'Edit activity'}, {id: 'remove', label: 'Remove personal item'}]};
+  return {heading: transport ? 'Personalize transportation' : 'Personalize this stop', entries: [
+    {id: 'edit', label: transport ? 'Edit transportation' : 'Edit schedule'},
+    ...(customized ? [{id: 'reset', label: transport ? 'Reset to MCS recommendation' : 'Reset to MCS plan'}] : []),
+    {id: 'skip', label: transport ? 'Skip transportation' : 'Skip this stop'}]};
+}
