@@ -1056,3 +1056,18 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 .schedule-form label { display: grid; gap: 8px; margin: 16px 0; }
 #personal-content .schedule-form input[type="time"] { -webkit-appearance: none; appearance: none; display: block; box-sizing: border-box; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; block-size: max(44px,2.75rem); min-block-size: 44px; padding: 8px 12px; line-height: 1.25; text-align: left; }
 #personal-content .schedule-form input::-webkit-date-and-time-value { min-height: 1.25em; text-align: left; }
+
+/* Quiet secondary controls preserve a readable authored timeline. */
+.schedule-card-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 2px; clear: both; margin-top: 4px; }
+.schedule-card-actions button { min-width: 44px; min-height: 44px; max-width: 100%; padding: 4px 6px; border: 0; border-radius: 3px; background: transparent; color: var(--indigo-700); font-size: .75rem; font-weight: 500; white-space: normal; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 3px; }
+.schedule-card-actions button:hover { background: transparent; color: var(--indigo-900); text-decoration-thickness: 2px; }
+.schedule-card-actions > span { color: var(--indigo-700); font-size: .75rem; }
+.schedule-original-time { margin-top: 8px; font-size: .6875rem; }
+.schedule-add { margin: 4px 0 16px; }
+.schedule-add > summary { display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--indigo-900); font-size: .875rem; font-weight: 600; cursor: pointer; list-style: none; }
+.schedule-add > summary::-webkit-details-marker { display: none; }
+.schedule-add > summary::before { content: '+'; color: #876526; font-size: 1.25rem; }
+.schedule-add[open] > summary::before { content: '−'; }
+.schedule-add-choices { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+.schedule-add-choices button { min-height: 44px; max-width: 100%; padding: 6px 8px; border: 0; background: transparent; color: var(--indigo-700); font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; }
+@media (forced-colors: active) { .schedule-card-actions button { color: ButtonText; } .schedule-add > summary { border-color: ButtonText; } }

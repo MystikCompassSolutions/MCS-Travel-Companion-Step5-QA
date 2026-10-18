@@ -22,6 +22,7 @@ import {loadSamplePhrasebook} from '../domain/phrases.js';
 import {travelInfoView} from './travel-info-view.js';
 import {myTripView} from './my-trip-view.js';
 import {createEditProtection} from './edit-protection.js';
+import {originalTimeNote, hasPersonalScheduleChanges} from './personal-schedule-presentation.js';
 import {scheduleEditor} from './schedule-editor.js';
 import {resolvePersonalDay, scheduleName, scheduleCatalog, personalizationIssues, scheduleWarnings, setScheduleOverride, restoreScheduleItem, restoreScheduleDay, removePersonalItem} from '../domain/personal-itinerary.js';
 import {itineraryContext} from '../domain/itinerary-context.js';
@@ -177,6 +178,7 @@ dialog.addEventListener('close', () => {
   edits.clear();
   const scheduleKey = personalReturnFocus?.dataset.scheduleFocus;
   if (view === 'Itinerary' && scheduleKey) personalReturnFocus = [...main.querySelectorAll('[data-schedule-focus]')].find(n => n.dataset.scheduleFocus === scheduleKey);
+  if (view === 'Itinerary' && personalReturnFocus?.closest('details:not([open])')) personalReturnFocus = personalReturnFocus.closest('details').querySelector('summary');
   const target = personalReturnFocus?.isConnected ? personalReturnFocus : view === 'Budget' ? document.querySelector('.budget-add') : view === 'Itinerary' ? document.querySelector('#day-panel-title') : myTripButton;
   target?.focus({preventScroll: true});
   // Native focus restoration and text-resize layout can finish after `close`.
@@ -422,8 +424,8 @@ function timelineRow(item, choice = null) {
   }
   if (!choice && item.key) {
     if (item.override?.notes) content.append(el('p', {class: 'schedule-note'}, item.override.notes));
-    if (item.override && item.original?.suggestedStartTime && item.original.suggestedStartTime !== item.suggestedStartTime)
-      content.append(el('p', {class: 'timeline-meta'}, 'MCS originally suggested ' + item.original.suggestedStartTime));
+    const originalNote = originalTimeNote(item);
+    if (originalNote) content.append(el('p', {class: 'timeline-meta schedule-original-time'}, originalNote));
     content.append(scheduleControls(item));
   }
   return el('li', {'data-schedule-key': item.key, class: `timeline-item timeline-${choice ? 'choice' : item.itemType.replaceAll('_', '-')}`,
@@ -450,7 +452,8 @@ function scheduleChange(change, message) {
 }
 function scheduleControls(item) {
   const attrs = {disabled: !!storageIssue, 'data-schedule-focus': item.key};
-  const controls = el('div', {class: 'schedule-actions'}, button(item.personal ? 'Edit' : 'Edit time / day', () => editSchedule(item), attrs));
+  const controls = el('div', {class: 'schedule-card-actions', role: 'group', 'aria-label': 'Personalize ' + scheduleName(bundle, item)},
+    button(item.personal ? 'Edit' : 'Edit time', () => editSchedule(item), attrs));
   if (item.personal) controls.append(button('Remove', () => {
     if (confirm('Remove this personal entry? Other trip data will stay saved.'))
       scheduleChange(current => removePersonalItem(current, item.personal.id), 'Personal entry removed.');
@@ -461,8 +464,9 @@ function scheduleControls(item) {
       if (confirm('Skip this recommendation in your personal timeline? You can restore it.' + (bookings ? ' A related reservation remains saved; review its booking separately.' : '')))
         scheduleChange(current => setScheduleOverride(bundle, current, item.original, {skipped: true}), 'Recommendation skipped.');
     }, {disabled: !!storageIssue}));
-    if (item.override) controls.append(button('Reset to MCS', () => scheduleChange(current => restoreScheduleItem(current, item.key), 'Original MCS schedule restored.'), {disabled: !!storageIssue}));
+    if (hasPersonalScheduleChanges(bundle, item)) controls.insertBefore(button('Reset', () => scheduleChange(current => restoreScheduleItem(current, item.key), 'Original MCS schedule restored.'), {disabled: !!storageIssue}), controls.lastChild);
   }
+  for (const control of [...controls.children].slice(1)) controls.insertBefore(el('span', {'aria-hidden': true}, '·'), control);
   return controls;
 }
 function dayTimeline(day) {
@@ -497,9 +501,11 @@ function scheduleManagement(day) {
   const warnings = scheduleWarnings(bundle, state, day);
   return el('section', {class: 'schedule-management', 'aria-label': 'Personalize this day'},
     el('p', {id: 'schedule-status', role: 'status', tabindex: '-1'}),
-    el('div', {class: 'schedule-actions'},
-      button('Add personal activity', () => editSchedule(), {'data-schedule-focus': 'add-activity', disabled: !!storageIssue}),
-      button('Add transportation', () => editSchedule(null, 'transport'), {'data-schedule-focus': 'add-transport', disabled: !!storageIssue})),
+    el('details', {class: 'schedule-add'},
+      el('summary', {'data-schedule-focus': 'add-stop'}, 'Add your own stop'),
+      el('div', {class: 'schedule-add-choices', role: 'group', 'aria-label': 'Choose what to add'},
+        button('Add personal activity', () => editSchedule(), {'data-schedule-focus': 'add-activity', disabled: !!storageIssue}),
+        button('Add transportation', () => editSchedule(null, 'transport'), {'data-schedule-focus': 'add-transport', disabled: !!storageIssue}))),
     warnings.length ? el('div', {class: 'schedule-warnings', 'aria-label': 'Plan warnings'}, warnings.map(text => el('p', {}, text))) : null,
     issues.length ? el('p', {class: 'schedule-warnings', role: 'status'}, 'Saved customizations need review. Open Skipped items & saved changes; export a backup before removing retained changes.') : null,
     review, button('Restore this day to MCS', () => {
