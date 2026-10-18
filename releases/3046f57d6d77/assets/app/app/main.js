@@ -22,12 +22,14 @@ import {loadSamplePhrasebook} from '../domain/phrases.js';
 import {travelInfoView} from './travel-info-view.js';
 import {myTripView} from './my-trip-view.js';
 import {createEditProtection} from './edit-protection.js';
-import {originalTimeNote, hasPersonalScheduleChanges} from './personal-schedule-presentation.js';
+import {createScheduleMenu} from './schedule-menu.js';
+import {originalTimeNote, hasPersonalScheduleChanges, personalScheduleMenu} from './personal-schedule-presentation.js';
 import {scheduleEditor} from './schedule-editor.js';
 import {resolvePersonalDay, scheduleName, scheduleCatalog, personalizationIssues, scheduleWarnings, setScheduleOverride, restoreScheduleItem, restoreScheduleDay, removePersonalItem} from '../domain/personal-itinerary.js';
 import {itineraryContext} from '../domain/itinerary-context.js';
 import {flightContextView, lodgingContextView} from './itinerary-context-view.js';
 
+const scheduleMenus = createScheduleMenu();
 const main = document.querySelector('#main');
 const appScroll = document.querySelector('#app-scroll');
 const dialog = document.querySelector('#personal');
@@ -369,6 +371,7 @@ function timelineTime(item) {
 }
 
 function timelineRow(item, choice = null) {
+  const menu = !choice && item.key ? scheduleControls(item) : null;
   const activity = ['activity', 'meal'].includes(item.itemType) ?
     bundle.activities.find(candidate => candidate.activityId === item.referencedEntityId) : null;
   const transport = item.itemType === 'transport' ?
@@ -378,7 +381,7 @@ function timelineRow(item, choice = null) {
     content = choice;
   } else if (item.personal) {
     content = el('div', {class: 'timeline-content timeline-personal'},
-      el('span', {class: 'timeline-kind'}, 'Added by you'), el('h3', {}, item.personal.name),
+      el('div', {class: 'timeline-personal-heading'}, el('span', {class: 'timeline-kind'}, 'Added by you'), menu), el('h3', {}, item.personal.name),
       el('p', {class: 'timeline-meta'}, [item.itemType === 'transport' ? item.personal.mode : '', item.durationMinutes ? item.durationMinutes + ' min' : 'Flexible duration'].filter(Boolean).join(' · ')),
       item.personal.address ? el('p', {}, item.personal.address) : null,
       item.personal.notes ? el('p', {class: 'schedule-note'}, item.personal.notes) : null);
@@ -399,15 +402,15 @@ function timelineRow(item, choice = null) {
     complete.replaceChildren(icon(completed ? 'done' : 'incomplete'));
     complete.title = completed ? 'Completed · Tap to undo' : 'Mark complete';
     content = el('div', {class: 'timeline-content'},
-      mediaImage(bundle, activity.heroMediaId, 'timeline-thumbnail', true),
-      el('div', {class: 'timeline-activity-header'}, el('h3', {}, title), complete),
+      el('div', {class: 'timeline-activity-header'}, mediaImage(bundle, activity.heroMediaId, 'timeline-thumbnail', true),
+        el('h3', {}, title), el('div', {class: 'timeline-item-tools'}, complete, menu)),
       el('p', {class: 'timeline-meta'},
         item.durationMinutes ? `${item.durationMinutes} min` : 'Flexible duration',
         activity.indoorOutdoor ? ` · ${activity.indoorOutdoor}` : ''), badges(activity));
   } else if (transport) {
     content = el('div', {class: 'timeline-content'},
-      el('span', {class: 'timeline-kind'}, 'Transport'),
-      el('h3', {class: 'timeline-transition-title'}, item.override?.mode || item.displayLabelOverride || transport.mode),
+      el('div', {class: 'timeline-transport-heading'}, el('div', {}, el('span', {class: 'timeline-kind'}, 'Transport'),
+        el('h3', {class: 'timeline-transition-title'}, item.override?.mode || item.displayLabelOverride || transport.mode)), menu),
       el('p', {class: 'timeline-meta'},
         item.durationMinutes ? `${item.override ? 'Your plan: ' : 'Approx. '}${item.durationMinutes} min` : 'Travel time flexible',
         !item.override && transport.routeSummary ? ' · ' + transport.routeSummary : ''),
@@ -418,15 +421,14 @@ function timelineRow(item, choice = null) {
     const title = item.displayLabelOverride ?? lodging?.name ??
       ({meal: 'Meal break', free_time: 'Free time', note: 'Day note', lodging: 'Lodging'}[item.itemType] ?? 'Flexible stop');
     content = el('div', {class: 'timeline-content'},
-      el('span', {class: 'timeline-kind'}, item.itemType.replaceAll('_', ' ')),
-      el('strong', {class: 'timeline-quiet-title'}, title),
+      el('div', {class: 'timeline-quiet-heading'}, el('div', {}, el('span', {class: 'timeline-kind'}, item.itemType.replaceAll('_', ' ')),
+        el('strong', {class: 'timeline-quiet-title'}, title)), menu),
       item.transitionNotes ? el('p', {class: 'timeline-meta'}, item.transitionNotes) : null);
   }
   if (!choice && item.key) {
     if (item.override?.notes) content.append(el('p', {class: 'schedule-note'}, item.override.notes));
     const originalNote = originalTimeNote(item);
     if (originalNote) content.append(el('p', {class: 'timeline-meta schedule-original-time'}, originalNote));
-    content.append(scheduleControls(item));
   }
   return el('li', {'data-schedule-key': item.key, class: `timeline-item timeline-${choice ? 'choice' : item.itemType.replaceAll('_', '-')}`,
     'data-item-type': item.itemType},
@@ -451,24 +453,24 @@ function scheduleChange(change, message) {
   }).catch(() => {});
 }
 function scheduleControls(item) {
-  const attrs = {disabled: !!storageIssue, 'data-schedule-focus': item.key};
-  const controls = el('div', {class: 'schedule-card-actions', role: 'group', 'aria-label': 'Personalize ' + scheduleName(bundle, item)},
-    button(item.personal ? 'Edit' : 'Edit time', () => editSchedule(item), attrs));
-  if (item.personal) controls.append(button('Remove', () => {
-    if (confirm('Remove this personal entry? Other trip data will stay saved.'))
-      scheduleChange(current => removePersonalItem(current, item.personal.id), 'Personal entry removed.');
-  }, {disabled: !!storageIssue}));
-  else {
-    controls.append(button('Skip', () => {
+  const presentation = personalScheduleMenu(item, hasPersonalScheduleChanges(bundle, item));
+  const actions = {
+    edit: () => editSchedule(item),
+    reset: () => scheduleChange(current => restoreScheduleItem(current, item.key), 'Original MCS schedule restored.'),
+    skip: () => {
       const bookings = state.personalReservations.some(r => r.activityId && item.referencedEntityId && r.activityId === item.referencedEntityId);
       if (confirm('Skip this recommendation in your personal timeline? You can restore it.' + (bookings ? ' A related reservation remains saved; review its booking separately.' : '')))
         scheduleChange(current => setScheduleOverride(bundle, current, item.original, {skipped: true}), 'Recommendation skipped.');
-    }, {disabled: !!storageIssue}));
-    if (hasPersonalScheduleChanges(bundle, item)) controls.insertBefore(button('Reset', () => scheduleChange(current => restoreScheduleItem(current, item.key), 'Original MCS schedule restored.'), {disabled: !!storageIssue}), controls.lastChild);
-  }
-  for (const control of [...controls.children].slice(1)) controls.insertBefore(el('span', {'aria-hidden': true}, '·'), control);
-  return controls;
+    },
+    remove: () => {
+      if (confirm('Remove this personal entry? Other trip data will stay saved.'))
+        scheduleChange(current => removePersonalItem(current, item.personal.id), 'Personal entry removed.');
+    }
+  };
+  return scheduleMenus.control({key: item.key, name: scheduleName(bundle, item), heading: presentation.heading,
+    commands: presentation.entries.map(entry => ({label: entry.label, action: actions[entry.id]})), disabled: !!storageIssue});
 }
+
 function dayTimeline(day) {
   const rows = resolvePersonalDay(bundle, state, day).map(item => {
     if (item.itemType !== 'option_group') return timelineRow(item);
@@ -499,19 +501,27 @@ function scheduleManagement(day) {
       dayId: day.dayId, suggestedStartTime: personal.startTime, durationMinutes: personal.durationMinutes}), {disabled: !!storageIssue})));
   if (review.children.length === 1) review.append(el('p', {}, 'No saved schedule changes for this day.'));
   const warnings = scheduleWarnings(bundle, state, day);
-  return el('section', {class: 'schedule-management', 'aria-label': 'Personalize this day'},
+  const hasChanges = changes.items.some(item => item.dayId === day.dayId) || changes.overrides.some(override => {
+    if (override.dayId !== day.dayId && override.source.dayId !== day.dayId) return false;
+    const original = catalog.find(item => item.key === override.source.key);
+    return !original || hasPersonalScheduleChanges(bundle, {override, original});
+  });
+  const add = el('section', {class: 'schedule-management', 'aria-label': 'Personalize this day'},
     el('p', {id: 'schedule-status', role: 'status', tabindex: '-1'}),
     el('details', {class: 'schedule-add'},
       el('summary', {'data-schedule-focus': 'add-stop'}, 'Add your own stop'),
       el('div', {class: 'schedule-add-choices', role: 'group', 'aria-label': 'Choose what to add'},
         button('Add personal activity', () => editSchedule(), {'data-schedule-focus': 'add-activity', disabled: !!storageIssue}),
-        button('Add transportation', () => editSchedule(null, 'transport'), {'data-schedule-focus': 'add-transport', disabled: !!storageIssue}))),
+        button('Add transportation', () => editSchedule(null, 'transport'), {'data-schedule-focus': 'add-transport', disabled: !!storageIssue}))));
+  const recovery = el('section', {class: 'schedule-recovery', 'aria-label': 'Day recovery'},
     warnings.length ? el('div', {class: 'schedule-warnings', 'aria-label': 'Plan warnings'}, warnings.map(text => el('p', {}, text))) : null,
     issues.length ? el('p', {class: 'schedule-warnings', role: 'status'}, 'Saved customizations need review. Open Skipped items & saved changes; export a backup before removing retained changes.') : null,
     review, button('Restore this day to MCS', () => {
       if (confirm('Restore Day ' + day.dayNumber + '? This resets overrides originating on or moved into this day, restores its skipped recommendations, and removes personal activities and transport assigned to this day. Authored alternatives and all bookings, flights, lodging, expenses, notes and packing stay saved.'))
         scheduleChange(current => restoreScheduleDay(current, day.dayId), 'Day restored to its authored plan.');
-    }, {disabled: !!storageIssue}));
+    }, {class: 'schedule-day-reset', disabled: !!storageIssue || !hasChanges, 'aria-describedby': !hasChanges ? 'day-reset-help' : undefined}),
+    !hasChanges ? el('p', {id: 'day-reset-help', class: 'visually-hidden'}, 'No personal schedule changes for this day.') : null);
+  return {add, recovery};
 }
 
 function itinerary() {
@@ -536,8 +546,10 @@ function itinerary() {
   const panel = el('section', {class: 'day-panel', 'aria-labelledby': 'day-panel-title'});
 
   function paint(announce = false) {
+    scheduleMenus.close(false);
     const day = bundle.days[dayIndex];
     const context = itineraryContext(state, day.dayNumber);
+    const personalization = scheduleManagement(day);
     previous.disabled = dayIndex === 0;
     next.disabled = dayIndex === total - 1;
     chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(index === dayIndex)));
@@ -545,7 +557,7 @@ function itinerary() {
       day.pace || day.expectedWalkingLevel ? el('p', {class: 'day-meta'},
         [day.pace, day.expectedWalkingLevel ? `${day.expectedWalkingLevel} walking` : null].filter(Boolean).join(' · ')) : null,
       day.weatherNotes || day.summary ? el('p', {class: 'day-summary'}, day.weatherNotes ?? day.summary) : null,
-      flightContextView(context), dayTimeline(day), scheduleManagement(day), lodgingContextView(context)].filter(Boolean));
+      flightContextView(context), dayTimeline(day), personalization.add, lodgingContextView(context), personalization.recovery].filter(Boolean));
     if (announce) status.textContent = `Showing Day ${day.dayNumber} of ${total}: ${editorialText(day.title)}`;
     requestAnimationFrame(() => {
       const chip = chips[dayIndex];
@@ -769,6 +781,7 @@ function detailAlternative(group, activity) {
 }
 
 function detail(activity) {
+  scheduleMenus.close(false);
   exploreReturn = view === 'Explore' ? {scrollTop: appScroll.scrollTop} : null;
   activeMapPreview?.dispose(); activeMapPreview = null;
   if (view !== 'Itinerary') itineraryScrollTop = 0;
@@ -1094,6 +1107,7 @@ function renderNav() {
     }));
 }
 function render() {
+  scheduleMenus.close(false);
   if (!bundle) return;
   activeMapPreview?.dispose(); activeMapPreview = null;
   document.documentElement.dataset.theme = bundle.trip.defaultThemeId;
