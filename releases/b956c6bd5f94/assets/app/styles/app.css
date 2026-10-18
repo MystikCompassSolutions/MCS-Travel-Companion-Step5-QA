@@ -1043,9 +1043,17 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 .schedule-warnings { border-left: 3px solid #876526; padding: 0 12px; font-size: .875rem; overflow-wrap: anywhere; }
 .schedule-note { white-space: pre-wrap; overflow-wrap: anywhere; }
 .timeline-personal { border-style: dashed; }
+.timeline-personal-transport { border: 0; border-radius: 0; background: transparent; box-shadow: none; padding: 4px 0 12px; }
+.timeline-personal-transport .timeline-transition-title { margin: 2px 0; }
+.timeline-personal-transport > p:not(.timeline-meta) { margin: 6px 0 0; font-size: .875rem; }
 .schedule-form, .schedule-form label, .schedule-form input, .schedule-form textarea, .schedule-form select { min-width: 0; max-width: 100%; box-sizing: border-box; }
-.schedule-form input, .schedule-form textarea, .schedule-form select { font-size: max(16px,1rem); }
-.schedule-form label { display: grid; gap: 8px; margin: 16px 0; }
+.schedule-form input, .schedule-form textarea, .schedule-form select { font-size: max(16px,1rem); margin: 0; }
+.schedule-form label { display: grid; gap: 6px; margin: 0; }
+.schedule-form > p, .schedule-form > h3 { margin: 0; }
+.schedule-form .schedule-warnings:empty { display: none; }
+.schedule-form .schedule-warnings p { margin: 0; }
+.schedule-form .schedule-warnings p + p { margin-top: 8px; }
+.schedule-form .schedule-actions { margin-top: 2px; }
 #personal-content .schedule-form input[type="time"] { -webkit-appearance: none; appearance: none; display: block; box-sizing: border-box; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; block-size: max(44px,2.75rem); min-block-size: 44px; padding: 8px 12px; line-height: 1.25; text-align: left; }
 #personal-content .schedule-form input::-webkit-date-and-time-value { min-height: 1.25em; text-align: left; }
 

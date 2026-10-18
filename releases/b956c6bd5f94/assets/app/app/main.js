@@ -391,9 +391,14 @@ function timelineRow(item) {
     bundle.transport.find(candidate => candidate.transportId === item.referencedEntityId) : null;
   let content;
   if (item.personal) {
-    content = el('div', {class: 'timeline-content timeline-personal'},
-      el('div', {class: 'timeline-personal-heading'}, el('span', {class: 'timeline-kind'}, 'Added by you'), menu), el('h3', {}, item.personal.name),
-      el('p', {class: 'timeline-meta'}, [item.itemType === 'transport' ? item.personal.mode : '', item.durationMinutes ? item.durationMinutes + ' min' : 'Flexible duration'].filter(Boolean).join(' · ')),
+    const connection = item.itemType === 'transport';
+    const label = el('span', {class: 'timeline-kind'}, connection ? 'Added by you · Transport' : 'Added by you');
+    const title = el('h3', {class: connection ? 'timeline-transition-title' : undefined}, item.personal.name);
+    const metadata = [connection ? item.personal.mode : '', item.durationMinutes ? item.durationMinutes + ' min' : connection ? '' : 'Flexible duration'].filter(Boolean).join(' · ');
+    content = el('div', {class: `timeline-content timeline-personal${connection ? ' timeline-personal-transport' : ''}`},
+      connection ? el('div', {class: 'timeline-transport-heading'}, el('div', {}, label, title), menu) :
+        [el('div', {class: 'timeline-personal-heading'}, label, menu), title],
+      metadata ? el('p', {class: 'timeline-meta'}, metadata) : null,
       item.personal.address ? el('p', {}, item.personal.address) : null,
       item.personal.notes ? el('p', {class: 'schedule-note'}, item.personal.notes) : null);
   } else if (activity) {
