@@ -1,7 +1,8 @@
+import {emptyPersonalization, assertPersonalization, personalizationIssues} from '../domain/personal-itinerary.js';
 import {assertSchema} from '../domain/schema.js';
 
 export const EXPORT_LIMIT_BYTES = 2 * 1024 * 1024;
-export const STATE_VERSION = '1.1.0';
+export const STATE_VERSION = '1.2.0';
 
 export class ConflictError extends Error {
   constructor() {super('Another tab changed this trip. Your change was not saved. Review the latest trip and retry.'); this.name = 'ConflictError';}
@@ -20,19 +21,20 @@ export function newTravelerState(bundle, now = new Date().toISOString()) {
     selectedUpgradeIds: [], homeCurrency: 'USD', optionSelections: {}, activityCompletion: {},
     savedItems: [], notes: {}, personalFlights: [], personalLodging: [], personalReservations: [],
     packingChecklist: [], budgetPlan: {totalMinor: 0, categoryMinor: {}}, actualExpenses: [],
-    preferences: {}, dismissedNotices: []
+    preferences: {}, dismissedNotices: [], itineraryPersonalization: emptyPersonalization()
   };
 }
 
-export function migrateTravelerState(raw, schema, legacySchema) {
+export function migrateTravelerState(raw, schema, legacySchema, previousSchema) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new CorruptStateError(raw);
   try {
-    if (raw.travelerStateSchemaVersion === STATE_VERSION) return assertSchema(schema, raw);
-    if (raw.travelerStateSchemaVersion !== '1.0.0' || !legacySchema) throw new Error('Unsupported state version');
-    assertSchema(legacySchema, raw);
+    if (raw.travelerStateSchemaVersion === STATE_VERSION) return assertPersonalization(assertSchema(schema, raw));
+    if (!['1.0.0', '1.1.0'].includes(raw.travelerStateSchemaVersion) || !(raw.travelerStateSchemaVersion === '1.0.0' ? legacySchema : previousSchema)) throw new Error('Unsupported state version');
+    assertSchema(raw.travelerStateSchemaVersion === '1.0.0' ? legacySchema : previousSchema, raw);
     return assertSchema(schema, {
       ...raw, travelerStateSchemaVersion: STATE_VERSION,
-      revision: 0, partySize: 1, selectedUpgradeIds: []
+      ...(raw.travelerStateSchemaVersion === '1.0.0' ? {revision: 0, partySize: 1, selectedUpgradeIds: []} : {}),
+      itineraryPersonalization: emptyPersonalization()
     });
   } catch {throw new CorruptStateError(raw);}
 }
@@ -41,10 +43,13 @@ export function serializeTravelerState(state, schema, now = new Date().toISOStri
   const envelope = {format: 'mcs-traveler-state', schemaVersion: STATE_VERSION,
     tripId: state.tripId, contentVersion: state.contentVersionAtLastOpen, exportedAt: now, state};
   assertSchema(schema, envelope);
-  return JSON.stringify(envelope, null, 2);
+  assertPersonalization(state);
+  const text = JSON.stringify(envelope, null, 2);
+  if (new TextEncoder().encode(text).byteLength > EXPORT_LIMIT_BYTES) throw new Error('Backup exceeds the 2 MiB import limit. Your saved data is unchanged; reduce long personal entries before exporting.');
+  return text;
 }
 
-export function parseTravelerExport(text, tripId, schema, legacyExportSchema, legacyStateSchema) {
+export function parseTravelerExport(text, tripId, schema, legacyExportSchema, legacyStateSchema, previousExportSchema, previousStateSchema) {
   if (typeof text !== 'string' || new TextEncoder().encode(text).byteLength > EXPORT_LIMIT_BYTES) {
     throw new Error('Import exceeds the 2 MiB limit.');
   }
@@ -53,10 +58,13 @@ export function parseTravelerExport(text, tripId, schema, legacyExportSchema, le
   if (data?.schemaVersion === '1.0.0') {
     if (!legacyExportSchema) throw new Error('This backup version cannot be imported here.');
     assertSchema(legacyExportSchema, data);
+  } else if (data?.schemaVersion === '1.1.0') {
+    if (!previousExportSchema) throw new Error('This backup version cannot be imported here.');
+    assertSchema(previousExportSchema, data);
   } else assertSchema(schema, data);
   if (data.tripId !== tripId || data.state.tripId !== tripId) throw new Error('This backup belongs to a different trip.');
   if (data.contentVersion !== data.state.contentVersionAtLastOpen) throw new Error('Backup content version mismatch.');
-  return migrateTravelerState(data.state, schema.properties.state, legacyStateSchema);
+  return migrateTravelerState(data.state, schema.properties.state, legacyStateSchema, previousStateSchema);
 }
 
 export function reconcileContent(state, bundle) {
@@ -68,6 +76,7 @@ export function reconcileContent(state, bundle) {
     if (!group || optionIds.some(id => !group.optionIds.includes(id))) changedItems.push(groupId);
   }
   for (const id of state.selectedUpgradeIds ?? []) if (!knownUpgrades.has(id)) changedItems.push(id);
+  changedItems.push(...personalizationIssues(bundle, state).map(issue => issue.key));
   return {state: {...state, contentVersionAtLastOpen: bundle.trip.contentVersion}, changedItems};
 }
 
@@ -75,7 +84,7 @@ function storageFailure() {
   return new Error('Local trip change was not saved. Storage may be full or disabled.');
 }
 
-export function createTravelerStore(schema, indexedDB = globalThis.indexedDB, legacySchema) {
+export function createTravelerStore(schema, indexedDB = globalThis.indexedDB, legacySchema, previousSchema) {
   let dbPromise;
   function open() {
     if (!indexedDB) return Promise.reject(new Error('Local storage is unavailable. Use a browser with IndexedDB enabled.'));
@@ -118,7 +127,7 @@ export function createTravelerStore(schema, indexedDB = globalThis.indexedDB, le
   }
 
   async function save(value) {
-    assertSchema(schema, value);
+    assertPersonalization(assertSchema(schema, value));
     const db = await open();
     return new Promise((resolve, reject) => {
       let tx, next, failure;
@@ -128,7 +137,7 @@ export function createTravelerStore(schema, indexedDB = globalThis.indexedDB, le
         const request = objectStore.get(value.tripId);
         request.onsuccess = () => {
           try {
-            const previous = request.result ? migrateTravelerState(request.result, schema, legacySchema) : null;
+            const previous = request.result ? migrateTravelerState(request.result, schema, legacySchema, previousSchema) : null;
             const observedRevision = previous?.revision ?? 0;
             if (value.revision !== observedRevision) throw new ConflictError();
             next = {...value, revision: observedRevision + 1, updatedAt: new Date().toISOString()};
@@ -158,7 +167,7 @@ export function createTravelerStore(schema, indexedDB = globalThis.indexedDB, le
   }
 
   return {
-    async load(tripId) {const raw = await read(tripId); return raw ? migrateTravelerState(raw, schema, legacySchema) : null;},
+    async load(tripId) {const raw = await read(tripId); return raw ? migrateTravelerState(raw, schema, legacySchema, previousSchema) : null;},
     loadRaw: read, save, remove,
     async close() {if (dbPromise) {try {(await dbPromise).close();} catch {} dbPromise = undefined;}
     }
