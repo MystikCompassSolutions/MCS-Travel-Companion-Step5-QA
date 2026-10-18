@@ -1038,3 +1038,21 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 .budget-card-action .ui-icon { width: 14px; height: 14px; flex: none; }
 @container (max-width: 20rem) { .budget-management-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (forced-colors: active) { .budget-management-card, .edit-confirmation button { border: 1px solid CanvasText; } }
+
+/* Functional itinerary personalization; final decorative convergence is separate. */
+.schedule-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.schedule-actions button { min-width: 44px; min-height: 44px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; font-size: .875rem; }
+.schedule-management { padding: 16px 0; border-top: 1px solid var(--line); }
+.schedule-management p:empty { margin: 0; }
+.schedule-review { margin: 12px 0; }
+.schedule-review summary, .timeline-content details summary { min-height: 44px; cursor: pointer; padding: 10px 0; }
+.schedule-review section { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.schedule-review button { min-height: 44px; max-width: 100%; white-space: normal; }
+.schedule-warnings { border-left: 3px solid #876526; padding: 0 12px; font-size: .875rem; overflow-wrap: anywhere; }
+.schedule-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.timeline-personal { border-style: dashed; }
+.schedule-form, .schedule-form label, .schedule-form input, .schedule-form textarea, .schedule-form select { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.schedule-form input, .schedule-form textarea, .schedule-form select { font-size: max(16px,1rem); }
+.schedule-form label { display: grid; gap: 8px; margin: 16px 0; }
+#personal-content .schedule-form input[type="time"] { -webkit-appearance: none; appearance: none; display: block; box-sizing: border-box; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; block-size: max(44px,2.75rem); min-block-size: 44px; padding: 8px 12px; line-height: 1.25; text-align: left; }
+#personal-content .schedule-form input::-webkit-date-and-time-value { min-height: 1.25em; text-align: left; }

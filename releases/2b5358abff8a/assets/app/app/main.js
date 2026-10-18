@@ -22,6 +22,8 @@ import {loadSamplePhrasebook} from '../domain/phrases.js';
 import {travelInfoView} from './travel-info-view.js';
 import {myTripView} from './my-trip-view.js';
 import {createEditProtection} from './edit-protection.js';
+import {scheduleEditor} from './schedule-editor.js';
+import {resolvePersonalDay, scheduleName, scheduleCatalog, personalizationIssues, scheduleWarnings, setScheduleOverride, restoreScheduleItem, restoreScheduleDay, removePersonalItem} from '../domain/personal-itinerary.js';
 import {itineraryContext} from '../domain/itinerary-context.js';
 import {flightContextView, lodgingContextView} from './itinerary-context-view.js';
 
@@ -173,7 +175,9 @@ dialog.addEventListener('close', () => {
     appScroll.scrollTop = personalPageScrollTop;
   }
   edits.clear();
-  const target = personalReturnFocus?.isConnected ? personalReturnFocus : view === 'Budget' ? document.querySelector('.budget-add') : myTripButton;
+  const scheduleKey = personalReturnFocus?.dataset.scheduleFocus;
+  if (view === 'Itinerary' && scheduleKey) personalReturnFocus = [...main.querySelectorAll('[data-schedule-focus]')].find(n => n.dataset.scheduleFocus === scheduleKey);
+  const target = personalReturnFocus?.isConnected ? personalReturnFocus : view === 'Budget' ? document.querySelector('.budget-add') : view === 'Itinerary' ? document.querySelector('#day-panel-title') : myTripButton;
   target?.focus({preventScroll: true});
   // Native focus restoration and text-resize layout can finish after `close`.
   requestAnimationFrame(() => {
@@ -359,7 +363,7 @@ function optionGroup(group, headingTag = 'h2') {
 
 function timelineTime(item) {
   if (item.suggestedStartTime) return el('time', {dateTime: item.suggestedStartTime}, item.suggestedStartTime);
-  return el('span', {}, item.timeWindowLabel ?? (item.suggestedTimeMode === 'all_day' ? 'All day' : 'Flexible'));
+  return el('span', {}, item.timeWindowLabel || (item.suggestedTimeMode === 'all_day' ? 'All day' : 'Flexible'));
 }
 
 function timelineRow(item, choice = null) {
@@ -370,6 +374,12 @@ function timelineRow(item, choice = null) {
   let content;
   if (choice) {
     content = choice;
+  } else if (item.personal) {
+    content = el('div', {class: 'timeline-content timeline-personal'},
+      el('span', {class: 'timeline-kind'}, 'Added by you'), el('h3', {}, item.personal.name),
+      el('p', {class: 'timeline-meta'}, [item.itemType === 'transport' ? item.personal.mode : '', item.durationMinutes ? item.durationMinutes + ' min' : 'Flexible duration'].filter(Boolean).join(' · ')),
+      item.personal.address ? el('p', {}, item.personal.address) : null,
+      item.personal.notes ? el('p', {class: 'schedule-note'}, item.personal.notes) : null);
   } else if (activity) {
     const completed = state.activityCompletion[activity.activityId] ?? false;
     const title = button(editorialText(activity.name), () => {itineraryScrollTop = appScroll.scrollTop; detail(activity);},
@@ -390,15 +400,16 @@ function timelineRow(item, choice = null) {
       mediaImage(bundle, activity.heroMediaId, 'timeline-thumbnail', true),
       el('div', {class: 'timeline-activity-header'}, el('h3', {}, title), complete),
       el('p', {class: 'timeline-meta'},
-        activity.recommendedDurationMinutes ? `${activity.recommendedDurationMinutes} min` : 'Flexible duration',
+        item.durationMinutes ? `${item.durationMinutes} min` : 'Flexible duration',
         activity.indoorOutdoor ? ` · ${activity.indoorOutdoor}` : ''), badges(activity));
   } else if (transport) {
     content = el('div', {class: 'timeline-content'},
       el('span', {class: 'timeline-kind'}, 'Transport'),
-      el('h3', {class: 'timeline-transition-title'}, item.displayLabelOverride ?? transport.mode),
+      el('h3', {class: 'timeline-transition-title'}, item.override?.mode || item.displayLabelOverride || transport.mode),
       el('p', {class: 'timeline-meta'},
-        transport.durationMinutes ? `Approx. ${transport.durationMinutes} min` : 'Travel time flexible',
-        transport.routeSummary ? ` · ${transport.routeSummary}` : ''));
+        item.durationMinutes ? `${item.override ? 'Your plan: ' : 'Approx. '}${item.durationMinutes} min` : 'Travel time flexible',
+        !item.override && transport.routeSummary ? ' · ' + transport.routeSummary : ''),
+      item.override ? el('details', {}, el('summary', {}, 'Original MCS transportation'), el('p', {}, transport.mode + ' · ' + transport.durationMinutes + ' min · ' + (transport.routeSummary ?? ''))) : null);
   } else {
     const lodging = item.itemType === 'lodging' ?
       bundle.lodgingGuidance.find(candidate => candidate.lodgingGuideId === item.referencedEntityId) : null;
@@ -409,22 +420,92 @@ function timelineRow(item, choice = null) {
       el('strong', {class: 'timeline-quiet-title'}, title),
       item.transitionNotes ? el('p', {class: 'timeline-meta'}, item.transitionNotes) : null);
   }
-  return el('li', {class: `timeline-item timeline-${choice ? 'choice' : item.itemType.replaceAll('_', '-')}`,
+  if (!choice && item.key) {
+    if (item.override?.notes) content.append(el('p', {class: 'schedule-note'}, item.override.notes));
+    if (item.override && item.original?.suggestedStartTime && item.original.suggestedStartTime !== item.suggestedStartTime)
+      content.append(el('p', {class: 'timeline-meta'}, 'MCS originally suggested ' + item.original.suggestedStartTime));
+    content.append(scheduleControls(item));
+  }
+  return el('li', {'data-schedule-key': item.key, class: `timeline-item timeline-${choice ? 'choice' : item.itemType.replaceAll('_', '-')}`,
     'data-item-type': item.itemType},
   el('div', {class: 'timeline-time'}, timelineTime(item)),
   el('span', {class: 'timeline-rail', 'aria-hidden': true}, el('span', {class: 'timeline-dot'})), content);
 }
 
+function editSchedule(item = null, itemType = 'activity') {
+  const entry = scheduleEditor(bundle, state, {item, itemType, day: bundle.days[dayIndex], edits, commit,
+    close: closePersonal, finish(form, dayId) {
+      edits.saved(form); dayIndex = bundle.days.findIndex(d => d.dayId === dayId); render(); dialog.close();
+      document.querySelector('#schedule-status').textContent = 'Personal schedule saved on this device.';
+    }});
+  void openTravelerEditor(entry.title, entry.content, entry.form);
+}
+function scheduleChange(change, message) {
+  const scroll = appScroll.scrollTop;
+  commit(change).then(() => {
+    appScroll.scrollTop = scroll;
+    const status = document.querySelector('#schedule-status');
+    if (status) {status.textContent = message; status.focus({preventScroll: true});}
+  }).catch(() => {});
+}
+function scheduleControls(item) {
+  const attrs = {disabled: !!storageIssue, 'data-schedule-focus': item.key};
+  const controls = el('div', {class: 'schedule-actions'}, button(item.personal ? 'Edit' : 'Edit time / day', () => editSchedule(item), attrs));
+  if (item.personal) controls.append(button('Remove', () => {
+    if (confirm('Remove this personal entry? Other trip data will stay saved.'))
+      scheduleChange(current => removePersonalItem(current, item.personal.id), 'Personal entry removed.');
+  }, {disabled: !!storageIssue}));
+  else {
+    controls.append(button('Skip', () => {
+      const bookings = state.personalReservations.some(r => r.activityId && item.referencedEntityId && r.activityId === item.referencedEntityId);
+      if (confirm('Skip this recommendation in your personal timeline? You can restore it.' + (bookings ? ' A related reservation remains saved; review its booking separately.' : '')))
+        scheduleChange(current => setScheduleOverride(bundle, current, item.original, {skipped: true}), 'Recommendation skipped.');
+    }, {disabled: !!storageIssue}));
+    if (item.override) controls.append(button('Reset to MCS', () => scheduleChange(current => restoreScheduleItem(current, item.key), 'Original MCS schedule restored.'), {disabled: !!storageIssue}));
+  }
+  return controls;
+}
 function dayTimeline(day) {
-  const rows = day.scheduleItems.flatMap(item => {
-    if (item.itemType !== 'option_group') return [timelineRow(item)];
+  const rows = resolvePersonalDay(bundle, state, day).map(item => {
+    if (item.itemType !== 'option_group') return timelineRow(item);
     const group = bundle.optionGroups.find(candidate => candidate.optionGroupId === item.referencedEntityId);
     const selection = optionGroup(group, 'h3');
     selection.classList.add(group.requiredSelection ? 'timeline-choice-card' : 'timeline-choice-inline');
-    return [timelineRow(item, selection),
-      ...effectiveOptions(bundle, state, group).flatMap(option => optionScheduleItems(option, item).map(entry => timelineRow(entry)))];
+    return timelineRow(item, selection);
   });
-  return el('ol', {class: 'timeline', 'aria-label': `Day ${day.dayNumber} timeline`}, rows);
+  return el('ol', {class: 'timeline', 'aria-label': 'Day ' + day.dayNumber + ' timeline'}, rows);
+}
+function scheduleManagement(day) {
+  const catalog = scheduleCatalog(bundle), issues = personalizationIssues(bundle, state);
+  const changes = state.itineraryPersonalization;
+  const review = el('details', {class: 'schedule-review'}, el('summary', {}, 'Skipped items & saved changes'));
+  const activeKeys = new Set(bundle.days.flatMap(d => resolvePersonalDay(bundle, {...state, itineraryPersonalization: {...changes, overrides: []}}, d)).map(i => i.key));
+  for (const override of changes.overrides) {
+    if (override.source.dayId !== day.dayId && override.dayId !== day.dayId && !issues.some(i => i.key === override.source.key)) continue;
+    const original = catalog.find(i => i.key === override.source.key);
+    const issue = issues.find(i => i.key === override.source.key);
+    const label = original ? scheduleName(bundle, original) : 'Retained customization (' + override.source.scheduleItemId + ')';
+    review.append(el('section', {}, el('strong', {}, label), el('p', {}, issue?.message ?? (override.skipped ? 'Skipped from your timeline.' : !activeKeys.has(override.source.key) ? 'Saved for an inactive authored alternative.' : 'Personal schedule saved.')),
+      issue?.suspended ? null : button(override.skipped ? 'Restore skipped item' : 'Reset to MCS', () => scheduleChange(current => override.skipped ? setScheduleOverride(bundle, current, original, {skipped: false}) : restoreScheduleItem(current, override.source.key), 'Saved schedule updated.'), {disabled: !!storageIssue}),
+      issue?.suspended ? button('Remove retained change', () => {if (confirm('Remove this retained customization? Export My Trip first if you need a backup.')) scheduleChange(current => restoreScheduleItem(current, override.source.key), 'Retained customization removed.');}, {disabled: !!storageIssue}) : null));
+  }
+  for (const personal of changes.items.filter(i => !bundle.days.some(d => d.dayId === i.dayId))) review.append(el('section', {},
+    el('p', {}, personal.name + ': its original day is unavailable. Your entry is retained.'),
+    button('Edit retained entry', () => editSchedule({personal, key: 'p:' + personal.id, itemType: personal.itemType,
+      dayId: day.dayId, suggestedStartTime: personal.startTime, durationMinutes: personal.durationMinutes}), {disabled: !!storageIssue})));
+  if (review.children.length === 1) review.append(el('p', {}, 'No saved schedule changes for this day.'));
+  const warnings = scheduleWarnings(bundle, state, day);
+  return el('section', {class: 'schedule-management', 'aria-label': 'Personalize this day'},
+    el('p', {id: 'schedule-status', role: 'status', tabindex: '-1'}),
+    el('div', {class: 'schedule-actions'},
+      button('Add personal activity', () => editSchedule(), {'data-schedule-focus': 'add-activity', disabled: !!storageIssue}),
+      button('Add transportation', () => editSchedule(null, 'transport'), {'data-schedule-focus': 'add-transport', disabled: !!storageIssue})),
+    warnings.length ? el('div', {class: 'schedule-warnings', 'aria-label': 'Plan warnings'}, warnings.map(text => el('p', {}, text))) : null,
+    issues.length ? el('p', {class: 'schedule-warnings', role: 'status'}, 'Saved customizations need review. Open Skipped items & saved changes; export a backup before removing retained changes.') : null,
+    review, button('Restore this day to MCS', () => {
+      if (confirm('Restore Day ' + day.dayNumber + '? This resets overrides originating on or moved into this day, restores its skipped recommendations, and removes personal activities and transport assigned to this day. Authored alternatives and all bookings, flights, lodging, expenses, notes and packing stay saved.'))
+        scheduleChange(current => restoreScheduleDay(current, day.dayId), 'Day restored to its authored plan.');
+    }, {disabled: !!storageIssue}));
 }
 
 function itinerary() {
@@ -454,11 +535,11 @@ function itinerary() {
     previous.disabled = dayIndex === 0;
     next.disabled = dayIndex === total - 1;
     chips.forEach((chip, index) => chip.setAttribute('aria-pressed', String(index === dayIndex)));
-    panel.replaceChildren(...[el('h2', {id: 'day-panel-title'}, dayLabel(day)),
+    panel.replaceChildren(...[el('h2', {id: 'day-panel-title', tabindex: '-1'}, dayLabel(day)),
       day.pace || day.expectedWalkingLevel ? el('p', {class: 'day-meta'},
         [day.pace, day.expectedWalkingLevel ? `${day.expectedWalkingLevel} walking` : null].filter(Boolean).join(' · ')) : null,
       day.weatherNotes || day.summary ? el('p', {class: 'day-summary'}, day.weatherNotes ?? day.summary) : null,
-      flightContextView(context), dayTimeline(day), lodgingContextView(context)].filter(Boolean));
+      flightContextView(context), dayTimeline(day), scheduleManagement(day), lodgingContextView(context)].filter(Boolean));
     if (announce) status.textContent = `Showing Day ${day.dayNumber} of ${total}: ${editorialText(day.title)}`;
     requestAnimationFrame(() => {
       const chip = chips[dayIndex];
@@ -917,7 +998,7 @@ function tripDataSettings() {
       const selected = event.target.files[0]; if (!selected) return;
       if (selected.size > EXPORT_LIMIT_BYTES) throw new Error('Import exceeds the 2 MiB limit.');
       const imported = parseTravelerExport(await selected.text(), bundle.trip.tripId, schemas.export,
-        schemas.legacyExport, schemas.legacyTraveler);
+        schemas.legacyExport, schemas.legacyTraveler, schemas.previousExport, schemas.previousTraveler);
       const preview = card(el('h2', {}, 'Review import'),
         el('p', {}, `This replaces this trip’s local data with a backup for ${imported.tripId}. ${imported.actualExpenses.length} expenses and ${imported.personalReservations.length} reservations.`),
         button('Replace local trip with this backup', () => commit(current =>
@@ -1047,7 +1128,7 @@ async function switchPack(name) {
 async function start() {
   try {
     schemas = await loadRuntimeContracts();
-    store = createTravelerStore(schemas.traveler, globalThis.indexedDB, schemas.legacyTraveler);
+    store = createTravelerStore(schemas.traveler, globalThis.indexedDB, schemas.legacyTraveler, schemas.previousTraveler);
     try {const remembered = localStorage.getItem('mcs-active-sample');
       if (['japan', 'iceland'].includes(remembered)) packName = remembered;
     } catch {}
