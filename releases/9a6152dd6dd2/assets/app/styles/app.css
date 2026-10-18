@@ -99,8 +99,6 @@ main[data-screen="Itinerary"] .context-address span { min-width: 0; white-space:
 .timeline-activity-header { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 8px; }
 .timeline-activity-header h3 { flex: 1 1 125px; min-width: 0; margin: 0; }
 .timeline-title { min-height: 44px; max-width: 100%; padding: 0; border: 0; background: transparent; font-size: clamp(17px, 1.0625rem, 32px); font-weight: 700; line-height: 1.25; text-align: left; overflow-wrap: anywhere; }
-.timeline-complete { flex: 0 1 auto; min-width: 0; min-height: 44px; padding: 4px 8px; border-color: #bbb5c9; font-size: clamp(12px, .75rem, 20px); line-height: 1.1; overflow-wrap: anywhere; }
-.timeline-complete[aria-pressed="true"] { border-color: var(--success); color: var(--success); font-weight: 700; }
 .timeline-meta { margin: 2px 0 6px; color: var(--indigo-700); font-size: clamp(13px, .8125rem, 24px); line-height: 1.4; }
 .timeline-content .badge { margin: 0 4px 4px 0; }
 .timeline-kind { color: var(--indigo-700); font-size: clamp(11px, .6875rem, 18px); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
@@ -109,10 +107,6 @@ main[data-screen="Itinerary"] .context-address span { min-width: 0; white-space:
 .timeline-transport .timeline-dot { width: 12px; height: 12px; border: 2px solid var(--indigo-700); background: var(--paper); box-shadow: none; }
 .timeline-meal .timeline-dot, .timeline-free-time .timeline-dot, .timeline-note .timeline-dot, .timeline-lodging .timeline-dot { width: 7px; height: 7px; margin-top: 18px; background: var(--gold); box-shadow: none; }
 .timeline-quiet-title { display: block; margin: 2px 0; font-size: clamp(15px, .9375rem, 28px); font-weight: 600; }
-.timeline-choice .timeline-dot { border-radius: 2px; background: var(--gold); box-shadow: none; }
-.timeline-choice .card { margin: 0 0 14px; padding: 12px; border: 1px solid #d4cfdd; border-radius: 10px; }
-.timeline-choice .card h3 { margin: 0 0 8px; font-size: 1.25rem; }
-.timeline-choice-inline { background: transparent; border-color: transparent !important; padding: 0 !important; }
 .section-kicker { margin: 0 0 4px; color: var(--indigo-700); font-size: .75rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .compact-section { padding: 12px 0; border-bottom: 1px solid #d4cfdd; }
 .compact-section h2, .compact-section h3 { margin: 0 0 5px; font-size: 1.125rem; line-height: 1.25; }
@@ -420,12 +414,10 @@ main[data-screen="Home"] .home-content > details[open] .disclosure-body { backgr
 .timeline-thumbnail { float: left; width: 38px; height: 44px; border-radius: 7px; object-fit: cover; margin: 3px 8px 4px 0; }
 .timeline-activity-header { flex-wrap: nowrap; }
 .timeline-activity-header h3 { flex: 1 1 70px; }
-.timeline-complete { flex: none; width: 44px; height: 44px; padding: 0; border-radius: 50%; background: transparent; }
 .timeline-title { font-size: 1rem; }
 .timeline-meta { font-size: .75rem; }
 .timeline-transport .timeline-content { border-bottom: 0; color: var(--muted); }
 .timeline-transport .timeline-dot { border-color: var(--muted); }
-.timeline-choice .card { border-color: #B9A27A; background: var(--paper); }
 
 /* Activity detail uses an editorial cover and short, practical layers. */
 html[data-screen^="detail-"] { --detail-surface: var(--paper); --detail-text: var(--indigo-900); --detail-muted: var(--muted); --detail-divider: var(--line); --detail-accent: #80622D; --detail-link: var(--indigo-700); --detail-focus: var(--info); }
@@ -1075,7 +1067,8 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 .timeline-activity-header h3 { grid-column: 2; }
 .timeline-activity-header:not(:has(.timeline-thumbnail)) { grid-template-columns: minmax(0,1fr) auto; }
 .timeline-activity-header:not(:has(.timeline-thumbnail)) h3 { grid-column: 1; }
-.timeline-item-tools { display: flex; align-items: center; gap: 6px; }
+.timeline-activity-header > .schedule-menu-trigger { grid-column: 3; justify-self: end; }
+.timeline-activity-header:not(:has(.timeline-thumbnail)) > .schedule-menu-trigger { grid-column: 2; }
 .timeline-personal-heading, .timeline-transport-heading, .timeline-quiet-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .timeline-personal-heading > :first-child, .timeline-transport-heading > :first-child, .timeline-quiet-heading > :first-child { min-width: 0; }
 .timeline-personal h3 { margin: 0 0 6px; }
@@ -1092,5 +1085,10 @@ html[data-screen^="detail-"][data-header-layout="cover"] .detail-back { top: var
 .schedule-recovery { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--line); }
 .schedule-day-reset { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--indigo-700); font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; }
 .schedule-day-reset:hover { background: transparent; }
-@container (max-width: 14rem) { .timeline-activity-header { grid-template-columns: 38px minmax(0,1fr); } .timeline-activity-header h3 { grid-column: 1 / -1; grid-row: 2; } .timeline-item-tools { grid-column: 2; grid-row: 1; justify-self: end; } .timeline-activity-header:not(:has(.timeline-thumbnail)) h3 { grid-column: 1 / -1; } }
+@container (max-width: 10rem) { .timeline-activity-header:has(.timeline-thumbnail) { grid-template-columns: 38px minmax(0,1fr); } .timeline-activity-header:has(.timeline-thumbnail) h3 { grid-column: 1 / -1; grid-row: 2; } .timeline-activity-header:has(.timeline-thumbnail) > .schedule-menu-trigger { grid-column: 2; grid-row: 1; justify-self: end; } }
 @media (forced-colors: active) { .schedule-menu { border-color: CanvasText; } .schedule-menu-trigger, .schedule-menu [role="menuitem"] { color: ButtonText; } }
+
+.schedule-alternatives .row { display: grid; gap: 10px; }
+.schedule-alternatives .row button { display: grid; gap: 4px; min-height: 44px; width: 100%; text-align: left; overflow-wrap: anywhere; }
+.schedule-alternatives .row button[aria-pressed="true"] { border-color: var(--indigo-700); background: var(--cream); }
+.schedule-alternatives .row small { font-size: .875rem; }

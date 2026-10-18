@@ -23,7 +23,7 @@ import {travelInfoView} from './travel-info-view.js';
 import {myTripView} from './my-trip-view.js';
 import {createEditProtection} from './edit-protection.js';
 import {createScheduleMenu} from './schedule-menu.js';
-import {originalTimeNote, hasPersonalScheduleChanges, personalScheduleMenu} from './personal-schedule-presentation.js';
+import {originalTimeNote, hasPersonalScheduleChanges, personalScheduleMenu, timelineItems, itemAlternativeGroup} from './personal-schedule-presentation.js';
 import {scheduleEditor} from './schedule-editor.js';
 import {resolvePersonalDay, scheduleName, scheduleCatalog, personalizationIssues, scheduleWarnings, setScheduleOverride, restoreScheduleItem, restoreScheduleDay, removePersonalItem} from '../domain/personal-itinerary.js';
 import {itineraryContext} from '../domain/itinerary-context.js';
@@ -347,22 +347,35 @@ function home() {
         name === 'japan' ? 'Japan' : 'Iceland')))), {id: 'sample-packs'}))];
 }
 
-function optionGroup(group, headingTag = 'h2') {
+function optionGroup(group, onSelected) {
   const chosen = selectedOptions(bundle, state, group).map(option => option.optionId);
   const choices = group.optionIds.filter(id => id !== group.baseOptionId);
-  return card(el(headingTag, {}, group.title),
+  return el('section', {class: 'schedule-alternatives'}, el('h3', {}, group.title),
     el('p', {}, group.travelerPrompt ?? 'Choose an authored alternative.'),
     group.baseOptionId ? el('p', {}, `Included: ${bundle.options.find(option => option.optionId === group.baseOptionId).title}`) : null,
     el('div', {class: 'row'}, choices.map(id => {
       const option = bundle.options.find(candidate => candidate.optionId === id);
       const pressed = chosen.includes(id);
-      return button(option.title, () => {
+      const entities = [...new Set([...(option.activityIds ?? []), ...(option.transportIds ?? []),
+        ...(option.scheduleItems ?? []).map(item => item.referencedEntityId)])];
+      const names = entities.map(id => bundle.activities.find(a => a.activityId === id)?.name ??
+        bundle.transport.find(t => t.transportId === id)?.mode).filter(Boolean);
+      return button([el('span', {}, option.title), names.length ? el('small', {}, names.join(' · ')) : null], () => {
         const ids = group.selectionMode === 'single' ? [id] :
           pressed ? chosen.filter(value => value !== id) : [...chosen, id];
         commit(current => chooseOption(bundle, current, group.optionGroupId, ids))
-          .then(() => {if (dialog.open) myTrip();}).catch(() => {});
-      }, {'aria-pressed': String(pressed), disabled: !!storageIssue});
+          .then(onSelected).catch(() => {});
+      }, {'aria-pressed': String(pressed), 'data-option-id': id, disabled: !!storageIssue});
     })), el('small', {}, 'Selections stay on this device and update the schedule and estimate.'));
+}
+
+function viewScheduleAlternatives(group) {
+  const scroll = appScroll.scrollTop;
+  void openTravelerEditor('Choose an alternative', optionGroup(group, () => {
+    appScroll.scrollTop = scroll; dialog.close();
+    const status = document.querySelector('#schedule-status');
+    if (status) status.textContent = 'Authored choice saved on this device. Schedule and estimate updated.';
+  }));
 }
 
 function timelineTime(item) {
@@ -370,40 +383,25 @@ function timelineTime(item) {
   return el('span', {}, item.timeWindowLabel || (item.suggestedTimeMode === 'all_day' ? 'All day' : 'Flexible'));
 }
 
-function timelineRow(item, choice = null) {
-  const menu = !choice && item.key ? scheduleControls(item) : null;
+function timelineRow(item) {
+  const menu = item.key ? scheduleControls(item) : null;
   const activity = ['activity', 'meal'].includes(item.itemType) ?
     bundle.activities.find(candidate => candidate.activityId === item.referencedEntityId) : null;
   const transport = item.itemType === 'transport' ?
     bundle.transport.find(candidate => candidate.transportId === item.referencedEntityId) : null;
   let content;
-  if (choice) {
-    content = choice;
-  } else if (item.personal) {
+  if (item.personal) {
     content = el('div', {class: 'timeline-content timeline-personal'},
       el('div', {class: 'timeline-personal-heading'}, el('span', {class: 'timeline-kind'}, 'Added by you'), menu), el('h3', {}, item.personal.name),
       el('p', {class: 'timeline-meta'}, [item.itemType === 'transport' ? item.personal.mode : '', item.durationMinutes ? item.durationMinutes + ' min' : 'Flexible duration'].filter(Boolean).join(' · ')),
       item.personal.address ? el('p', {}, item.personal.address) : null,
       item.personal.notes ? el('p', {class: 'schedule-note'}, item.personal.notes) : null);
   } else if (activity) {
-    const completed = state.activityCompletion[activity.activityId] ?? false;
     const title = button(editorialText(activity.name), () => {itineraryScrollTop = appScroll.scrollTop; detail(activity);},
       {class: 'timeline-title'});
-    const complete = button(completed ? '✓ Completed' : '○ Complete', () => {
-      const scroll = appScroll.scrollTop;
-      commit(current => ({...current, activityCompletion: {...current.activityCompletion,
-        [activity.activityId]: !completed}})).then(() => {
-        appScroll.scrollTop = scroll;
-        [...main.querySelectorAll('[data-completion-id]')]
-          .find(control => control.getAttribute('data-completion-id') === activity.activityId)?.focus({preventScroll: true});
-      }).catch(() => {});
-    }, {class: 'timeline-complete', 'aria-label': `Complete ${editorialText(activity.name)}`,
-      'aria-pressed': String(completed), 'data-completion-id': activity.activityId, disabled: !!storageIssue});
-    complete.replaceChildren(icon(completed ? 'done' : 'incomplete'));
-    complete.title = completed ? 'Completed · Tap to undo' : 'Mark complete';
     content = el('div', {class: 'timeline-content'},
       el('div', {class: 'timeline-activity-header'}, mediaImage(bundle, activity.heroMediaId, 'timeline-thumbnail', true),
-        el('h3', {}, title), el('div', {class: 'timeline-item-tools'}, complete, menu)),
+        el('h3', {}, title), menu),
       el('p', {class: 'timeline-meta'},
         item.durationMinutes ? `${item.durationMinutes} min` : 'Flexible duration',
         activity.indoorOutdoor ? ` · ${activity.indoorOutdoor}` : ''), badges(activity));
@@ -425,12 +423,12 @@ function timelineRow(item, choice = null) {
         el('strong', {class: 'timeline-quiet-title'}, title)), menu),
       item.transitionNotes ? el('p', {class: 'timeline-meta'}, item.transitionNotes) : null);
   }
-  if (!choice && item.key) {
+  if (item.key) {
     if (item.override?.notes) content.append(el('p', {class: 'schedule-note'}, item.override.notes));
     const originalNote = originalTimeNote(item);
     if (originalNote) content.append(el('p', {class: 'timeline-meta schedule-original-time'}, originalNote));
   }
-  return el('li', {'data-schedule-key': item.key, class: `timeline-item timeline-${choice ? 'choice' : item.itemType.replaceAll('_', '-')}`,
+  return el('li', {'data-schedule-key': item.key, 'data-entity-id': item.referencedEntityId, class: `timeline-item timeline-${item.itemType.replaceAll('_', '-')}`,
     'data-item-type': item.itemType},
   el('div', {class: 'timeline-time'}, timelineTime(item)),
   el('span', {class: 'timeline-rail', 'aria-hidden': true}, el('span', {class: 'timeline-dot'})), content);
@@ -453,9 +451,11 @@ function scheduleChange(change, message) {
   }).catch(() => {});
 }
 function scheduleControls(item) {
-  const presentation = personalScheduleMenu(item, hasPersonalScheduleChanges(bundle, item));
+  const group = itemAlternativeGroup(bundle, item);
+  const presentation = personalScheduleMenu(item, hasPersonalScheduleChanges(bundle, item), !!group);
   const actions = {
     edit: () => editSchedule(item),
+    alternatives: () => viewScheduleAlternatives(group),
     reset: () => scheduleChange(current => restoreScheduleItem(current, item.key), 'Original MCS schedule restored.'),
     skip: () => {
       const bookings = state.personalReservations.some(r => r.activityId && item.referencedEntityId && r.activityId === item.referencedEntityId);
@@ -472,19 +472,21 @@ function scheduleControls(item) {
 }
 
 function dayTimeline(day) {
-  const rows = resolvePersonalDay(bundle, state, day).map(item => {
-    if (item.itemType !== 'option_group') return timelineRow(item);
-    const group = bundle.optionGroups.find(candidate => candidate.optionGroupId === item.referencedEntityId);
-    const selection = optionGroup(group, 'h3');
-    selection.classList.add(group.requiredSelection ? 'timeline-choice-card' : 'timeline-choice-inline');
-    return timelineRow(item, selection);
-  });
+  const rows = timelineItems(resolvePersonalDay(bundle, state, day)).map(item => timelineRow(item));
   return el('ol', {class: 'timeline', 'aria-label': 'Day ' + day.dayNumber + ' timeline'}, rows);
 }
 function scheduleManagement(day) {
   const catalog = scheduleCatalog(bundle), issues = personalizationIssues(bundle, state);
   const changes = state.itineraryPersonalization;
   const review = el('details', {class: 'schedule-review'}, el('summary', {}, 'Skipped items & saved changes'));
+  // If every active child was skipped/moved, keep its chooser recoverable here,
+  // rather than inserting an empty alternatives announcement into the timeline.
+  const visibleGroups = new Set(timelineItems(resolvePersonalDay(bundle, state, day)).map(item => item.optionGroupId));
+  for (const anchor of day.scheduleItems.filter(item => item.itemType === 'option_group' && !visibleGroups.has(item.referencedEntityId))) {
+    const group = bundle.optionGroups.find(g => g.optionGroupId === anchor.referencedEntityId);
+    if (group) review.append(button('View alternatives: ' + group.title, () => viewScheduleAlternatives(group),
+      {'data-schedule-focus': 'alternatives-' + group.optionGroupId, disabled: !!storageIssue}));
+  }
   const activeKeys = new Set(bundle.days.flatMap(d => resolvePersonalDay(bundle, {...state, itineraryPersonalization: {...changes, overrides: []}}, d)).map(i => i.key));
   for (const override of changes.overrides) {
     if (override.source.dayId !== day.dayId && override.dayId !== day.dayId && !issues.some(i => i.key === override.source.key)) continue;
